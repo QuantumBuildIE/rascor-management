@@ -1,0 +1,33 @@
+using MediatR;
+using Rascor.Modules.ToolboxTalks.Application.DTOs;
+using Rascor.Modules.ToolboxTalks.Domain.Enums;
+
+namespace Rascor.Modules.ToolboxTalks.Application.Commands.CreateToolboxTalk;
+
+/// <summary>
+/// Command to create a new toolbox talk
+/// </summary>
+public record CreateToolboxTalkCommand : IRequest<ToolboxTalkDto>
+{
+    public Guid TenantId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string? Description { get; init; }
+    public ToolboxTalkFrequency Frequency { get; init; } = ToolboxTalkFrequency.Once;
+    public string? VideoUrl { get; init; }
+    public VideoSource VideoSource { get; init; } = VideoSource.None;
+    public string? AttachmentUrl { get; init; }
+    public int MinimumVideoWatchPercent { get; init; } = 90;
+    public bool RequiresQuiz { get; init; } = false;
+    public int? PassingScore { get; init; } = 80;
+    public bool IsActive { get; init; } = true;
+
+    /// <summary>
+    /// Content sections for this toolbox talk
+    /// </summary>
+    public List<CreateToolboxTalkSectionDto> Sections { get; init; } = new();
+
+    /// <summary>
+    /// Quiz questions for this toolbox talk
+    /// </summary>
+    public List<CreateToolboxTalkQuestionDto> Questions { get; init; } = new();
+}

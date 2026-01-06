@@ -1,0 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using Rascor.Core.Domain.Entities;
+
+namespace Rascor.Core.Application.Interfaces;
+
+/// <summary>
+/// Interface for the Core database context with shared entities
+/// </summary>
+public interface ICoreDbContext
+{
+    // Core DbSets
+    DbSet<Tenant> Tenants { get; }
+    DbSet<Site> Sites { get; }
+    DbSet<Employee> Employees { get; }
+    DbSet<Company> Companies { get; }
+    DbSet<Contact> Contacts { get; }
+
+    /// <summary>
+    /// Save changes to the database
+    /// </summary>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+}

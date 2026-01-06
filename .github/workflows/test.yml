@@ -1,0 +1,318 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  NODE_VERSION: '20'
+  POSTGRES_DB: rascor_test
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: testpassword123
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run Unit Tests
+        run: dotnet test tests/Rascor.Tests.Unit --no-build --configuration Release --logger trx --results-directory TestResults/Unit
+
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: TestResults/Unit
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run Integration Tests
+        run: dotnet test tests/Rascor.Tests.Integration --no-build --configuration Release --logger trx --results-directory TestResults/Integration
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          ASPNETCORE_ENVIRONMENT: Testing
+
+      - name: Upload Integration Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: TestResults/Integration
+
+  e2e-smoke-tests:
+    name: E2E Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build .NET solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Install Playwright dependencies
+        working-directory: tests/Rascor.Tests.E2E
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+
+      - name: Start API server
+        run: |
+          dotnet run --project src/Rascor.API --configuration Release &
+          sleep 30
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          ASPNETCORE_ENVIRONMENT: Testing
+          ASPNETCORE_URLS: http://localhost:5222
+
+      - name: Start frontend server
+        working-directory: web
+        run: |
+          npm run start &
+          sleep 15
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5222
+
+      - name: Wait for services
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:5222/health > /dev/null; do sleep 2; done'
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
+
+      - name: Run E2E Smoke Tests
+        working-directory: tests/Rascor.Tests.E2E
+        run: npx playwright test --grep @smoke --reporter=html
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:5222
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-smoke-report
+          path: tests/Rascor.Tests.E2E/playwright-report
+
+      - name: Upload Playwright Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-smoke-screenshots
+          path: tests/Rascor.Tests.E2E/test-results
+
+  e2e-critical-tests:
+    name: E2E Critical Flow Tests
+    runs-on: ubuntu-latest
+    needs: [e2e-smoke-tests]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build .NET solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Install Playwright dependencies
+        working-directory: tests/Rascor.Tests.E2E
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+
+      - name: Start API server
+        run: |
+          dotnet run --project src/Rascor.API --configuration Release &
+          sleep 30
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          ASPNETCORE_ENVIRONMENT: Testing
+          ASPNETCORE_URLS: http://localhost:5222
+
+      - name: Start frontend server
+        working-directory: web
+        run: |
+          npm run start &
+          sleep 15
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5222
+
+      - name: Wait for services
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:5222/health > /dev/null; do sleep 2; done'
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
+
+      - name: Run E2E Critical Flow Tests
+        working-directory: tests/Rascor.Tests.E2E
+        run: npx playwright test --grep @critical --reporter=html
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:5222
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-critical-report
+          path: tests/Rascor.Tests.E2E/playwright-report
+
+      - name: Upload Playwright Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-critical-screenshots
+          path: tests/Rascor.Tests.E2E/test-results
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-smoke-tests, e2e-critical-tests]
+    if: always()
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+
+      - name: Generate Test Summary
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Smoke Tests | ${{ needs.e2e-smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Critical Tests | ${{ needs.e2e-critical-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit test results are available in the 'unit-test-results' artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration test results are available in the 'integration-test-results' artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E smoke test reports are available in the 'playwright-smoke-report' artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E critical test reports are available in the 'playwright-critical-report' artifact" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check overall result
+        run: |
+          if [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.integration-tests.result }}" != "success" ] || \
+             [ "${{ needs.e2e-smoke-tests.result }}" != "success" ] || \
+             [ "${{ needs.e2e-critical-tests.result }}" != "success" ]; then
+            echo "One or more test suites failed"
+            exit 1
+          fi
+          echo "All tests passed!"

@@ -1,0 +1,44 @@
+using Rascor.Core.Domain.Entities;
+using Rascor.Modules.ToolboxTalks.Domain.Entities;
+
+namespace Rascor.Modules.ToolboxTalks.Application.Services;
+
+/// <summary>
+/// Service for sending Toolbox Talk related email notifications
+/// </summary>
+public interface IToolboxTalkEmailService
+{
+    /// <summary>
+    /// Sends an email to an employee when a new toolbox talk is assigned to them
+    /// </summary>
+    Task SendTalkAssignmentEmailAsync(
+        ScheduledTalk scheduledTalk,
+        Employee employee,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a reminder email for an overdue toolbox talk
+    /// </summary>
+    Task SendReminderEmailAsync(
+        ScheduledTalk scheduledTalk,
+        Employee employee,
+        int reminderNumber,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a confirmation email when an employee completes a toolbox talk
+    /// </summary>
+    Task SendCompletionConfirmationEmailAsync(
+        ScheduledTalkCompletion completion,
+        Employee employee,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends an escalation email to the employee's manager when a talk remains overdue
+    /// </summary>
+    Task SendEscalationEmailAsync(
+        ScheduledTalk scheduledTalk,
+        Employee employee,
+        Employee manager,
+        CancellationToken cancellationToken = default);
+}

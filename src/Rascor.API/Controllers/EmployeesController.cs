@@ -1,0 +1,140 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Rascor.Core.Application.Features.Employees;
+using Rascor.Core.Application.Features.Employees.DTOs;
+
+namespace Rascor.API.Controllers;
+
+[ApiController]
+[Route("api/employees")]
+[Authorize]
+public class EmployeesController : ControllerBase
+{
+    private readonly IEmployeeService _employeeService;
+
+    public EmployeesController(IEmployeeService employeeService)
+    {
+        _employeeService = employeeService;
+    }
+
+    /// <summary>
+    /// Get all employees (non-paginated)
+    /// </summary>
+    /// <returns>List of employees</returns>
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _employeeService.GetAllAsync();
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Get employees with pagination, sorting, and search
+    /// </summary>
+    /// <param name="pageNumber">Page number (default: 1)</param>
+    /// <param name="pageSize">Page size (default: 20)</param>
+    /// <param name="sortColumn">Column to sort by</param>
+    /// <param name="sortDirection">Sort direction (asc/desc)</param>
+    /// <param name="search">Search term</param>
+    /// <returns>Paginated list of employees</returns>
+    [HttpGet]
+    public async Task<IActionResult> GetPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortColumn = null,
+        [FromQuery] string? sortDirection = null,
+        [FromQuery] string? search = null)
+    {
+        var query = new GetEmployeesQueryDto(pageNumber, pageSize, sortColumn, sortDirection, search);
+        var result = await _employeeService.GetPaginatedAsync(query);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Get an employee by ID
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <returns>Employee details</returns>
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _employeeService.GetByIdAsync(id);
+
+        if (!result.Success)
+        {
+            return NotFound(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Create a new employee
+    /// </summary>
+    /// <param name="dto">Employee creation data</param>
+    /// <returns>Created employee</returns>
+    [HttpPost]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> Create([FromBody] CreateEmployeeDto dto)
+    {
+        var result = await _employeeService.CreateAsync(dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result);
+    }
+
+    /// <summary>
+    /// Update an existing employee
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <param name="dto">Employee update data</param>
+    /// <returns>Updated employee</returns>
+    [HttpPut("{id:guid}")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployeeDto dto)
+    {
+        var result = await _employeeService.UpdateAsync(id, dto);
+
+        if (!result.Success)
+        {
+            return NotFound(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Delete an employee (soft delete)
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <returns>No content on success</returns>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var result = await _employeeService.DeleteAsync(id);
+
+        if (!result.Success)
+        {
+            return NotFound(result);
+        }
+
+        return NoContent();
+    }
+}

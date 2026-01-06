@@ -1,0 +1,10 @@
+global using Xunit;
+global using FluentAssertions;
+global using Rascor.Tests.Common.TestTenant;
+global using Rascor.Tests.Common.Builders;
+global using Rascor.Tests.Integration.Fixtures;
+global using Rascor.Tests.Integration.Setup;
+global using Rascor.Tests.Integration.Setup.Fakes;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using System.Net.Http.Json;
+global using System.Net;

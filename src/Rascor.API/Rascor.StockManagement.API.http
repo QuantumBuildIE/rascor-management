@@ -1,0 +1,6 @@
+@Rascor.StockManagement.API_HostAddress = http://localhost:5222
+
+GET {{Rascor.StockManagement.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
