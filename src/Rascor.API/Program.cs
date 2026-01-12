@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,10 @@ using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Infrastructure;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Persistence.Seed;
+using Rascor.Modules.Rams.Application;
+using Rascor.Modules.Rams.Infrastructure;
+using Rascor.Modules.Rams.Infrastructure.Jobs;
+using Rascor.Modules.Rams.Infrastructure.Persistence.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,11 +63,18 @@ builder.Services.AddScoped<IProposalsDbContext>(provider =>
 builder.Services.AddScoped<IToolboxTalksDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
 
+// Register IRamsDbContext
+builder.Services.AddScoped<Rascor.Modules.Rams.Application.Common.Interfaces.IRamsDbContext>(provider =>
+    provider.GetRequiredService<ApplicationDbContext>());
+
 // Register SiteAttendance module (separate DbContext with own schema)
 builder.Services.AddSiteAttendanceInfrastructure(builder.Configuration);
 
 // Register ToolboxTalks module services
 builder.Services.AddToolboxTalksInfrastructure(builder.Configuration);
+
+// Register RAMS module services
+builder.Services.AddRamsInfrastructure(builder.Configuration);
 
 // Register DbContext (for DataSeeder)
 builder.Services.AddScoped<DbContext>(provider =>
@@ -79,9 +91,16 @@ builder.Services.AddCoreApplication();
 builder.Services.AddApplication();
 builder.Services.AddProposalsApplication();
 builder.Services.AddToolboxTalksApplication();
+builder.Services.AddRamsApplication();
 
 // Register HttpContextAccessor for accessing current user from JWT
 builder.Services.AddHttpContextAccessor();
+
+// Register HttpClient for Claude API
+builder.Services.AddHttpClient("ClaudeApi", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 // Register Infrastructure services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -92,6 +111,7 @@ builder.Services.AddScoped<DailyAttendanceProcessorJob>();
 builder.Services.AddScoped<ProcessToolboxTalkSchedulesJob>();
 builder.Services.AddScoped<SendToolboxTalkRemindersJob>();
 builder.Services.AddScoped<UpdateOverdueToolboxTalksJob>();
+builder.Services.AddScoped<RamsDailyDigestJob>();
 
 // Add Hangfire with PostgreSQL storage
 builder.Services.AddHangfire(config => config
@@ -103,8 +123,12 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 
-// Add controllers
-builder.Services.AddControllers();
+// Add controllers with JSON options for enum string conversion
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Add Swagger/OpenAPI documentation with JWT support
 builder.Services.AddEndpointsApiExplorer();
@@ -152,6 +176,9 @@ await SeedSiteAttendanceDataAsync(app.Services);
 
 // Seed Toolbox Talks module data
 await SeedToolboxTalksDataAsync(app.Services);
+
+// Seed RAMS module library data
+await SeedRamsLibraryDataAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -218,6 +245,16 @@ RecurringJob.AddOrUpdate<UpdateOverdueToolboxTalksJob>(
     job => job.ExecuteAsync(CancellationToken.None),
     "0 * * * *"); // Run every hour
 
+// RAMS background jobs
+RecurringJob.AddOrUpdate<RamsDailyDigestJob>(
+    "rams-daily-digest",
+    job => job.ExecuteAsync(CancellationToken.None),
+    "0 8 * * 1-5", // Run at 8:00 AM on weekdays (Monday-Friday)
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") // Ireland time
+    });
+
 app.Run();
 
 /// <summary>
@@ -260,6 +297,28 @@ static async Task SeedToolboxTalksDataAsync(IServiceProvider serviceProvider)
     catch (Exception ex)
     {
         logger.LogError(ex, "Error seeding Toolbox Talks module data");
+        throw;
+    }
+}
+
+/// <summary>
+/// Seeds RAMS module library data (hazards, controls, legislation, SOPs)
+/// </summary>
+static async Task SeedRamsLibraryDataAsync(IServiceProvider serviceProvider)
+{
+    using var scope = serviceProvider.CreateScope();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var context = services.GetRequiredService<DbContext>();
+        await RamsLibrarySeedData.SeedAsync(context, logger);
+        logger.LogInformation("RAMS module library seeding completed");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error seeding RAMS module library data");
         throw;
     }
 }

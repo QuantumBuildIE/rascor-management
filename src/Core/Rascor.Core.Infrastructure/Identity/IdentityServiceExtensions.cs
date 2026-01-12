@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Domain.Entities;
+using Rascor.Core.Infrastructure.Services;
 
 namespace Rascor.Core.Infrastructure.Identity;
 
@@ -76,6 +77,9 @@ public static class IdentityServiceExtensions
 
         // Register auth service
         services.AddScoped<IAuthService, AuthService>();
+
+        // Register email service
+        services.AddScoped<IEmailService, EmailService>();
 
         // Register permission authorization handler
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
