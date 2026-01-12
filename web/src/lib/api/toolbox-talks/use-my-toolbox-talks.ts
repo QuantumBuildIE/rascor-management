@@ -1,0 +1,158 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  getMyToolboxTalks,
+  getMyToolboxTalkById,
+  getMyPendingToolboxTalks,
+  getMyInProgressToolboxTalks,
+  getMyOverdueToolboxTalks,
+  getMyCompletedToolboxTalks,
+  markSectionRead,
+  updateVideoProgress,
+  submitQuizAnswers,
+  completeToolboxTalk,
+} from './my-toolbox-talks';
+import type {
+  GetMyToolboxTalksParams,
+  MarkSectionReadRequest,
+  UpdateVideoProgressRequest,
+  SubmitQuizRequest,
+  CompleteToolboxTalkRequest,
+} from '@/types/toolbox-talks';
+
+// ============================================
+// Query Keys
+// ============================================
+
+export const MY_TOOLBOX_TALKS_KEY = ['my-toolbox-talks'];
+
+// ============================================
+// My Toolbox Talks Query Hooks
+// ============================================
+
+export function useMyToolboxTalks(params?: GetMyToolboxTalksParams) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'list', params],
+    queryFn: () => getMyToolboxTalks(params),
+  });
+}
+
+export function useMyToolboxTalk(id: string) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, id],
+    queryFn: () => getMyToolboxTalkById(id),
+    enabled: !!id,
+  });
+}
+
+export function useMyPendingToolboxTalks(params?: Omit<GetMyToolboxTalksParams, 'status'>) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'pending', params],
+    queryFn: () => getMyPendingToolboxTalks(params),
+  });
+}
+
+export function useMyInProgressToolboxTalks(params?: Omit<GetMyToolboxTalksParams, 'status'>) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'in-progress', params],
+    queryFn: () => getMyInProgressToolboxTalks(params),
+  });
+}
+
+export function useMyOverdueToolboxTalks(params?: Omit<GetMyToolboxTalksParams, 'status'>) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'overdue', params],
+    queryFn: () => getMyOverdueToolboxTalks(params),
+  });
+}
+
+export function useMyCompletedToolboxTalks(params?: Omit<GetMyToolboxTalksParams, 'status'>) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'completed', params],
+    queryFn: () => getMyCompletedToolboxTalks(params),
+  });
+}
+
+// ============================================
+// Progress Mutation Hooks
+// ============================================
+
+export function useMarkSectionRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      scheduledTalkId,
+      sectionId,
+      data,
+    }: {
+      scheduledTalkId: string;
+      sectionId: string;
+      data?: MarkSectionReadRequest;
+    }) => markSectionRead(scheduledTalkId, sectionId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+      queryClient.invalidateQueries({ queryKey: MY_TOOLBOX_TALKS_KEY });
+    },
+  });
+}
+
+export function useUpdateVideoProgress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      scheduledTalkId,
+      data,
+    }: {
+      scheduledTalkId: string;
+      data: UpdateVideoProgressRequest;
+    }) => updateVideoProgress(scheduledTalkId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+    },
+  });
+}
+
+// ============================================
+// Quiz Mutation Hooks
+// ============================================
+
+export function useSubmitQuizAnswers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      scheduledTalkId,
+      data,
+    }: {
+      scheduledTalkId: string;
+      data: SubmitQuizRequest;
+    }) => submitQuizAnswers(scheduledTalkId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+      queryClient.invalidateQueries({ queryKey: MY_TOOLBOX_TALKS_KEY });
+    },
+  });
+}
+
+// ============================================
+// Completion Mutation Hooks
+// ============================================
+
+export function useCompleteToolboxTalk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      scheduledTalkId,
+      data,
+    }: {
+      scheduledTalkId: string;
+      data: CompleteToolboxTalkRequest;
+    }) => completeToolboxTalk(scheduledTalkId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+      queryClient.invalidateQueries({ queryKey: MY_TOOLBOX_TALKS_KEY });
+    },
+  });
+}
