@@ -62,6 +62,20 @@ public static class Permissions
     }
 
     /// <summary>
+    /// RAMS (Risk Assessment Method Statement) module permissions
+    /// </summary>
+    public static class Rams
+    {
+        public const string View = "Rams.View";
+        public const string Create = "Rams.Create";
+        public const string Edit = "Rams.Edit";
+        public const string Delete = "Rams.Delete";
+        public const string Submit = "Rams.Submit";
+        public const string Approve = "Rams.Approve";
+        public const string Admin = "Rams.Admin";
+    }
+
+    /// <summary>
     /// Core module permissions (Sites, Employees, Companies, Users, Roles)
     /// </summary>
     public static class Core
@@ -115,6 +129,15 @@ public static class Permissions
             ToolboxTalks.Schedule,
             ToolboxTalks.ViewReports,
             ToolboxTalks.Admin,
+
+            // RAMS permissions
+            Rams.View,
+            Rams.Create,
+            Rams.Edit,
+            Rams.Delete,
+            Rams.Submit,
+            Rams.Approve,
+            Rams.Admin,
 
             // Core permissions
             Core.ManageSites,

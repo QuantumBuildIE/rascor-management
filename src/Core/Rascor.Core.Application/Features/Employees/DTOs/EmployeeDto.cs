@@ -16,5 +16,13 @@ public record EmployeeDto(
     DateTime? StartDate,
     DateTime? EndDate,
     bool IsActive,
-    string? Notes
+    string? Notes,
+    /// <summary>
+    /// Indicates whether this employee has a linked User account
+    /// </summary>
+    bool HasUserAccount = false,
+    /// <summary>
+    /// The linked User ID if a user account exists
+    /// </summary>
+    Guid? LinkedUserId = null
 );

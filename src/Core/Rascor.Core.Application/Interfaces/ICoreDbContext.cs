@@ -8,6 +8,9 @@ namespace Rascor.Core.Application.Interfaces;
 /// </summary>
 public interface ICoreDbContext
 {
+    // Identity DbSets
+    DbSet<User> Users { get; }
+
     // Core DbSets
     DbSet<Tenant> Tenants { get; }
     DbSet<Site> Sites { get; }
