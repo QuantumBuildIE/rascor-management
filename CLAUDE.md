@@ -416,6 +416,14 @@ rascor-management/
 | PUT | `/{id}` | Update device registration | SiteAttendance.Admin |
 | DELETE | `/{id}` | Deactivate device (soft delete) | SiteAttendance.Admin |
 
+### RAMS Module
+
+#### RAMS AI Suggestions (`/api/rams/ai`)
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| POST | `/suggest-controls` | Get AI-powered control measure suggestions | Authenticated |
+| POST | `/accept-suggestion` | Mark suggestion as accepted (for analytics) | Authenticated |
+
 ---
 
 ## Frontend Pages
@@ -1214,5 +1222,44 @@ dotnet ef database update --project ../Modules/StockManagement/Rascor.Modules.St
 
 ---
 
-*Last Updated: December 22, 2025 (Site Attendance Module Complete)*
+## RAMS AI Features
+
+### AI-Powered Control Measure Suggestions
+
+The RAMS module includes AI-powered control measure suggestions to assist safety officers in creating comprehensive risk assessments.
+
+**Backend Components:**
+- **McpAuditLog Entity** - Tracks all AI requests, responses, and acceptance rates for analytics
+- **IRamsAiService** - Service interface for AI suggestions
+- **RamsAiService** - Implementation that:
+  1. Searches the library for matching hazards based on keywords
+  2. Searches for relevant control measures from the library
+  3. Searches for relevant legislation references
+  4. Searches for relevant SOPs
+  5. Optionally calls Claude API for AI-generated suggestions when library matches are sparse
+  6. Logs all requests for usage tracking and improvement
+
+**API Endpoints:**
+- `POST /api/rams/ai/suggest-controls` - Get suggestions based on task/hazard
+- `POST /api/rams/ai/accept-suggestion` - Mark suggestion as accepted/rejected
+
+**Configuration:**
+```json
+{
+  "Anthropic": {
+    "ApiKey": ""  // Set via environment variable or secrets
+  },
+  "Rams": {
+    "AiEnabled": true  // Toggle AI features on/off
+  }
+}
+```
+
+**Frontend Hooks:**
+- `useSuggestControls()` - Mutation hook to request AI suggestions
+- `useAcceptSuggestion()` - Mutation hook to mark suggestions as accepted
+
+---
+
+*Last Updated: January 10, 2026 (RAMS AI Suggestions Added)*
 *Architecture: Modular Monolith with Clean Architecture*
