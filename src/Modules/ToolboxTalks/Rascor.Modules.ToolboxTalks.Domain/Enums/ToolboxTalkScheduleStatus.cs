@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 /// <summary>
 /// Status of a toolbox talk schedule
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ToolboxTalkScheduleStatus
 {
     /// <summary>

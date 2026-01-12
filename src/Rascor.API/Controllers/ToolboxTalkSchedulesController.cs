@@ -123,6 +123,18 @@ public class ToolboxTalkSchedulesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateToolboxTalkScheduleCommand command)
     {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+            _logger.LogWarning("Model state validation failed for CreateToolboxTalkScheduleCommand: {@Errors}", errors);
+            return BadRequest(new { message = "Validation failed", errors });
+        }
+
         try
         {
             var commandWithTenant = command with { TenantId = _currentUserService.TenantId };
@@ -131,10 +143,12 @@ public class ToolboxTalkSchedulesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(ex, "Invalid operation creating schedule");
             return BadRequest(new { message = ex.Message });
         }
         catch (FluentValidation.ValidationException ex)
         {
+            _logger.LogWarning("FluentValidation failed: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message, errors = ex.Errors });
         }
         catch (Exception ex)

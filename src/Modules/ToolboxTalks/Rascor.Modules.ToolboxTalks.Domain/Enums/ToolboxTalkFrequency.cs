@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 /// <summary>
 /// Frequency at which a toolbox talk must be completed
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ToolboxTalkFrequency
 {
     /// <summary>
