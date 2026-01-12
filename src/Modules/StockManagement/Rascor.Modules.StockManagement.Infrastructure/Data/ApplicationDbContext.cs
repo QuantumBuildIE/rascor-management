@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Rascor.Modules.StockManagement.Application.Common.Interfaces;
 using Rascor.Modules.Proposals.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
+using Rascor.Modules.Rams.Application.Common.Interfaces;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Domain.Common;
 using Rascor.Core.Domain.Entities;
@@ -11,7 +12,9 @@ using Rascor.Core.Infrastructure.Data.Configurations;
 using Rascor.Modules.StockManagement.Domain.Entities;
 using Rascor.Modules.Proposals.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
+using Rascor.Modules.Rams.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Persistence.Configurations;
+using Rascor.Modules.Rams.Infrastructure.Configurations;
 
 namespace Rascor.Modules.StockManagement.Infrastructure.Data;
 
@@ -19,7 +22,7 @@ namespace Rascor.Modules.StockManagement.Infrastructure.Data;
 /// Main database context for the RASCOR Management System
 /// Implements multi-tenancy, soft deletes, audit trail, and Identity
 /// </summary>
-public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>, IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>, IStockManagementDbContext, IProposalsDbContext, IToolboxTalksDbContext, ICoreDbContext
+public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>, IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>, IStockManagementDbContext, IProposalsDbContext, IToolboxTalksDbContext, IRamsDbContext, ICoreDbContext
 {
     private readonly ICurrentUserService _currentUserService;
 
@@ -90,6 +93,18 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkSettings> ToolboxTalkSettings => Set<ToolboxTalkSettings>();
     public DbSet<ToolboxTalkTranslation> ToolboxTalkTranslations => Set<ToolboxTalkTranslation>();
     public DbSet<ToolboxTalkVideoTranslation> ToolboxTalkVideoTranslations => Set<ToolboxTalkVideoTranslation>();
+
+    // RAMS DbSets
+    public DbSet<RamsDocument> RamsDocuments => Set<RamsDocument>();
+    public DbSet<RiskAssessment> RamsRiskAssessments => Set<RiskAssessment>();
+    public DbSet<MethodStep> RamsMethodSteps => Set<MethodStep>();
+    public DbSet<HazardLibrary> RamsHazardLibrary => Set<HazardLibrary>();
+    public DbSet<ControlMeasureLibrary> RamsControlMeasureLibrary => Set<ControlMeasureLibrary>();
+    public DbSet<LegislationReference> RamsLegislationReferences => Set<LegislationReference>();
+    public DbSet<SopReference> RamsSopReferences => Set<SopReference>();
+    public DbSet<HazardControlLink> RamsHazardControlLinks => Set<HazardControlLink>();
+    public DbSet<McpAuditLog> RamsMcpAuditLogs => Set<McpAuditLog>();
+    public DbSet<RamsNotificationLog> RamsNotificationLogs => Set<RamsNotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,6 +219,18 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkVideoTranslationConfiguration());
 
+        // Apply RAMS entity configurations
+        modelBuilder.ApplyConfiguration(new RamsDocumentConfiguration());
+        modelBuilder.ApplyConfiguration(new RiskAssessmentConfiguration());
+        modelBuilder.ApplyConfiguration(new MethodStepConfiguration());
+        modelBuilder.ApplyConfiguration(new HazardLibraryConfiguration());
+        modelBuilder.ApplyConfiguration(new ControlMeasureLibraryConfiguration());
+        modelBuilder.ApplyConfiguration(new LegislationReferenceConfiguration());
+        modelBuilder.ApplyConfiguration(new SopReferenceConfiguration());
+        modelBuilder.ApplyConfiguration(new HazardControlLinkConfiguration());
+        modelBuilder.ApplyConfiguration(new McpAuditLogConfiguration());
+        modelBuilder.ApplyConfiguration(new RamsNotificationLogConfiguration());
+
         // Apply global query filters - Core entities
         modelBuilder.Entity<Site>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
         modelBuilder.Entity<Employee>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
@@ -234,6 +261,10 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.Entity<ProposalSection>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
         modelBuilder.Entity<ProposalLineItem>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
         modelBuilder.Entity<ProposalContact>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
+
+        // Note: RAMS query filters are defined in entity configurations
+        // TenantEntity-based: RamsDocument, RiskAssessment, MethodStep, HazardLibrary, ControlMeasureLibrary, LegislationReference, SopReference
+        // BaseEntity-based (not tenant-scoped): HazardControlLink
 
         // Note: Toolbox Talks query filters are defined in entity configurations
         // TenantEntity-based: ToolboxTalk, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation

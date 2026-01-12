@@ -10,6 +10,7 @@ using Rascor.Modules.StockManagement.Application.Features.StockLocations;
 using Rascor.Modules.StockManagement.Application.Features.StockOrders;
 using Rascor.Modules.StockManagement.Application.Features.Stocktakes;
 using Rascor.Modules.StockManagement.Application.Features.StockTransactions;
+using Rascor.Modules.StockManagement.Application.Features.ProductKits;
 using Rascor.Modules.StockManagement.Application.Features.Reports;
 using Rascor.Modules.StockManagement.Application.Features.Suppliers;
 
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IStockTransactionService, StockTransactionService>();
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IStockReportService, StockReportService>();
+        services.AddScoped<IProductKitService, ProductKitService>();
 
         return services;
     }

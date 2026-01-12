@@ -12,6 +12,8 @@
     <ProjectReference Include="..\..\Proposals\Rascor.Modules.Proposals.Infrastructure\Rascor.Modules.Proposals.Infrastructure.csproj" />
     <ProjectReference Include="..\..\ToolboxTalks\Rascor.Modules.ToolboxTalks.Application\Rascor.Modules.ToolboxTalks.Application.csproj" />
     <ProjectReference Include="..\..\ToolboxTalks\Rascor.Modules.ToolboxTalks.Infrastructure\Rascor.Modules.ToolboxTalks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Rams\Rascor.Modules.Rams.Application\Rascor.Modules.Rams.Application.csproj" />
+    <ProjectReference Include="..\..\Rams\Rascor.Modules.Rams.Infrastructure\Rascor.Modules.Rams.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
