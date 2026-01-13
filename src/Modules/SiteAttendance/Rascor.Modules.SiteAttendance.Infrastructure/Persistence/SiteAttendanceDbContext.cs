@@ -18,6 +18,7 @@ public class SiteAttendanceDbContext : DbContext
     public DbSet<BankHoliday> BankHolidays => Set<BankHoliday>();
     public DbSet<AttendanceSettings> AttendanceSettings => Set<AttendanceSettings>();
     public DbSet<AttendanceNotification> AttendanceNotifications => Set<AttendanceNotification>();
+    public DbSet<GeofenceSyncLog> GeofenceSyncLogs => Set<GeofenceSyncLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

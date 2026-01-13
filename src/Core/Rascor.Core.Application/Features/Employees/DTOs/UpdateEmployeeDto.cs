@@ -13,5 +13,9 @@ public record UpdateEmployeeDto(
     DateTime? StartDate,
     DateTime? EndDate,
     bool IsActive,
-    string? Notes
+    string? Notes,
+    /// <summary>
+    /// Geo tracker device ID for mobile geofence app integration (format: EVT####, e.g., "EVT0011")
+    /// </summary>
+    string? GeoTrackerID = null
 );

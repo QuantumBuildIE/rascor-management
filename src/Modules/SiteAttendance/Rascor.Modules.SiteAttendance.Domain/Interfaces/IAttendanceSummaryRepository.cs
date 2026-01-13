@@ -11,4 +11,14 @@ public interface IAttendanceSummaryRepository
     Task<IEnumerable<AttendanceSummary>> GetByDateRangeAsync(Guid tenantId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default);
     Task AddAsync(AttendanceSummary entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(AttendanceSummary entity, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets total count of summaries for a tenant
+    /// </summary>
+    Task<int> GetTotalCountAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets summary counts grouped by date
+    /// </summary>
+    Task<IEnumerable<(DateOnly Date, int Count)>> GetCountsByDateAsync(Guid tenantId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default);
 }

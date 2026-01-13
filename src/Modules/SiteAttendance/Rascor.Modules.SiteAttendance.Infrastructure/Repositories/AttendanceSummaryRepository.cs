@@ -113,4 +113,29 @@ public class AttendanceSummaryRepository : IAttendanceSummaryRepository
         _context.AttendanceSummaries.Update(entity);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<int> GetTotalCountAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return await _context.AttendanceSummaries
+            .Where(s => s.TenantId == tenantId)
+            .CountAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<(DateOnly Date, int Count)>> GetCountsByDateAsync(
+        Guid tenantId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken = default)
+    {
+        var results = await _context.AttendanceSummaries
+            .Where(s => s.TenantId == tenantId)
+            .Where(s => s.Date >= fromDate)
+            .Where(s => s.Date <= toDate)
+            .GroupBy(s => s.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Date)
+            .ToListAsync(cancellationToken);
+
+        return results.Select(r => (r.Date, r.Count));
+    }
 }

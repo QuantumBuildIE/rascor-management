@@ -48,12 +48,21 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .IsRequired()
             .HasDefaultValue("en");
 
+        builder.Property(e => e.GeoTrackerID)
+            .HasMaxLength(10);
+
         // Ignore computed property
         builder.Ignore(e => e.FullName);
 
         builder.HasIndex(e => new { e.TenantId, e.EmployeeCode })
             .IsUnique()
             .HasDatabaseName("IX_Employees_TenantId_EmployeeCode");
+
+        // Unique index on GeoTrackerID per tenant (where not null)
+        builder.HasIndex(e => new { e.TenantId, e.GeoTrackerID })
+            .IsUnique()
+            .HasFilter("\"GeoTrackerID\" IS NOT NULL")
+            .HasDatabaseName("IX_Employees_TenantId_GeoTrackerID");
 
         builder.HasOne(e => e.PrimarySite)
             .WithMany()

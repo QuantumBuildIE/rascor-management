@@ -59,6 +59,7 @@ public class EmployeeService : IEmployeeService
                     e.EndDate,
                     e.IsActive,
                     e.Notes,
+                    e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null
                 ))
@@ -121,6 +122,7 @@ public class EmployeeService : IEmployeeService
                     e.EndDate,
                     e.IsActive,
                     e.Notes,
+                    e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null
                 ))
@@ -181,6 +183,7 @@ public class EmployeeService : IEmployeeService
                     e.EndDate,
                     e.IsActive,
                     e.Notes,
+                    e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null
                 ))
@@ -267,6 +270,8 @@ public class EmployeeService : IEmployeeService
                 Notes = dto.Notes
             };
 
+            employee.SetGeoTrackerID(dto.GeoTrackerID);
+
             _context.Employees.Add(employee);
 
             User? createdUser = null;
@@ -336,6 +341,7 @@ public class EmployeeService : IEmployeeService
                 createdEmployee.EndDate,
                 createdEmployee.IsActive,
                 createdEmployee.Notes,
+                createdEmployee.GeoTrackerID,
                 createdEmployee.UserId != null,
                 createdUser?.Id
             );
@@ -488,6 +494,7 @@ public class EmployeeService : IEmployeeService
             employee.EndDate = dto.EndDate;
             employee.IsActive = dto.IsActive;
             employee.Notes = dto.Notes;
+            employee.SetGeoTrackerID(dto.GeoTrackerID);
 
             // Sync User account if email changed and employee has a linked user
             if (emailChanged && !string.IsNullOrWhiteSpace(employee.UserId))
@@ -533,6 +540,7 @@ public class EmployeeService : IEmployeeService
                 employee.EndDate,
                 employee.IsActive,
                 employee.Notes,
+                employee.GeoTrackerID,
                 employee.UserId != null,
                 employee.UserId != null ? Guid.Parse(employee.UserId) : null
             );

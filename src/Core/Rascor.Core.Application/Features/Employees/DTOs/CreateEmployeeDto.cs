@@ -15,6 +15,10 @@ public record CreateEmployeeDto(
     bool IsActive,
     string? Notes,
     /// <summary>
+    /// Geo tracker device ID for mobile geofence app integration (format: EVT####, e.g., "EVT0011")
+    /// </summary>
+    string? GeoTrackerID = null,
+    /// <summary>
     /// If true (default), creates a linked User account when Email is provided.
     /// The user will receive a password setup email.
     /// </summary>

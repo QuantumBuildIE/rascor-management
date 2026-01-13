@@ -8,6 +8,7 @@ using Rascor.Modules.SiteAttendance.Domain.Interfaces;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
 using Rascor.Modules.SiteAttendance.Infrastructure.Repositories;
 using Rascor.Modules.SiteAttendance.Infrastructure.Services;
+using Rascor.Modules.SiteAttendance.Infrastructure.Sync;
 
 namespace Rascor.Modules.SiteAttendance.Infrastructure;
 
@@ -54,6 +55,24 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGeofenceService, GeofenceService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAttendanceAnalyticsService, AttendanceAnalyticsService>();
+
+        // Register geofence sync settings and services
+        services.Configure<GeofenceSyncSettings>(
+            configuration.GetSection(GeofenceSyncSettings.SectionName));
+
+        // Register GeofenceMobileDbContext for reading from mobile geofence database
+        var mobileDbConnectionString = configuration.GetConnectionString("GeofenceMobileDb");
+        if (!string.IsNullOrEmpty(mobileDbConnectionString) && !mobileDbConnectionString.Contains("<"))
+        {
+            services.AddDbContext<GeofenceMobileDbContext>(options =>
+                options.UseNpgsql(mobileDbConnectionString));
+        }
+
+        // Register sync service as both hosted service and scoped service
+        services.AddSingleton<GeofenceSyncService>();
+        services.AddHostedService(provider => provider.GetRequiredService<GeofenceSyncService>());
+        services.AddScoped<IGeofenceSyncService>(provider =>
+            provider.GetRequiredService<GeofenceSyncService>());
 
         return services;
     }

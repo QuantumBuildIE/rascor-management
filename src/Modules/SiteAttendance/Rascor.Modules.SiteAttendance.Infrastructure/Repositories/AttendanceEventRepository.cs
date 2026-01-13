@@ -143,4 +143,62 @@ public class AttendanceEventRepository : IAttendanceEventRepository
         _context.AttendanceEvents.Update(entity);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<DateOnly>> GetUniqueDatesWithEventsAsync(
+        Guid tenantId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.AttendanceEvents
+            .Where(e => e.TenantId == tenantId)
+            .Where(e => DateOnly.FromDateTime(e.Timestamp) >= fromDate)
+            .Where(e => DateOnly.FromDateTime(e.Timestamp) <= toDate)
+            .Select(e => DateOnly.FromDateTime(e.Timestamp))
+            .Distinct()
+            .OrderBy(d => d)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(int Total, int Processed, int Unprocessed)> GetProcessingStatsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var stats = await _context.AttendanceEvents
+            .Where(e => e.TenantId == tenantId)
+            .GroupBy(e => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Processed = g.Count(e => e.Processed),
+                Unprocessed = g.Count(e => !e.Processed)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return stats == null ? (0, 0, 0) : (stats.Total, stats.Processed, stats.Unprocessed);
+    }
+
+    public async Task<IEnumerable<(DateOnly Date, int Total, int Processed, int Unprocessed)>> GetEventCountsByDateAsync(
+        Guid tenantId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken = default)
+    {
+        var results = await _context.AttendanceEvents
+            .Where(e => e.TenantId == tenantId)
+            .Where(e => DateOnly.FromDateTime(e.Timestamp) >= fromDate)
+            .Where(e => DateOnly.FromDateTime(e.Timestamp) <= toDate)
+            .GroupBy(e => DateOnly.FromDateTime(e.Timestamp))
+            .Select(g => new
+            {
+                Date = g.Key,
+                Total = g.Count(),
+                Processed = g.Count(e => e.Processed),
+                Unprocessed = g.Count(e => !e.Processed)
+            })
+            .OrderByDescending(x => x.Date)
+            .ToListAsync(cancellationToken);
+
+        return results.Select(r => (r.Date, r.Total, r.Processed, r.Unprocessed));
+    }
 }

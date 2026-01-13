@@ -92,4 +92,18 @@ public class Employee : TenantEntity
     /// Used for toolbox talk translations and email notifications
     /// </summary>
     public string PreferredLanguage { get; set; } = "en";
+
+    /// <summary>
+    /// Geo tracker device ID for mobile geofence app integration (format: EVT####, e.g., "EVT0011")
+    /// </summary>
+    public string? GeoTrackerID { get; private set; }
+
+    /// <summary>
+    /// Sets the geo tracker device ID
+    /// </summary>
+    /// <param name="geoTrackerId">The tracker ID in format EVT#### (e.g., "EVT0011")</param>
+    public void SetGeoTrackerID(string? geoTrackerId)
+    {
+        GeoTrackerID = geoTrackerId;
+    }
 }

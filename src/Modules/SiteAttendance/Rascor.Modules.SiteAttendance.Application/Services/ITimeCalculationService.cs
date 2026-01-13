@@ -29,4 +29,10 @@ public interface ITimeCalculationService
     /// Processes all unprocessed events for a date and creates/updates summaries
     /// </summary>
     Task ProcessDailyAttendanceAsync(Guid tenantId, DateOnly date, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Processes all unprocessed events for a date and returns counts
+    /// </summary>
+    /// <returns>Tuple of (events processed, summaries created/updated)</returns>
+    Task<(int EventsProcessed, int SummariesCreated)> ProcessDailyAttendanceWithCountsAsync(Guid tenantId, DateOnly date, CancellationToken cancellationToken = default);
 }

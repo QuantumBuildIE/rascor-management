@@ -18,6 +18,10 @@ public record EmployeeDto(
     bool IsActive,
     string? Notes,
     /// <summary>
+    /// Geo tracker device ID for mobile geofence app integration (format: EVT####)
+    /// </summary>
+    string? GeoTrackerID = null,
+    /// <summary>
     /// Indicates whether this employee has a linked User account
     /// </summary>
     bool HasUserAccount = false,

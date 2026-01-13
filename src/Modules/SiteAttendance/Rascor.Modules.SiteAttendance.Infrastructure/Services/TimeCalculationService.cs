@@ -118,23 +118,34 @@ public class TimeCalculationService : ITimeCalculationService
         DateOnly date,
         CancellationToken cancellationToken = default)
     {
+        await ProcessDailyAttendanceWithCountsAsync(tenantId, date, cancellationToken);
+    }
+
+    public async Task<(int EventsProcessed, int SummariesCreated)> ProcessDailyAttendanceWithCountsAsync(
+        Guid tenantId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
         var settings = await _settingsRepository.GetByTenantAsync(tenantId, cancellationToken);
         var expectedHours = settings?.ExpectedHoursPerDay ?? 7.5m;
 
         // Get all unprocessed events for the date
         var events = await _eventRepository.GetUnprocessedAsync(tenantId, date, cancellationToken);
+        var eventsList = events.ToList();
+        var eventsProcessed = eventsList.Count;
+        var summariesCreated = 0;
 
         // Group by employee and site
-        var groupedEvents = events.GroupBy(e => new { e.EmployeeId, e.SiteId });
+        var groupedEvents = eventsList.GroupBy(e => new { e.EmployeeId, e.SiteId });
 
         foreach (var group in groupedEvents)
         {
             var employeeId = group.Key.EmployeeId;
             var siteId = group.Key.SiteId;
-            var eventsList = group.ToList();
+            var groupEventsList = group.ToList();
 
             // Calculate time on site
-            var timeOnSite = CalculateTimeOnSite(eventsList);
+            var timeOnSite = CalculateTimeOnSite(groupEventsList);
 
             // Get or create summary
             var summary = await _summaryRepository.GetByEmployeeSiteDateAsync(tenantId, employeeId, siteId, date, cancellationToken);
@@ -143,23 +154,26 @@ public class TimeCalculationService : ITimeCalculationService
             {
                 summary = AttendanceSummary.Create(tenantId, employeeId, siteId, date, expectedHours);
                 await _summaryRepository.AddAsync(summary, cancellationToken);
+                summariesCreated++;
             }
 
             // Update summary
-            var firstEntry = eventsList.Where(e => e.EventType == EventType.Enter).MinBy(e => e.Timestamp)?.Timestamp;
-            var lastExit = eventsList.Where(e => e.EventType == EventType.Exit).MaxBy(e => e.Timestamp)?.Timestamp;
-            var entryCount = eventsList.Count(e => e.EventType == EventType.Enter);
-            var exitCount = eventsList.Count(e => e.EventType == EventType.Exit);
+            var firstEntry = groupEventsList.Where(e => e.EventType == EventType.Enter).MinBy(e => e.Timestamp)?.Timestamp;
+            var lastExit = groupEventsList.Where(e => e.EventType == EventType.Exit).MaxBy(e => e.Timestamp)?.Timestamp;
+            var entryCount = groupEventsList.Count(e => e.EventType == EventType.Enter);
+            var exitCount = groupEventsList.Count(e => e.EventType == EventType.Exit);
 
             summary.UpdateFromEvents(firstEntry, lastExit, timeOnSite.TotalMinutes, entryCount, exitCount);
             await _summaryRepository.UpdateAsync(summary, cancellationToken);
 
             // Mark events as processed
-            foreach (var evt in eventsList)
+            foreach (var evt in groupEventsList)
             {
                 evt.MarkAsProcessed();
                 await _eventRepository.UpdateAsync(evt, cancellationToken);
             }
         }
+
+        return (eventsProcessed, summariesCreated);
     }
 }

@@ -172,7 +172,7 @@ var app = builder.Build();
 await DataSeeder.SeedAsync(app.Services);
 
 // Seed Site Attendance module data (separate DbContext)
-await SeedSiteAttendanceDataAsync(app.Services);
+// await SeedSiteAttendanceDataAsync(app.Services);
 
 // Seed Toolbox Talks module data
 await SeedToolboxTalksDataAsync(app.Services);
