@@ -47,7 +47,7 @@ export function CategoryForm({
   const updateCategory = useUpdateCategory();
 
   const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema),
+    resolver: zodResolver(categoryFormSchema) as any,
     defaultValues: {
       categoryName: category?.categoryName ?? "",
       sortOrder: category?.sortOrder ?? 0,
@@ -200,3 +200,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

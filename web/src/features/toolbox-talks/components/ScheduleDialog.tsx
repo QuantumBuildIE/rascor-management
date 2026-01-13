@@ -123,7 +123,7 @@ export function ScheduleDialog({
   const updateMutation = useUpdateToolboxTalkSchedule();
 
   const form = useForm<ScheduleFormValues>({
-    resolver: zodResolver(scheduleFormSchema),
+    resolver: zodResolver(scheduleFormSchema) as any,
     defaultValues: {
       toolboxTalkId: schedule?.toolboxTalkId ?? preselectedTalkId ?? '',
       scheduledDate: schedule ? new Date(schedule.scheduledDate) : new Date(),
@@ -595,3 +595,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

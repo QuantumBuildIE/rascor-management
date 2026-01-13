@@ -96,7 +96,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(productFormSchema) as any,
     defaultValues: {
       productCode: product?.productCode ?? "",
       productName: product?.productName ?? "",
@@ -710,3 +710,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

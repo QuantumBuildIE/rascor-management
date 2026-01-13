@@ -73,7 +73,7 @@ export function ResetPasswordDialog({
   const resetPassword = useResetPassword();
 
   const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(resetPasswordSchema) as any,
     defaultValues: {
       newPassword: "",
       confirmPassword: "",
@@ -226,3 +226,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

@@ -58,7 +58,7 @@ export function SectionDialog({
   const isEditing = !!section;
 
   const form = useForm<SectionFormValues>({
-    resolver: zodResolver(sectionSchema),
+    resolver: zodResolver(sectionSchema) as any,
     defaultValues: {
       sectionName: "",
       description: "",
@@ -198,3 +198,4 @@ export function SectionDialog({
     </Dialog>
   );
 }
+

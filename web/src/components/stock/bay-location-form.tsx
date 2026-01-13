@@ -52,7 +52,7 @@ export function BayLocationForm({
   const updateBayLocation = useUpdateBayLocation();
 
   const form = useForm<BayLocationFormValues>({
-    resolver: zodResolver(bayLocationFormSchema),
+    resolver: zodResolver(bayLocationFormSchema) as any,
     defaultValues: {
       bayCode: bayLocation?.bayCode ?? "",
       bayName: bayLocation?.bayName ?? "",
@@ -273,3 +273,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

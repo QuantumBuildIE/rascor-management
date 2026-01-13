@@ -72,7 +72,7 @@ export function MethodStepDialog({
   const updateMethodStep = useUpdateMethodStep();
 
   const form = useForm<MethodStepFormData>({
-    resolver: zodResolver(methodStepSchema),
+    resolver: zodResolver(methodStepSchema) as any,
     defaultValues: {
       stepTitle: "",
       detailedProcedure: "",
@@ -279,3 +279,4 @@ export function MethodStepDialog({
     </Dialog>
   );
 }
+

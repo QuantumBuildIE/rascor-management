@@ -48,7 +48,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
   const updateSite = useUpdateSite();
 
   const form = useForm<SiteFormValues>({
-    resolver: zodResolver(siteFormSchema),
+    resolver: zodResolver(siteFormSchema) as any,
     defaultValues: {
       siteCode: site?.siteCode ?? "",
       siteName: site?.siteName ?? "",
@@ -323,3 +323,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

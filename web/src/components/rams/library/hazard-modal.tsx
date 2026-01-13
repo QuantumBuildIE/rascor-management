@@ -86,7 +86,7 @@ export function HazardModal({ open, onOpenChange, hazard }: HazardModalProps) {
   const updateHazard = useUpdateHazardLibraryItem();
 
   const form = useForm<HazardFormData>({
-    resolver: zodResolver(hazardSchema),
+    resolver: zodResolver(hazardSchema) as any,
     defaultValues: {
       code: "",
       name: "",
@@ -400,3 +400,4 @@ export function HazardModal({ open, onOpenChange, hazard }: HazardModalProps) {
     </Dialog>
   );
 }
+

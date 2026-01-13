@@ -59,7 +59,7 @@ export function LegislationModal({ open, onOpenChange, legislation }: Legislatio
   const updateLegislation = useUpdateLegislationLibraryItem();
 
   const form = useForm<LegislationFormData>({
-    resolver: zodResolver(legislationSchema),
+    resolver: zodResolver(legislationSchema) as any,
     defaultValues: {
       code: "",
       name: "",
@@ -333,3 +333,4 @@ export function LegislationModal({ open, onOpenChange, legislation }: Legislatio
     </Dialog>
   );
 }
+

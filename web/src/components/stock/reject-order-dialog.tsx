@@ -48,7 +48,7 @@ export function RejectOrderDialog({
   const rejectOrder = useRejectStockOrder();
 
   const form = useForm<RejectFormValues>({
-    resolver: zodResolver(rejectSchema),
+    resolver: zodResolver(rejectSchema) as any,
     defaultValues: {
       rejectedBy: "",
       reason: "",
@@ -145,3 +145,4 @@ export function RejectOrderDialog({
     </Dialog>
   );
 }
+

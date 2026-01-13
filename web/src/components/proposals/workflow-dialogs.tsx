@@ -60,7 +60,7 @@ export function SubmitDialog({ open, onOpenChange, proposal }: SubmitDialogProps
   const submitProposal = useSubmitProposal();
 
   const form = useForm<SubmitFormValues>({
-    resolver: zodResolver(submitSchema),
+    resolver: zodResolver(submitSchema) as any,
     defaultValues: {
       notes: "",
     },
@@ -153,7 +153,7 @@ export function ApproveDialog({ open, onOpenChange, proposal }: ApproveDialogPro
   const approveProposal = useApproveProposal();
 
   const form = useForm<ApproveFormValues>({
-    resolver: zodResolver(approveSchema),
+    resolver: zodResolver(approveSchema) as any,
     defaultValues: {
       notes: "",
     },
@@ -246,7 +246,7 @@ export function RejectDialog({ open, onOpenChange, proposal }: RejectDialogProps
   const rejectProposal = useRejectProposal();
 
   const form = useForm<RejectFormValues>({
-    resolver: zodResolver(rejectSchema),
+    resolver: zodResolver(rejectSchema) as any,
     defaultValues: {
       reason: "",
     },
@@ -344,7 +344,7 @@ export function WinDialog({ open, onOpenChange, proposal }: WinDialogProps) {
   const winProposal = useWinProposal();
 
   const form = useForm<WinFormValues>({
-    resolver: zodResolver(winSchema),
+    resolver: zodResolver(winSchema) as any,
     defaultValues: {
       reason: "",
       wonDate: new Date(),
@@ -479,7 +479,7 @@ export function LoseDialog({ open, onOpenChange, proposal }: LoseDialogProps) {
   const loseProposal = useLoseProposal();
 
   const form = useForm<LoseFormValues>({
-    resolver: zodResolver(loseSchema),
+    resolver: zodResolver(loseSchema) as any,
     defaultValues: {
       reason: "",
       lostDate: new Date(),
@@ -673,7 +673,7 @@ export function CreateRevisionDialog({
   const createRevision = useCreateRevision();
 
   const form = useForm<RevisionFormValues>({
-    resolver: zodResolver(revisionSchema),
+    resolver: zodResolver(revisionSchema) as any,
     defaultValues: {
       notes: "",
     },
@@ -758,3 +758,4 @@ export function CreateRevisionDialog({
     </Dialog>
   );
 }
+

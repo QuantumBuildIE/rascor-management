@@ -72,7 +72,7 @@ export function ProposalForm({
   const isEditing = !!proposal;
 
   const form = useForm<ProposalFormValues>({
-    resolver: zodResolver(proposalFormSchema),
+    resolver: zodResolver(proposalFormSchema) as any,
     defaultValues: {
       companyId: proposal?.companyId ?? "",
       primaryContactId: proposal?.primaryContactId ?? "",
@@ -530,3 +530,4 @@ export function ProposalForm({
     </Form>
   );
 }
+

@@ -45,7 +45,7 @@ export default function AttendanceSettingsPage() {
   const updateSettings = useUpdateAttendanceSettings();
 
   const form = useForm<SettingsFormData>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema) as any,
     defaultValues: {
       expectedHoursPerDay: 7.5,
       workStartTime: '08:00',
@@ -436,3 +436,4 @@ export default function AttendanceSettingsPage() {
     </div>
   );
 }
+

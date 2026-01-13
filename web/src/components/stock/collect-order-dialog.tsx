@@ -59,7 +59,7 @@ export function CollectOrderDialog({
   );
 
   const form = useForm<CollectFormValues>({
-    resolver: zodResolver(collectSchema),
+    resolver: zodResolver(collectSchema) as any,
     defaultValues: {
       warehouseLocationId: "",
     },
@@ -146,3 +146,4 @@ export function CollectOrderDialog({
     </Dialog>
   );
 }
+

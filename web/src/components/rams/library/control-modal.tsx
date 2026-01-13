@@ -57,7 +57,18 @@ const controlSchema = z.object({
   isActive: z.boolean(),
 });
 
-type ControlFormData = z.infer<typeof controlSchema>;
+interface ControlFormData {
+  code: string;
+  name: string;
+  description: string;
+  hierarchy: string;
+  applicableToCategory?: string;
+  keywords?: string;
+  typicalLikelihoodReduction: number;
+  typicalSeverityReduction: number;
+  sortOrder: number;
+  isActive: boolean;
+}
 
 interface ControlModalProps {
   open: boolean;
@@ -80,7 +91,7 @@ export function ControlModal({ open, onOpenChange, control }: ControlModalProps)
   const updateControl = useUpdateControlLibraryItem();
 
   const form = useForm<ControlFormData>({
-    resolver: zodResolver(controlSchema),
+    resolver: zodResolver(controlSchema) as any,
     defaultValues: {
       code: "",
       name: "",
@@ -411,3 +422,5 @@ export function ControlModal({ open, onOpenChange, control }: ControlModalProps)
     </Dialog>
   );
 }
+
+

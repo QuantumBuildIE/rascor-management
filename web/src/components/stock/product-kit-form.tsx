@@ -60,7 +60,7 @@ export function ProductKitForm({
   const { data: categories } = useCategories();
 
   const form = useForm<ProductKitFormValues>({
-    resolver: zodResolver(productKitFormSchema),
+    resolver: zodResolver(productKitFormSchema) as any,
     defaultValues: {
       kitCode: productKit?.kitCode ?? "",
       kitName: productKit?.kitName ?? "",
@@ -287,3 +287,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

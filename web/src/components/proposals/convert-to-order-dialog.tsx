@@ -109,7 +109,7 @@ export function ConvertToOrderDialog({
 
   // Form setup
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       siteId: "",
       sourceLocationId: "",
@@ -697,3 +697,4 @@ export function ConvertToOrderDialog({
     </Dialog>
   );
 }
+

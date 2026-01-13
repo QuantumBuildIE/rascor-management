@@ -80,7 +80,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const { data: roles, isLoading: rolesLoading } = useRoles();
 
   const form = useForm<CreateUserFormValues | UpdateUserFormValues>({
-    resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema),
+    resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema) as any,
     defaultValues: {
       email: user?.email ?? "",
       firstName: user?.firstName ?? "",
@@ -382,3 +382,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

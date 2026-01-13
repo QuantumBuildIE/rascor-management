@@ -52,7 +52,7 @@ export function SupplierForm({
   const updateSupplier = useUpdateSupplier();
 
   const form = useForm<SupplierFormValues>({
-    resolver: zodResolver(supplierFormSchema),
+    resolver: zodResolver(supplierFormSchema) as any,
     defaultValues: {
       supplierCode: supplier?.supplierCode ?? "",
       supplierName: supplier?.supplierName ?? "",
@@ -312,3 +312,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

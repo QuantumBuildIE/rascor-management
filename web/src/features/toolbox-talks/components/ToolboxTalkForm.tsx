@@ -106,7 +106,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
   const updateMutation = useUpdateToolboxTalk();
 
   const form = useForm<ToolboxTalkFormValues>({
-    resolver: zodResolver(toolboxTalkFormSchema),
+    resolver: zodResolver(toolboxTalkFormSchema) as any,
     defaultValues: {
       title: talk?.title ?? '',
       description: talk?.description ?? '',
@@ -534,3 +534,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

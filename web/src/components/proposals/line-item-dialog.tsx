@@ -89,7 +89,7 @@ export function LineItemDialog({
   const isEditing = !!lineItem;
 
   const form = useForm<LineItemFormValues>({
-    resolver: zodResolver(lineItemSchema),
+    resolver: zodResolver(lineItemSchema) as any,
     defaultValues: {
       productId: "",
       description: "",
@@ -483,3 +483,4 @@ export function LineItemDialog({
     </Dialog>
   );
 }
+

@@ -61,7 +61,7 @@ export function ChangePasswordForm({ onSuccess, onCancel }: ChangePasswordFormPr
   const changePassword = useChangePassword();
 
   const form = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(changePasswordSchema) as any,
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -213,3 +213,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

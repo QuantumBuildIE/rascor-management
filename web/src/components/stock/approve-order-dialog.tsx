@@ -61,7 +61,7 @@ export function ApproveOrderDialog({
   );
 
   const form = useForm<ApproveFormValues>({
-    resolver: zodResolver(approveSchema),
+    resolver: zodResolver(approveSchema) as any,
     defaultValues: {
       approvedBy: "",
       warehouseLocationId: "",
@@ -165,3 +165,4 @@ export function ApproveOrderDialog({
     </Dialog>
   );
 }
+

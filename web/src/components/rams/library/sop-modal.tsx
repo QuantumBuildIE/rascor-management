@@ -59,7 +59,7 @@ export function SopModal({ open, onOpenChange, sop }: SopModalProps) {
   const updateSop = useUpdateSopLibraryItem();
 
   const form = useForm<SopFormData>({
-    resolver: zodResolver(sopSchema),
+    resolver: zodResolver(sopSchema) as any,
     defaultValues: {
       sopId: "",
       topic: "",
@@ -343,3 +343,4 @@ export function SopModal({ open, onOpenChange, sop }: SopModalProps) {
     </Dialog>
   );
 }
+

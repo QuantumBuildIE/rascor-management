@@ -44,7 +44,7 @@ export function StocktakeForm({ onSuccess, onCancel }: StocktakeFormProps) {
   const defaultCountedBy = user ? `${user.firstName} ${user.lastName}` : "";
 
   const form = useForm<StocktakeFormValues>({
-    resolver: zodResolver(stocktakeFormSchema),
+    resolver: zodResolver(stocktakeFormSchema) as any,
     defaultValues: {
       locationId: "",
       locationName: "",
@@ -197,3 +197,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

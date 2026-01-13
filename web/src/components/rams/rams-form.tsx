@@ -80,7 +80,7 @@ export function RamsForm({
   const { data: employees } = useAllEmployees();
 
   const form = useForm<RamsFormValues>({
-    resolver: zodResolver(ramsFormSchema),
+    resolver: zodResolver(ramsFormSchema) as any,
     defaultValues: {
       projectReference: rams?.projectReference ?? "",
       projectName: rams?.projectName ?? "",
@@ -424,3 +424,4 @@ export function RamsForm({
     </Form>
   );
 }
+

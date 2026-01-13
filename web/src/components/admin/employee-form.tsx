@@ -80,7 +80,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
   const { data: sites, isLoading: sitesLoading } = useAllSites();
 
   const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
+    resolver: zodResolver(employeeFormSchema) as any,
     defaultValues: {
       employeeCode: employee?.employeeCode ?? "",
       firstName: employee?.firstName ?? "",
@@ -555,3 +555,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

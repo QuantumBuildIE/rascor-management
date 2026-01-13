@@ -99,7 +99,7 @@ export function CompanyForm({ company, onSuccess, onCancel }: CompanyFormProps) 
   const deleteContact = useDeleteCompanyContact(company?.id ?? "");
 
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companyFormSchema),
+    resolver: zodResolver(companyFormSchema) as any,
     defaultValues: {
       companyCode: company?.companyCode ?? "",
       companyName: company?.companyName ?? "",
@@ -828,3 +828,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

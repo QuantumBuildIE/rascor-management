@@ -79,7 +79,7 @@ export function KitItemDialog({
   const { data: products } = useAllProducts();
 
   const form = useForm<KitItemFormValues>({
-    resolver: zodResolver(kitItemFormSchema),
+    resolver: zodResolver(kitItemFormSchema) as any,
     defaultValues: {
       productId: item?.productId ?? "",
       defaultQuantity: item?.defaultQuantity ?? 1,
@@ -420,3 +420,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

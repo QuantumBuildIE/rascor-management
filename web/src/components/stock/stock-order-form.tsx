@@ -79,7 +79,7 @@ export function StockOrderForm({ order, onSuccess, onCancel }: StockOrderFormPro
   const updateStockOrder = useUpdateStockOrder();
 
   const form = useForm<StockOrderFormValues>({
-    resolver: zodResolver(stockOrderFormSchema),
+    resolver: zodResolver(stockOrderFormSchema) as any,
     defaultValues: {
       siteId: order?.siteId ?? "",
       siteName: order?.siteName ?? "",
@@ -500,3 +500,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

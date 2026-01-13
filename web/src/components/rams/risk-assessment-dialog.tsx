@@ -141,7 +141,7 @@ export function RiskAssessmentDialog({
   const [showSuggestions, setShowSuggestions] = React.useState(false);
 
   const form = useForm<RiskAssessmentFormData>({
-    resolver: zodResolver(riskAssessmentSchema),
+    resolver: zodResolver(riskAssessmentSchema) as any,
     defaultValues: {
       taskActivity: "",
       locationArea: "",
@@ -1022,3 +1022,4 @@ export function RiskAssessmentDialog({
     </Dialog>
   );
 }
+

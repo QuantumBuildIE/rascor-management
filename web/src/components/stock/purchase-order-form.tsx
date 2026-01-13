@@ -74,7 +74,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
   const updatePurchaseOrder = useUpdatePurchaseOrder();
 
   const form = useForm<PurchaseOrderFormValues>({
-    resolver: zodResolver(purchaseOrderFormSchema),
+    resolver: zodResolver(purchaseOrderFormSchema) as any,
     defaultValues: {
       supplierId: order?.supplierId ?? "",
       supplierName: order?.supplierName ?? "",
@@ -486,3 +486,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

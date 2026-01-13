@@ -98,7 +98,7 @@ export function ContactDialog({
   const isEditing = !!contact;
 
   const form = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactSchema) as any,
     defaultValues: {
       existingContactId: "",
       contactName: "",
@@ -399,3 +399,4 @@ export function ContactDialog({
     </Dialog>
   );
 }
+

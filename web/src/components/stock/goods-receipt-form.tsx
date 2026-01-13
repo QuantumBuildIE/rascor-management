@@ -90,7 +90,7 @@ export function GoodsReceiptForm({
   const defaultReceivedBy = user ? `${user.firstName} ${user.lastName}` : "";
 
   const form = useForm<GoodsReceiptFormValues>({
-    resolver: zodResolver(goodsReceiptFormSchema),
+    resolver: zodResolver(goodsReceiptFormSchema) as any,
     defaultValues: {
       supplierId: initialPurchaseOrder?.supplierId ?? "",
       supplierName: initialPurchaseOrder?.supplierName ?? "",
@@ -572,3 +572,4 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
+

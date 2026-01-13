@@ -72,7 +72,7 @@ export function SectionFromKitDialog({
   const kits = kitsData?.items ?? [];
 
   const form = useForm<SectionFromKitFormValues>({
-    resolver: zodResolver(sectionFromKitSchema),
+    resolver: zodResolver(sectionFromKitSchema) as any,
     defaultValues: {
       kitId: "",
       sectionName: "",
@@ -274,3 +274,4 @@ export function SectionFromKitDialog({
     </Dialog>
   );
 }
+
