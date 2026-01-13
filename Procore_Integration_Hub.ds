@@ -1,0 +1,5604 @@
+/*
+ * Author       : quantumbuild1
+ * Generated on : 09-Jan-2026 11:55:02
+ * Version      : 1.0
+ */
+ application "Procore Integration Hub"
+ {
+ 	date format = "dd-MMM-yyyy"
+ 	time zone = "Europe/Dublin"
+ 	time format = "24-hr"
+ 	forms
+	{
+		form Parameter
+		{
+			success message = "Parameter Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			ProcoreClientID
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreSecret
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreCompanyID
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreAccessToken
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = large
+			)
+			ProcoreRefreshToken
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreTokenRefreshedAt
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreTokenExpires
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreAutorisationCode
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreApp
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreInstallationKey
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcoreRedirect
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcodeReAuthorisation
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Refreshed
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			float_api_key1
+			(
+    			type = text
+				displayname = "Float_Api_Key"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Processed_Project_Index
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			last_processed_index
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			processed_project_ids
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			LastProcessedProjectIndex
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ProcessedProjectIds
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_In_Progress
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			ClaudeAPI
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Multi_Line
+			(
+    			type = textarea
+				displayname = "Multi Line"
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Generated_HTML
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Generated
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Actions
+		{
+			displayname = "Procore Actions"
+			success message = "Procore Action Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Observation_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_name
+			(
+    			type = text
+				displayname = "Project name"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Priority
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Action_field1
+			(
+    			type = textarea
+				displayname = "Action"
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Assigned_To
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Due_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Completed_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Action_Order
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Action_Count
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Is_Safety_Related
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Risk_Level
+			(
+				type = checkboxes	
+				values = {"critical","high","medium","low","none"}
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Requires_Approval
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Approved_By
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Approved_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Estimated_Hours
+			(
+				type = decimal
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Notes
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Related_Trade
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Change_Orders
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Change_Order_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Change_Order_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+				type = picklist	
+				values  = Procore_Projects.ID
+    			displayformat = [Procore_Project_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Title
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Description
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+				type = radiobuttons
+				values = {"Pending Approval","Draft","Approved"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Change_Type
+			(
+				type = radiobuttons
+				values = {"Modification","Addition","Substitution"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Cost_Impact
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Schedule_Impact_Days
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Approved_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Companies
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Company_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Procore_Company_ID_String
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Company_Name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Company_Type
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Address
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Phone
+			(
+    			type = phonenumber
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Primary_Contact
+			(
+    			type = name
+     			prefix
+     			(
+	     			 type = prefix
+	     			 displayname ="Prefix"
+	     			 value = {"Mr.","Mrs.","Ms."}
+     			) 
+     			first_name
+     			(
+	     			 type = first_name
+	     			 displayname ="First Name"
+     			) 
+     			last_name
+     			(
+	     			 type = last_name
+	     			 displayname ="Last Name"
+     			) 
+     			suffix
+     			(
+	     			 type = suffix
+	     			 displayname ="Suffix"
+     			) 
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Is_Active
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Daily_Logs
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Daily_Log_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+				type = picklist	
+				values  = Procore_Projects.ID
+    			displayformat = [Procore_Project_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Log_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Weather_AM
+			(
+				type = picklist
+				values = {"Light Rain","Overcast","Cloudy","Sunny"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Weather_PM
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Temperature_High
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Temperature_Low
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Work_Summary
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Total_Workers_On_Site
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Observations
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Observation_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Observation_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Observation_Type
+			(
+				type = picklist
+				values = {"Progress","Compliance","Quality","Safety"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Chargeable
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Assignee_Email
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Attachment_Count
+			(
+				type = number
+				displayname = "Attachment Count"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Category
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Source
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Title
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Description
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+				type = radiobuttons
+				values = {"Closed","In Progress","Open"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Priority
+			(
+				type = picklist
+				values = {"High","Low","Medium","Critical"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Location_Name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Updated_At
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_At
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By_Name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By_Email
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Assigned_To
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Assignee_name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Due_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Resolved_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Cost_Impact
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Schedule_Impact_Days
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Photo_Count
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Weather_Conditions
+			(
+				type = picklist
+				values = {"Light Rain","Overcast","Partly Cloudy","Cloudy","Sunny","Clear"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Contributing_Condition
+			(
+    			type = textarea
+				displayname = "Contributing Condition"
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Temperature
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sentiment_Analysis2
+			(
+				type = section
+				displayname = "Sentiment Analysis2"
+				visibility = true
+	 			row = 2
+	 			column = 0   
+				width = medium
+			)
+			Is_Chargeable
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Charge_Confidence
+			(
+				type = picklist
+				maxchar = 100
+				values = {"high","medium","low"}
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Analysis_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Charge_Category
+			(
+				type = picklist
+				maxchar = 100
+				values = {"labor","materials","equipment","overhead","non-billable"}
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Charge_Reason
+			(
+    			type = textarea
+				height = 100px
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Is_Safety_Concern
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Safety_Description
+			(
+    			type = textarea
+				height = 100px
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Safety_Concern_Type
+			(
+				type = picklist
+				maxchar = 100
+				values = {"hazard","incident","near-miss","unsafe-condition","ppe-required","compliance","none"}
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Immediate_Action_Required
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Risk_Level
+			(
+				type = picklist
+				maxchar = 100
+				values = {"Choice 3","critical","high","medium","low","none"}
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Analyzed_By
+			(
+    			type = text
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			DateTime
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Requires_Documentation
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Tags
+			(
+    			type = textarea
+				height = 100px
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Primary_Type
+			(
+				type = picklist
+				maxchar = 100
+				values = {"Choice 1","Choice 2","Choice 3","incident","maintenance","inspection","repair","routine","emergency","other"}
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Requires_Approval
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Recommended_Actions
+			(
+    			type = textarea
+				height = 100px
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			Estimated_Resolution_Time
+			(
+    			type = text
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+			HTML_Observation_Analysis
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 2
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Projects
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Project_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID_MultiLine
+			(
+    			type = textarea
+				displayname = "Project ID MultiLine"
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Manager
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Company_ID
+			(
+				type = picklist	
+				values  = Procore_Companies.ID
+    			displayformat = [Procore_Company_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Owner_Company_ID
+			(
+				type = picklist	
+				values  = Procore_Companies.ID
+    			displayformat = [Procore_Company_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Zip_Code
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			State
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			City
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Status
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Stage
+			(
+				type = radiobuttons
+				values = {"Construction","Planning","Pre-Construction"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Start_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Completion_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Value
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Currency
+			(
+    			type = text
+				initial value = "EUR"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Address
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+				type = radiobuttons
+				values = {"Active","On Hold"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Synced
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Source
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_RFIs
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_RFI_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			RFI_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+				type = picklist	
+				values  = Procore_Projects.ID
+    			displayformat = [Procore_Project_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Subject1
+			(
+    			type = text
+				displayname = "Subject"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Question
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Priority
+			(
+				type = radiobuttons
+				values = {"High","Low","Standard"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Assigned_To
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Due_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Submittals
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_Submittal_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Submittal_Number
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_ID
+			(
+				type = picklist	
+				values  = Procore_Projects.ID
+    			displayformat = [Procore_Project_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Title
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Specification_Section
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+				type = radiobuttons
+				values = {"Submitted","Approved","Resubmit"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Submittal_Type
+			(
+				type = radiobuttons
+				values = {"Shop Drawings","Samples","Product Data"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_By
+			(
+				type = picklist	
+				values  = Procore_Users.ID
+    			displayformat = [Procore_User_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Reviewer
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Due_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Reviewed_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Sync_Log
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Sync_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_Type
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_Status
+			(
+				type = radiobuttons
+				values = {"Partial","Failed","Success"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Records_Processed
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Error_Message
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_Started
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_Completed
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Procore_Users
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Procore_User_ID
+			(
+				type = number
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Full_Name
+			(
+    			type = name
+     			prefix
+     			(
+	     			 type = prefix
+	     			 displayname ="Prefix"
+	     			 visibility = false
+	     			 value = {"Mr.","Mrs.","Ms."}
+     			) 
+     			first_name
+     			(
+	     			 type = first_name
+	     			 displayname ="First Name"
+     			) 
+     			last_name
+     			(
+	     			 type = last_name
+	     			 displayname ="Last Name"
+	     			 visibility = false
+     			) 
+     			suffix
+     			(
+	     			 type = suffix
+	     			 displayname ="Suffix"
+	     			 visibility = false
+     			) 
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Email
+			(
+    			type = email
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Job_Title
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Company_ID
+			(
+				type = picklist	
+				values  = Procore_Companies.ID
+    			displayformat = [Procore_Company_ID]
+				allow new entries
+				[
+					displayname = "Add New"
+				]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Phone
+			(
+    			type = phonenumber
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			User_Type
+			(
+    			type = text
+				initial value = "Employee"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Permissions
+			(
+				type = radiobuttons
+				values = {"Read/Write","Project Admin"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Created_Date
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Source
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+	}
+	reports
+	{
+		list Procore_Companies_Report
+		{
+			displayName = "Procore_Companies Report"
+			show all rows from Procore_Companies    
+			(
+				Procore_Company_ID
+				Company_Name
+				Company_Type
+				Address
+				Phone
+				Primary_Contact 
+	 			(
+	      			displayformat = [first_name+""+prefix+""+last_name+""+suffix]
+	 			)
+				Is_Active
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_Projects_Report
+		{
+			displayName = "Procore_Projects Report"
+			show all rows from Procore_Projects    
+			(
+				Procore_Project_ID
+				Project_Name
+				Project_Number
+				Company_ID
+				Owner_Company_ID
+				Project_Stage
+				Start_Date
+				Completion_Date
+				Project_Value
+				Currency
+				Address
+				Status
+				Created_Date
+				Last_Synced
+				Project_ID_MultiLine as "Project ID MultiLine"
+			)
+		}
+		list Procore_Users_Report
+		{
+			displayName = "Procore_Users Report"
+			show all rows from Procore_Users    
+			(
+				Procore_User_ID
+				Full_Name 
+	 			(
+	      			displayformat = [first_name+""+prefix+""+last_name+""+suffix]
+	 			)
+				Email
+				Job_Title
+				Company_ID
+				Phone
+				Status
+				User_Type
+				Permissions
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_RFIs_Report
+		{
+			displayName = "Procore_RFIs Report"
+			show all rows from Procore_RFIs    
+			(
+				Procore_RFI_ID
+				RFI_Number
+				Project_ID
+				Subject1 as "Subject"
+				Question
+				Status
+				Priority
+				Created_By
+				Assigned_To
+				Due_Date
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_Submittals_Report
+		{
+			displayName = "Procore_Submittals Report"
+			show all rows from Procore_Submittals    
+			(
+				Procore_Submittal_ID
+				Submittal_Number
+				Project_ID
+				Title
+				Specification_Section
+				Status
+				Submittal_Type
+				Created_By
+				Reviewer
+				Due_Date
+				Reviewed_Date
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_Daily_Logs_Report
+		{
+			displayName = "Procore_Daily_Logs Report"
+			show all rows from Procore_Daily_Logs    
+			(
+				Procore_Daily_Log_ID
+				Project_ID
+				Log_Date
+				Weather_AM
+				Weather_PM
+				Temperature_High
+				Temperature_Low
+				Work_Summary
+				Total_Workers_On_Site
+				Created_By
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_Change_Orders_Report
+		{
+			displayName = "Procore_Change_Orders Report"
+			show all rows from Procore_Change_Orders    
+			(
+				Procore_Change_Order_ID
+				Change_Order_Number
+				Project_ID
+				Title
+				Description
+				Status
+				Change_Type
+				Cost_Impact
+				Schedule_Impact_Days
+				Created_By
+				Approved_By
+				Created_Date
+				Last_Sync
+			)
+		}
+		list Procore_Observations_Report
+		{
+			displayName = "Procore_Observations Report"
+			show all rows from Procore_Observations    
+			(
+				Procore_Observation_ID
+				Observation_Number
+				Observation_Type
+				Category
+				Title
+				Description
+				Status
+				Priority
+				Location_Name
+				Created_By
+				Assigned_To
+				Due_Date
+				Resolved_Date
+				Cost_Impact
+				Schedule_Impact_Days
+				Photo_Count
+				Weather_Conditions
+				Temperature
+				Created_Date
+				Last_Sync
+				Chargeable
+				Is_Chargeable
+				Charge_Confidence
+				Charge_Category
+				Charge_Reason
+				Is_Safety_Concern
+				Safety_Description
+				Immediate_Action_Required
+				custom action "Sentiment Analysis2"
+				(
+	  			workflow = Sentiment_Analysis2
+				show action in edit record menu = true
+				column header = "Sentiment Analysis2"
+				)
+				Project_ID
+				ID
+			)
+			customlayouts
+			(
+				template
+	 			(
+	 	  			displayname="Custom Layout 1"
+	 	  			content="<panel  \n >\n	<pr \n			width='fill'\n		height='fill'\n>\n	<pc \n		bgColor = '#FFFFFF'\n\n		width = '100%'\n		hAlign = 'center'\n		vAlign = 'middle'\n>\n	<pr \n			width='fill'\n		height='fill'\n>\n	<pc \n		paddingTop = '17px'\n	paddingLeft = '17px'\n	paddingRight = '17px'\n	paddingBottom = '0px'\n	bgColor = 'transparent'\n        bgColorType = 'noFill'\n\n		width = '100%'\n		hAlign = 'center'\n>\n	<pr \n			width='auto'\n		height='auto'\n>\n	<pc \n	\n>\n	<text \n\n	margin = '0px'\n	padding = '0px'\n	color = '#000000'\n	size = '20px'\n	bold = 'true' \n	type = 'field'\n\n	bgColor = 'transparent'\n        bgColorType = 'noFill'\n	cornerRadius = '0px'\n\n    lineHeight = '28'\n    numOfLines = '1'\n\n\n\n\n    borderColor = '#000000'\n    borderWidth = '0px'\n\n	  value = 'Location_Name'\n>\n</text>\n\n</pc>\n</pr>\n</pc>\n</pr><pr \n			width='fill'\n		height='fill'\n>\n	<pc \n		padding = '17px'\n\n		width = '100%'\n>\n	<pr \n			width='auto'\n		height='auto'\n>\n	<pc \n	\n>\n	<text \n\n	margin = '0px'\n	padding = '0px'\n	color = '#000000'\n	size = '16px'\n	type = 'field'\n\n	bgColor = 'transparent'\n        bgColorType = 'noFill'\n	cornerRadius = '0px'\n\n    lineHeight = '22'\n    numOfLines = '3'\n\n\n\n\n    borderColor = '#000000'\n    borderWidth = '0px'\n\n	  value = 'Description'\n>\n</text>\n\n</pc>\n</pr>\n</pc>\n</pr><pr \n			width='fill'\n		height='fill'\n>\n	<pc \n		paddingTop = '0px'\n	paddingLeft = '17px'\n	paddingRight = '17px'\n	paddingBottom = '17px'\n	bgColor = 'transparent'\n        bgColorType = 'noFill'\n\n		width = '100%'\n		hAlign = 'center'\n>\n	<pr \n			width='auto'\n		height='auto'\n>\n	<pc \n	\n>\n	<button \n		margin = '0px'\n	paddingTop = '12px'\n	paddingLeft = '15px'\n	paddingRight = '15px'\n	paddingBottom = '12px'\n\n    action = 'CustomAction'\n	  	actionName = 'Sentiment Analysis2'\n	color = '#FFFFFF'\n	size = '14px'\n    borderColor = '#FFFFFF'\n    borderWidth = '0px'\n	text ='Analysis'\n		bgColor = 'theme'\n		cornerRadius = '60px' \n/>\n</pc>\n</pr>\n</pc>\n</pr>\n</pc>\n</pr>\n</panel>"
+	    		)
+			)
+		}
+		list Procore_Sync_Log_Report
+		{
+			displayName = "Procore_Sync_Log Report"
+			show all rows from Procore_Sync_Log    
+			(
+				Sync_ID
+				Sync_Type
+				Sync_Status
+				Records_Processed
+				Error_Message
+				Sync_Started
+				Sync_Completed
+			)
+		}
+		default list All_Procore_Actions
+		{
+			displayName = "All Procore Actions"
+			show all rows from Procore_Actions    
+			(
+				Project_ID
+				Procore_Observation_ID
+				Action_field1 as "Action"
+				Priority
+				Status
+				Due_Date
+				Assigned_To
+				Created_Date
+				Completed_Date
+				Action_Order
+				Is_Safety_Related
+				Risk_Level
+				Requires_Approval
+				Approved_By
+				Approved_Date
+				Estimated_Hours
+				Notes
+				Related_Trade
+				Project_Number
+				Action_Count
+				Project_name as "Project name"
+			)
+		}
+		list All_Parameters
+		{
+			displayName = "All_Parameters"
+			show all rows from Parameter    
+			(
+				ProcoreClientID
+				ProcoreSecret
+				ProcoreCompanyID
+				ProcoreAccessToken
+				ProcoreRefreshToken
+				ProcoreTokenRefreshedAt
+				ProcoreTokenExpires
+				ProcoreAutorisationCode
+				ProcoreApp
+				ProcoreInstallationKey
+				ProcoreRedirect
+				ProcodeReAuthorisation
+				Last_Refreshed
+				float_api_key1 as "Float_Api_Key"
+				Last_Processed_Project_Index
+				last_processed_index
+				processed_project_ids
+				LastProcessedProjectIndex
+				ProcessedProjectIds
+				Sync_In_Progress
+				ClaudeAPI
+				Multi_Line as "Multi Line"
+				Generated_HTML
+				Last_Generated
+			)
+		}
+	}
+
+
+		 functions
+		 {
+			 Deluge
+			 {
+				 void A001_Manually_Refresh_Token()
+                 {
+                 	// ============================================
+                 	// Manual Procore Token Refresh
+                 	// Use this to manually refresh your Procore access token
+                 	// ============================================
+                 	try 
+                 	{
+                 		info "=== Manual Token Refresh ===";
+                 		// Get parameters
+                 		param = Parameter[ID != 0];
+                 		client_id = param.ProcoreClientID;
+                 		client_secret = param.ProcoreSecret;
+                 		refresh_token = param.ProcoreRefreshToken;
+                 		// Validate we have required credentials
+                 		if(client_id == null || client_id == "")
+                 		{
+                 			info "Error: ProcoreClientId not found in parameters!";
+                 			return;
+                 		}
+                 		if(client_secret == null || client_secret == "")
+                 		{
+                 			info "Error: ProcoreClientSecret not found in parameters!";
+                 			return;
+                 		}
+                 		if(refresh_token == null || refresh_token == "")
+                 		{
+                 			info "Error: ProcoreRefreshToken not found in parameters!\n\nYou need to get initial tokens first.";
+                 			return;
+                 		}
+                 		info "Client ID: " + client_id.left(10) + "...";
+                 		info "Refresh Token: " + refresh_token.left(10) + "...";
+                 		// Procore token endpoint
+                 		token_url = "https://login.procore.com/oauth/token";
+                 		// Build refresh request
+                 		refresh_params = Map();
+                 		refresh_params.put("grant_type","refresh_token");
+                 		refresh_params.put("client_id",client_id);
+                 		refresh_params.put("client_secret",client_secret);
+                 		refresh_params.put("refresh_token",refresh_token);
+                 		refresh_params.put("redirect_uri","urn:ietf:wg:oauth:2.0:oob");
+                 		info "Requesting new token from Procore...";
+                 		// Make the token refresh request
+                 		token_response = invokeurl
+                 		[
+                 			url :token_url
+                 			type :POST
+                 			parameters:refresh_params
+                 		];
+                 		info "Response received: " + token_response;
+                 		// Extract new tokens
+                 		new_access_token = token_response.get("access_token");
+                 		new_refresh_token = token_response.get("refresh_token");
+                 		expires_in = token_response.get("expires_in");
+                 		if(new_access_token != null && new_access_token != "")
+                 		{
+                 			// Calculate expiry time
+                 			expiry_time = zoho.currenttime.addSeconds(expires_in);
+                 			info "✓ Token refresh successful!";
+                 			info "Access Token: " + new_access_token.left(20) + "...";
+                 			info "Refresh Token: " + new_refresh_token.left(20) + "...";
+                 			info "Expires In: " + expires_in / 60 + " minutes";
+                 			info "Expires At: " + expiry_time;
+                 			// Update parameters with new tokens
+                 			param.ProcoreAccessToken=new_access_token;
+                 			param.ProcoreRefreshToken=new_refresh_token;
+                 			param.ProcoreTokenExpires=expiry_time;
+                 			param.ProcoreTokenRefreshedAt=zoho.currenttime;
+                 			info "Parameters updated successfully";
+                 			// Show success message
+                 			info "✓ Token Refreshed Successfully!\n\n" + "New Access Token: " + new_access_token.left(30) + "...\n\n" + "Expires At: " + expiry_time + "\n\n" + "Expires In: " + expires_in / 60 + " minutes (" + expires_in / 3600 + " hours)";
+                 		}
+                 		else
+                 		{
+                 			info "❌ Token refresh failed!";
+                 			info "Response: " + token_response;
+                 			// Check for specific error messages
+                 			error_msg = token_response.get("error");
+                 			error_description = token_response.get("error_description");
+                 			if(error_msg != null)
+                 			{
+                 				info "Token Refresh Failed!\n\n" + "Error: " + error_msg + "\n\n" + "Description: " + error_description + "\n\n" + "You may need to re-authorize your Procore connection.";
+                 			}
+                 			else
+                 			{
+                 				info "Token refresh failed!\n\nResponse: " + token_response;
+                 			}
+                 		}
+                 	}
+                 	catch (e)
+                 	{
+                 		info "ERROR refreshing token: " + e;
+                 		info "Error refreshing token!\n\n" + e + "\n\nCheck your Procore credentials in Parameters.";
+                 	}
+                 }
+				 void A001_syncProcoreProjects()
+                 {
+                 	// Function to fetch projects from Procore and write to Zoho Creator Projects table
+                 	// Procore API Configuration
+                 	param = Parameter[ID != 0];
+                 	info "DEBUG - Parameter records found: " + param.count();
+                 	procoreClientId = param.ProcoreClientID;
+                 	procoreClientSecret = param.ProcoreSecret;
+                 	procoreCompanyId = param.ProcoreCompanyID;
+                 	procoreAccessToken = param.ProcoreAccessToken;
+                 	info "DEBUG - Param record found: " + if(param != null,"YES","NO");
+                 	info "DEBUG - Client ID being sent: " + procoreClientId;
+                 	info "DEBUG - Client Secret being sent: " + procoreClientSecret;
+                 	info "DEBUG - Company ID being sent: " + procoreCompanyId;
+                 	info "DEBUG - Access Token being sent: " + procoreAccessToken;
+                 	// Prepare headers for Procore API
+                 	procoreHeaders = Map();
+                 	procoreHeaders.put("Authorization","Bearer " + procoreAccessToken);
+                 	procoreHeaders.put("Content-Type","application/json");
+                 	procoreHeaders.put("Procore-Company-Id",procoreCompanyId);
+                 	try 
+                 	{
+                 		// Fetch ALL projects from Procore API
+                 		projectsUrl = "https://api.procore.com/rest/v1.0/projects?company_id=" + procoreCompanyId;
+                 		projectsResponse = invokeurl
+                 		[
+                 			url :projectsUrl
+                 			type :GET
+                 			headers:procoreHeaders
+                 		];
+                 		info "Projects Response received from Procore";
+                 		// DEBUG: Log the response
+                 		info "DEBUG - Projects Response: " + projectsResponse.toString();
+                 		projectsCreated = 0;
+                 		projectsUpdated = 0;
+                 		projectsSkipped = 0;
+                 		// Check if response is valid
+                 		if(projectsResponse != null)
+                 		{
+                 			try 
+                 			{
+                 				// Loop through each project
+                 				for each  project in projectsResponse
+                 				{
+                 					projectId = project.get("id");
+                 					projectName = project.get("name");
+                 					info "Processing project: " + projectName + " (ID: " + projectId + ")";
+                 					// Check if project already exists in Zoho Creator
+                 					existingProject = Procore_Projects[Procore_Project_ID == projectId];
+                 					if(existingProject.count() > 0)
+                 					{
+                 						// UPDATE existing project
+                 						for each  rec in existingProject
+                 						{
+                 							rec.Project_ID_MultiLine=projectId;
+                 							rec.Project_Name=projectName;
+                 							rec.Project_Number=project.get("project_number");
+                 							rec.Status=if(project.get("active") == true,"Active","Inactive");
+                 							rec.Start_Date=project.get("start_date");
+                 							rec.Created_Date=project.get("created_at");
+                 							rec.Completion_Date=project.get("completion_date");
+                 							rec.Address=project.get("address");
+                 							rec.City=project.get("city");
+                 							rec.State=project.get("state_code");
+                 							rec.Zip_Code=project.get("zip");
+                 							rec.Project_Manager=project.get("project_manager_name");
+                 							rec.Last_Synced=zoho.currenttime;
+                 						}
+                 						projectsUpdated = projectsUpdated + 1;
+                 						info "Updated project: " + projectName;
+                 					}
+                 					else
+                 					{
+                 						// CREATE new project
+                 						projectMap = Map();
+                 						projectMap.put("Name",projectName);
+                 						projectMap.put("Project_Number",project.get("project_number"));
+                 						projectMap.put("Status",if(project.get("active") == true,"Active","Inactive"));
+                 						projectMap.put("Start_Date",project.get("start_date"));
+                 						projectMap.put("Created_At",project.get("created_at"));
+                 						projectMap.put("Completion_Date",project.get("completion_date"));
+                 						projectMap.put("Address",project.get("address"));
+                 						projectMap.put("City",project.get("city"));
+                 						projectMap.put("State",project.get("state_code"));
+                 						projectMap.put("Zip_Code",project.get("zip"));
+                 						projectMap.put("Project_Manager",project.get("project_manager_name"));
+                 						projectMap.put("Last_Synced",zoho.currenttime);
+                 						insert into Procore_Projects
+                 						[
+                 							Added_User=zoho.loginuser
+                 							Project_Name=projectName
+                 							Project_ID_MultiLine=projectId
+                 							Project_Number=project.get("project_number")
+                 							Status=if(project.get("active") == true,"Active","Inactive")
+                 							Start_Date=project.get("start_date")
+                 							Created_Date=project.get("created_at")
+                 							Completion_Date=project.get("completion_date")
+                 							Address=project.get("address")
+                 							City=project.get("city")
+                 							State=project.get("state_code")
+                 							Zip_Code=project.get("zip")
+                 							Project_Manager=project.get("project_manager_name")
+                 							Last_Synced=zoho.currenttime
+                 						]
+                 						projectsCreated = projectsCreated + 1;
+                 						info "**********************************************";
+                 						info "!!!!!!  Created project: " + projectName;
+                 						info "!!!!!!  Created project: " + projectId;
+                 						info "**********************************************";
+                 					}
+                 				}
+                 				// Return summary
+                 				summaryMessage = "Procore Projects Sync Complete!\n";
+                 				summaryMessage = summaryMessage + "✓ Created: " + projectsCreated + " projects\n";
+                 				summaryMessage = summaryMessage + "✓ Updated: " + projectsUpdated + " projects\n";
+                 				summaryMessage = summaryMessage + "✓ Total processed: " + (projectsCreated + projectsUpdated) + " projects";
+                 				info summaryMessage;
+                 				//return summaryMessage;
+                 			}
+                 			catch (e)
+                 			{
+                 				info "Error processing projects: " + e;
+                 				//return "Error: " + e;
+                 			}
+                 		}
+                 		else
+                 		{
+                 			//return "Error: Projects API returned null";
+                 		}
+                 	}
+                 	catch (e)
+                 	{
+                 		info "Error: " + e;
+                 		//return "Error: " + e;
+                 	}
+                 }
+				 void A002_VR9Live_syncProcoreProjectsAndObservations()
+                 {
+                 	// This is the controlling function
+                 	try 
+                 	{
+                 		param = Parameter[ID != 0];
+                 		access_token = param.ProcoreAccessToken;
+                 		// Configuration settings - adjust these to optimize performance
+                 		max_projects_per_run = 15;
+                 		// Process 8 projects per run
+                 		max_observations_per_project = 100;
+                 		// Limit observations per project
+                 		// Resume capability - track progress
+                 		last_processed_index = ifnull(param.LastProcessedProjectIndex,0);
+                 		processed_project_ids = ifnull(param.ProcessedProjectIds,"");
+                 		info "Resume Settings: Starting from project index " + last_processed_index;
+                 		info "Previously processed: " + processed_project_ids.length() + " characters of project IDs";
+                 		// Create headers
+                 		headers = Map();
+                 		headers.put("Authorization","Bearer " + access_token);
+                 		headers.put("Procore-Company-Id","562949953427263");
+                 		// Get projects
+                 		info "Step 1: Getting all projects...";
+                 		projects_api_url = "https://us02.procore.com/rest/v1.0/projects?company_id=562949953427263";
+                 		projects_response = invokeurl
+                 		[
+                 			url :projects_api_url
+                 			type :GET
+                 			headers:headers
+                 		];
+                 		// Check for token expiry
+                 		if(projects_response.contains("expired") || projects_response.contains("invalid"))
+                 		{
+                 			info "Token expired, refreshing...";
+                 			thisapp.Z022_refreshProcoreTokenVR8();
+                 			return;
+                 		}
+                 		// Check if response is valid
+                 		if(projects_response == null || projects_response == "")
+                 		{
+                 			info "Error: No response from projects API";
+                 			return;
+                 		}
+                 		// Parse projects response
+                 		projects_list = projects_response.toJSONList();
+                 		if(projects_list == null || projects_list.size() == 0)
+                 		{
+                 			info "No projects found";
+                 			return;
+                 		}
+                 		total_projects = projects_list.size();
+                 		info "Found " + total_projects + " projects total";
+                 		// Calculate remaining projects
+                 		remaining_projects = total_projects - last_processed_index;
+                 		info "Remaining projects to process: " + remaining_projects;
+                 		if(remaining_projects <= 0)
+                 		{
+                 			info "All projects have been processed! Resetting counters for next full sync.";
+                 			param.LastProcessedProjectIndex=0;
+                 			param.ProcessedProjectIds="";
+                 			return;
+                 		}
+                 		// Initialize counters
+                 		current_project_index = 0;
+                 		projects_processed_this_run = 0;
+                 		total_observations_processed = 0;
+                 		info "Processing maximum " + max_projects_per_run + " projects this run";
+                 		info "Maximum " + max_observations_per_project + " observations per project";
+                 		// Process each project with smart batching
+                 		for each  project in projects_list
+                 		{
+                 			current_project_index = current_project_index + 1;
+                 			// Skip projects we've already processed
+                 			if(current_project_index <= last_processed_index)
+                 			{
+                 				continue;
+                 			}
+                 			// Check if we've reached the run limit
+                 			if(projects_processed_this_run >= max_projects_per_run)
+                 			{
+                 				info "Reached maximum projects per run (" + max_projects_per_run + "). Stopping.";
+                 				break;
+                 			}
+                 			project_id = project.get("id");
+                 			project_name = ifnull(project.get("name"),"Unknown Project");
+                 			project_status = ifnull(project.get("status"),"");
+                 			if(project_id == null)
+                 			{
+                 				info "Skipping project with null ID: " + project_name;
+                 				// Still update the index so we don't re-process this null project
+                 				param.LastProcessedProjectIndex=current_project_index;
+                 				continue;
+                 			}
+                 			project_id_str = project_id.toString();
+                 			// Check if we've already processed this project (additional safety check)
+                 			if(processed_project_ids.contains(project_id_str))
+                 			{
+                 				info "Project " + project_name + " already processed, skipping";
+                 				continue;
+                 			}
+                 			info "Processing Project " + (projects_processed_this_run + 1) + "/" + max_projects_per_run + ": " + project_name;
+                 			info "Project Index: " + current_project_index + "/" + total_projects + " (ID: " + project_id_str + ", Status: " + project_status + ")";
+                 			// Process observations for this project with limits (FIXED - void function call)
+                 			thisapp.A009_syncObservationsForProject(project_id_str,project_name,access_token,max_observations_per_project);
+                 			// Set fixed estimate since function doesn't return a count
+                 			project_observations_count = 20;
+                 			// Fixed estimate of 20 observations per project
+                 			// Update tracking
+                 			projects_processed_this_run = projects_processed_this_run + 1;
+                 			total_observations_processed = total_observations_processed + project_observations_count;
+                 			// Update progress in parameter record
+                 			param.LastProcessedProjectIndex=current_project_index;
+                 			param.ProcessedProjectIds="Index: " + current_project_index;
+                 			processed_project_ids = "";
+                 			info "Project completed: " + project_observations_count + " observations estimated";
+                 			// Update processed_project_ids for next iteration
+                 			processed_project_ids = processed_project_ids + project_id_str + ",";
+                 		}
+                 		info "=== PROJECT BATCH COMPLETED ===";
+                 		info "Projects processed this run: " + projects_processed_this_run;
+                 		info "Total observations estimated this run: " + total_observations_processed;
+                 		info "Progress: " + param.LastProcessedProjectIndex + "/" + total_projects + " projects completed";
+                 		// Calculate and display remaining work
+                 		remaining_after_this_run = total_projects - param.LastProcessedProjectIndex;
+                 		if(remaining_after_this_run > 0)
+                 		{
+                 			// Calculate estimated runs remaining without Math.ceil
+                 			estimated_runs_remaining = remaining_after_this_run / max_projects_per_run;
+                 			if(remaining_after_this_run % max_projects_per_run > 0)
+                 			{
+                 				estimated_runs_remaining = estimated_runs_remaining + 1;
+                 			}
+                 			info "Remaining: " + remaining_after_this_run + " projects (~" + estimated_runs_remaining.round(0) + " more runs needed)";
+                 			info "Run sync again to continue processing remaining projects";
+                 		}
+                 		else
+                 		{
+                 			info "ALL PROJECTS COMPLETED! Full sync finished.";
+                 			// Reset for next full sync cycle
+                 			param.LastProcessedProjectIndex=0;
+                 			param.ProcessedProjectIds="";
+                 		}
+                 	}
+                 	catch (exception)
+                 	{
+                 		info "Error in syncProcoreProjectsAndObservationsVR9: " + exception;
+                 		info "Current progress saved: " + ifnull(param.LastProcessedProjectIndex,0) + " projects completed";
+                 	}
+                 }
+				 void A009_syncObservationsForProject(string project_id, string project_name, string access_token, int max_observations)
+                 {
+                 	try 
+                 	{
+                 		// Create headers
+                 		headers = Map();
+                 		headers.put("Authorization","Bearer " + access_token);
+                 		headers.put("Procore-Company-Id","562949953427263");
+                 		// Get observations for this project
+                 		api_url = "https://us02.procore.com/rest/v1.0/observations/items?project_id=" + project_id;
+                 		response = invokeurl
+                 		[
+                 			url :api_url
+                 			type :GET
+                 			headers:headers
+                 		];
+                 		if(response == null || response == "")
+                 		{
+                 			info "No response from observations API for project: " + project_name;
+                 			// return 0;
+                 		}
+                 		observations_list = response.toJSONList();
+                 		if(observations_list == null || observations_list.size() == 0)
+                 		{
+                 			info "No observations found for project: " + project_name;
+                 			// return 0;
+                 		}
+                 		total_observations = observations_list.size();
+                 		if(total_observations <= max_observations)
+                 		{
+                 			observations_to_process = total_observations;
+                 		}
+                 		else
+                 		{
+                 			observations_to_process = max_observations;
+                 		}
+                 		//observations_to_process = Math.min(total_observations, max_observations);
+                 		info "Found " + total_observations + " observations, processing " + observations_to_process + " for project: " + project_name;
+                 		processed_count = 0;
+                 		success_count = 0;
+                 		error_count = 0;
+                 		for each  observation in observations_list
+                 		{
+                 			info " !!!!!!!!!!! observation: !!!!!!!!!!!!!" + observation;
+                 			// Check observation limit
+                 			if(processed_count >= max_observations)
+                 			{
+                 				info "Reached observation limit (" + max_observations + ") for project " + project_name;
+                 				break;
+                 			}
+                 			try 
+                 			{
+                 				// Your existing observation processing logic
+                 				procore_id_raw = observation.get("id");
+                 				if(procore_id_raw == null)
+                 				{
+                 					error_count = error_count + 1;
+                 					processed_count = processed_count + 1;
+                 					continue;
+                 				}
+                 				procore_id = procore_id_raw.toString();
+                 				title = ifnull(observation.get("title"),"");
+                 				description = ifnull(observation.get("description"),"");
+                 				status = ifnull(observation.get("status"),"");
+                 				priority = ifnull(observation.get("priority"),"");
+                 				created_at = ifnull(observation.get("created_at"),"");
+                 				updated_at = ifnull(observation.get("updated_at"),"");
+                 				due_date = ifnull(observation.get("due_date"),"");
+                 				contributing_condition = ifnull(observation.get("custom_fields"),"");
+                 				// Get assignee information
+                 				assignee_info = observation.get("assignee");
+                 				assignee_name = "";
+                 				assignee_email = "";
+                 				if(assignee_info != null)
+                 				{
+                 					assignee_name = ifnull(assignee_info.get("name"),"");
+                 					assignee_email = ifnull(assignee_info.get("email"),"");
+                 				}
+                 				// Get created by information
+                 				created_by_info = observation.get("created_by");
+                 				created_by_name = "";
+                 				created_by_email = "";
+                 				if(created_by_info != null)
+                 				{
+                 					created_by_name = ifnull(created_by_info.get("name"),"");
+                 					created_by_email = ifnull(created_by_info.get("email"),"");
+                 				}
+                 				location_name = ifnull(observation.get("location_name"),"");
+                 				photo_count = ifnull(observation.get("photo_count"),0);
+                 				// Check if observation already exists
+                 				procore_id_number = procore_id.toLong();
+                 				existing_record = Procore_Observations[Procore_Observation_ID == procore_id_number];
+                 				if(existing_record.count() > 0)
+                 				{
+                 					// Update existing record
+                 					existing_record.Title=title;
+                 					existing_record.Description=description;
+                 					existing_record.Status=status;
+                 					existing_record.Priority=priority;
+                 					existing_record.Contributing_Condition=contributing_condition;
+                 					existing_record.Location_Name=location_name;
+                 					existing_record.Due_Date=due_date;
+                 					existing_record.Photo_Count=photo_count;
+                 					existing_record.Project_ID=project_id;
+                 					existing_record.Updated_At=updated_at;
+                 					existing_record.Assignee_name=assignee_name;
+                 					existing_record.Assignee_Email=assignee_email;
+                 					existing_record.Created_By_Name=created_by_name;
+                 					existing_record.Created_By_Email=created_by_email;
+                 					existing_record.Last_Sync=zoho.currenttime;
+                 					success_count = success_count + 1;
+                 				}
+                 				else
+                 				{
+                 					// Create new record
+                 					insert into Procore_Observations
+                 					[
+                 						Added_User=zoho.loginuser
+                 						Procore_Observation_ID=procore_id
+                 						Title=title
+                 						Description=description
+                 						Status=status
+                 						Priority=priority
+                 						Assignee_name=assignee_name
+                 						Assignee_Email=assignee_email
+                 						Created_By_Name=created_by_name
+                 						Created_By_Email=created_by_email
+                 						Location_Name=location_name
+                 						Contributing_Condition=contributing_condition
+                 						Created_At=created_at
+                 						Updated_At=updated_at
+                 						Due_Date=due_date
+                 						Photo_Count=photo_count
+                 						Project_ID=project_id
+                 						Last_Sync=zoho.currenttime
+                 						Source="Procore"
+                 					]
+                 					success_count = success_count + 1;
+                 				}
+                 				processed_count = processed_count + 1;
+                 			}
+                 			catch (observation_exception)
+                 			{
+                 				error_count = error_count + 1;
+                 				processed_count = processed_count + 1;
+                 				info "Error processing observation: " + observation_exception;
+                 			}
+                 		}
+                 		info "Project " + project_name + " completed: " + success_count + " successful, " + error_count + " errors";
+                 		// return 0; //success_count.toNumber();
+                 	}
+                 	catch (project_exception)
+                 	{
+                 		info "Error processing observations for project " + project_name + ": " + project_exception;
+                 		// return 0;
+                 	}
+                 }
+				 void A01_MatchProjectstoObservations()
+                 {
+                 }
+				 void Z005_ProcoreAuthorise()
+                 {
+                 	Param = Parameter[ID != 0];
+                 	// Create the authorization URL
+                 	AUTH_URL = "https://login.procore.com/oauth/authorize";
+                 	AUTH_URL = AUTH_URL + "?client_id=" + Param.ProcoreClientID;
+                 	AUTH_URL = AUTH_URL + "&response_type=code";
+                 	AUTH_URL = AUTH_URL + "&redirect_uri=" + Param.ProcoreRedirect;
+                 	//info "Visit this URL to authorize:";
+                 	//info "";
+                 	info AUTH_URL;
+                 }
+				 void Z005_ProcoreCrulCommandVR7()
+                 {
+                 	Procore_Autorisation_Code_From_AUT_URL = null;
+                 	Autorisation_Code_Got = false;
+                 	param = Parameter[ID != 0];
+                 	AUTH_URL = "https://login.procore.com/oauth/authorize";
+                 	AUTH_URL = AUTH_URL + "?client_id=" + param.ProcoreClientID;
+                 	AUTH_URL = AUTH_URL + "&response_type=code";
+                 	AUTH_URL = AUTH_URL + "&redirect_uri=" + param.ProcoreRedirect;
+                 	info "Visit this URL to authorize:";
+                 	info "************************************************************";
+                 	info AUTH_URL;
+                 	info "*****************   Procore_Autorisation_Code_From_AUT_URL          *******************************************";
+                 	info "NOTE: Remember ===> Enter Aut Code you got above into the Procore_Autorisation_Code_From_AUT_URL variable below";
+                 	// Example https://login.procore.com/oauth/authorize?client_id=JSBveyQKgPZclLF19QBGkFSSyv1BR1EShX2k_QDghxs&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob
+                 	Procore_Autorisation_Code_From_AUT_URL = "5xXklef21lpZ9QTMB0HXjdZkL8uBKnAD8nXhHavMwNE";
+                 	Update_Param_Record = false;
+                 	// Update 
+                 	if(Procore_Autorisation_Code_From_AUT_URL != null && Update_Param_Record == true)
+                 	{
+                 		param.ProcoreAutorisationCode=Procore_Autorisation_Code_From_AUT_URL;
+                 		info "Parameter file updated you can you run the curl command below";
+                 	}
+                 	Autorisation_Code_Got = true;
+                 	if(param.ProcoreAutorisationCode != null)
+                 	{
+                 		crl = "curl -X POST https://login.procore.com/oauth/token";
+                 		crl = crl + " -H \"Content-Type: application/x-www-form-urlencoded\"";
+                 		crl = crl + " -d \"grant_type=authorization_code\"";
+                 		crl = crl + " -d \"client_id=" + param.ProcoreClientID + "\"";
+                 		crl = crl + " -d \"client_secret=" + param.ProcoreSecret + "\"";
+                 		crl = crl + " -d \"code=" + param.ProcoreAutorisationCode + "\"";
+                 		crl = crl + " -d \"redirect_uri=urn:ietf:wg:oauth:2.0:oob" + "\"";
+                 		info "************************************************************";
+                 		info crl;
+                 		info "************************************************************";
+                 		info "run this curl command in a DOS Prompt to get a new acess token";
+                 	}
+                 }
+				 void Z008_syncProcoreOperatorsVR6()
+                 {
+                 	try 
+                 	{
+                 		// REF:021025
+                 		param = Parameter[ID != 0];
+                 		token_needs_refresh = false;
+                 		param = Parameter[ID != 0];
+                 		// Get current time and stored token expiry
+                 		if(token_needs_refresh = false)
+                 		{
+                 			// Now proceed with the actual sync operation
+                 			info "Starting Procore operators sync...";
+                 			// Create headers with the current (possibly refreshed) access token
+                 			headers = Map();
+                 			auth_value = "Bearer " + param.ProcoreAccessToken;
+                 			headers.put("Authorization",auth_value);
+                 			info "AT 72";
+                 			//info "Using access token for API call: " + access_token.left(30) + "...";
+                 			// Try Method 1: Company ID in URL path
+                 			procore_api_url = "https://us02.procore.com/rest/v1.0/companies/562949953427263/users";
+                 			info "Trying URL path method";
+                 			info procore_api_url;
+                 			response = invokeurl
+                 			[
+                 				url :procore_api_url
+                 				type :GET
+                 				headers:headers
+                 			];
+                 			info "Users API response (URL path): " + response;
+                 			info "Final API Response: " + response;
+                 			info "========== PROCESS RESPONSE ========== " + response;
+                 			// ========== PROCESS RESPONSE ==========
+                 			if(response != null && response != "")
+                 			{
+                 				// Check if response is a valid array/list			
+                 				if(response.toJSONList() != null)
+                 				{
+                 					operators_list = response.toJSONList();
+                 					if(operators_list.size() > 0)
+                 					{
+                 						success_count = 0;
+                 						error_count = 0;
+                 						total_records = operators_list.size();
+                 						info "Found " + total_records + " users";
+                 						for each  operator in operators_list
+                 						{
+                 							try 
+                 							{
+                 								// Extract data from Procore with proper validation
+                 								procore_id_raw = operator.get("id");
+                 								if(procore_id_raw == null)
+                 								{
+                 									info "Skipping operator with null ID";
+                 									continue;
+                 								}
+                 								procore_id = procore_id_raw.toString();
+                 								procore_id_raw = procore_id_raw;
+                 								first_name = ifnull(operator.get("first_name"),"");
+                 								last_name = ifnull(operator.get("last_name"),"");
+                 								full_name = ifnull(operator.get("name"),first_name + " " + last_name);
+                 								Email = ifnull(operator.get("email_address"),"");
+                 								phone_number = ifnull(operator.get("phone"),"");
+                 								job_title = ifnull(operator.get("job_title"),"");
+                 								is_active = ifnull(operator.get("active"),true);
+                 								status = "Active";
+                 								if(is_active == false)
+                 								{
+                 									status = "Inactive";
+                 								}
+                 								info "Processing operator ID: " + procore_id + " Name: " + full_name;
+                 								info "**************************************";
+                 								info "email_address " + Email;
+                 								info "**************************************";
+                 								//
+                 								info procore_id_raw;
+                 								info procore_id;
+                 								info Email;
+                 								info last_name;
+                 								info full_name;
+                 								info phone_number;
+                 								info job_title;
+                 								info is_active;
+                 								//
+                 								info "**************************************";
+                 								// Check if operator already exists
+                 								existing_record = Procore_Users[Procore_User_ID == procore_id_raw];
+                 								//operators[Procore_Id == procore_id_raw];
+                 								if(existing_record.count() > 0)
+                 								{
+                 									existing_record.Full_Name.first_name=first_name;
+                 									existing_record.Full_Name.last_name=last_name;
+                 									existing_record.Email=Email;
+                 									info "Updated: " + full_name;
+                 								}
+                 								else
+                 								{
+                 									// Create new record - FIXED: Ensure Procore_Id is valid
+                 									if(procore_id != "" && procore_id != null)
+                 									{
+                 										insert into Procore_Users
+                 										[
+                 											Added_User=zoho.loginuser
+                 											Email=Email
+                 											Full_Name.first_name=first_name
+                 											Full_Name.last_name=last_name
+                 											Last_Sync=zoho.currenttime
+                 											Phone=phone_number
+                 											Procore_User_ID=procore_id_raw
+                 											Source="Procore"
+                 											Status=status
+                 										]
+                 										info "Added: " + full_name;
+                 									}
+                 									else
+                 									{
+                 										info "Skipping insert - invalid Procore ID: " + procore_id;
+                 										error_count = error_count + 1;
+                 										continue;
+                 									}
+                 								}
+                 								success_count = success_count + 1;
+                 							}
+                 							catch (exception)
+                 							{
+                 								error_count = error_count + 1;
+                 								info "Error processing operator: " + exception;
+                 							}
+                 						}
+                 						info "Sync completed. Success: " + success_count + ", Errors: " + error_count;
+                 					}
+                 					else
+                 					{
+                 						info "No operators found in response";
+                 					}
+                 				}
+                 				else
+                 				{
+                 					info "Response is not a valid JSON list";
+                 					info "Response type: " + response;
+                 				}
+                 			}
+                 			else
+                 			{
+                 				info "No response from Procore API";
+                 			}
+                 		}
+                 	}
+                 	catch (exception)
+                 	{
+                 		info "Function failed: " + exception;
+                 	}
+                 }
+				 void Z012_syncProcoreProjectsVR7()
+                 {
+                 	// REF160925
+                 	param = Parameter[ID != 0];
+                 	// Get current time and stored token expiry
+                 	current_time = zoho.currentdate;
+                 	access_token = param.ProcoreAccessToken;
+                 	Last_Refreshed = param.ProcoreTokenRefreshedAt;
+                 	company_id = param.ProcoreCompanyID;
+                 	info "========== STARTING PROCORE PROJECTS SYNC ==========";
+                 	info "Current time: " + current_time;
+                 	info "Last_Refreshed: " + Last_Refreshed;
+                 	info "Company ID: " + company_id;
+                 	// Validate required parameters
+                 	if(company_id.isEmpty())
+                 	{
+                 		info "ERROR: Company ID is missing. Please set ProcoreCompanyID parameter.";
+                 		return;
+                 	}
+                 	// Set up headers
+                 	headers = Map();
+                 	headers.put("Authorization","Bearer " + access_token);
+                 	headers.put("Content-Type","application/json");
+                 	headers.put("Procore-Company-Id",company_id);
+                 	// Construct the projects endpoint with company ID
+                 	projects_url = "https://us02.procore.com/rest/v1.0/companies/" + company_id + "/projects";
+                 	info "Trying projects endpoint: " + projects_url;
+                 	// Make the API call
+                 	projects_response = invokeurl
+                 	[
+                 		url :projects_url
+                 		type :GET
+                 		headers:headers
+                 	];
+                 	info "Projects API response received: >> " + projects_response;
+                 	// Check for API errors
+                 	if(projects_response.contains("error"))
+                 	{
+                 		info "API Error detected in response: " + projects_response;
+                 		return;
+                 	}
+                 	// Process response with batch processing using Deluge syntax
+                 	if(projects_response.isNull() == false && projects_response.size() > 0)
+                 	{
+                 		total_projects = projects_response.size();
+                 		info "========== PROCESSING " + total_projects + " PROJECTS ==========";
+                 		// Get batch processing status
+                 		last_index = param.Last_Processed_Project_Index;
+                 		if(last_index.isNull())
+                 		{
+                 			last_index = 0;
+                 		}
+                 		// Check if sync is already in progress
+                 		if(param.Sync_In_Progress == true)
+                 		{
+                 			info "Sync already in progress, continuing from index: " + last_index;
+                 		}
+                 		else
+                 		{
+                 			// Mark sync as started
+                 			param.Sync_In_Progress=true;
+                 			param.Last_Processed_Project_Index=0;
+                 			last_index = 0;
+                 			info "Starting new sync batch";
+                 		}
+                 		// BATCH PROCESSING - Process in chunks to avoid limits
+                 		BATCH_SIZE = 25;
+                 		// Process 25 projects per run
+                 		processed_count = 0;
+                 		success_count = 0;
+                 		error_count = 0;
+                 		current_index = 0;
+                 		// Process each project using Deluge for each syntax
+                 		for each  project in projects_response
+                 		{
+                 			current_index = current_index + 1;
+                 			// Skip projects we've already processed
+                 			if(current_index <= last_index)
+                 			{
+                 				continue;
+                 			}
+                 			// Stop if we hit batch limit
+                 			if(processed_count >= BATCH_SIZE)
+                 			{
+                 				// Update progress in Parameter table
+                 				param.Last_Processed_Project_Index=current_index - 1;
+                 				info "Batch complete. Processed " + processed_count + " projects. Resume from index: " + current_index;
+                 				info "========== BATCH COMPLETE ==========";
+                 				info "Progress: " + (current_index - 1) + "/" + total_projects + " projects";
+                 				return;
+                 				// Exit to avoid statement limit
+                 			}
+                 			processed_count = processed_count + 1;
+                 			// Extract project data with null checks
+                 			procore_project_id = project.get("id");
+                 			if(procore_project_id.isNull())
+                 			{
+                 				info "Skipping project " + current_index + ": Missing ID";
+                 				error_count = error_count + 1;
+                 				continue;
+                 			}
+                 			project_name = project.get("name");
+                 			info project_name;
+                 			if(project_name.isNull())
+                 			{
+                 				project_name = "";
+                 			}
+                 			project_number = project.get("id");
+                 			info "project_number:" + project_number;
+                 			if(project_number.isNull())
+                 			{
+                 				project_number = "";
+                 			}
+                 			project_status = project.get("status_name");
+                 			info "project_status: " + project_status;
+                 			if(project_status.isNull())
+                 			{
+                 				project_status = false;
+                 			}
+                 			/*
+                                                   			project_address = project.get("address");
+                                                   			address_street = "";
+                                                   			if(project_address.isNull())
+                                                   			{
+                                                   				address_street = project_address.get("street");
+                                                   				if(address_street.isNull())
+                                                   				{
+                                                   					address_street = "";
+                                                   				}
+                                                   			}
+                                                   			
+                                                   			project_city = "";
+                                                   			if(!project_address.isNull())
+                                                   			{
+                                                   				project_city = project_address.get("city");
+                                                   				if(project_city.isNull())
+                                                   				{
+                                                   					project_city = "";
+                                                   				}
+                                                   			}
+                                                   			project_state = "";
+                                                   			if(!project_address.isNull())
+                                                   			{
+                                                   				project_state = project_address.get("state_code");
+                                                   				if(project_state.isNull())
+                                                   				{
+                                                   					project_state = "";
+                                                   				}
+                                                   			}
+                                                   			project_zip = "";
+                                                   			if(!project_address.isNull())
+                                                   			{
+                                                   				project_zip = project_address.get("zip");
+                                                   				if(project_zip.isNull())
+                                                   				{
+                                                   					project_zip = "";
+                                                   				}
+                                                   			}
+                                                   			project_country = "";
+                                                   			if(!project_address.isNull())
+                                                   			{
+                                                   				project_country = project_address.get("country_code");
+                                                   				if(project_country.isNull())
+                                                   				{
+                                                   					project_country = "";
+                                                   				}
+                                                   			}
+                                                   			*/
+                 			created_at = project.get("created_at");
+                 			if(created_at.isNull())
+                 			{
+                 				created_at = "";
+                 			}
+                 			updated_at = project.get("updated_at");
+                 			if(updated_at.isNull())
+                 			{
+                 				updated_at = "";
+                 			}
+                 			project_type = project.get("project_type");
+                 			if(project_type.isNull())
+                 			{
+                 				project_type = "";
+                 			}
+                 			// Build full address
+                 			info "Processing project " + current_index + ": " + project_name + " (ID: " + procore_project_id + ")";
+                 			try 
+                 			{
+                 				// Check if project already exists using Zoho Creator syntax
+                 				existing_project = Procore_Projects[Project_ID_MultiLine == procore_project_id];
+                 				if(existing_project.count() > 0)
+                 				{
+                 					// Update existing project in Zoho Creator
+                 					for each  existing_record in existing_project
+                 					{
+                 						existing_record.Project_Name=project_name;
+                 						existing_record.Project_Number=procore_project_id.toString();
+                 						existing_record.Company_ID=company_id;
+                 						existing_record.Project_Stage=project_type;
+                 						existing_record.Status=project_status;
+                 						existing_record.Last_Synced=zoho.currentdate;
+                 						existing_record.Source="Procore API";
+                 					}
+                 					info "Updated project: " + project_name;
+                 					success_count = success_count + 1;
+                 				}
+                 				else
+                 				{
+                 					// Create new project in Zoho Creator
+                 					insert into Procore_Projects
+                 					[
+                 						Project_Number=procore_project_id.toString()
+                 						Procore_Project_ID=procore_project_id
+                 						Project_ID_MultiLine=procore_project_id
+                 						Project_Name=project_name
+                 						Project_Stage=project_type
+                 						Status=project_status
+                 						Created_Date=zoho.currentdate
+                 						Last_Synced=zoho.currentdate
+                 						Source="Procore API"
+                 						Added_User=zoho.loginuser
+                 					]
+                 					info "Created new project: " + project_name;
+                 					success_count = success_count + 1;
+                 				}
+                 			}
+                 			catch (e)
+                 			{
+                 				info "Error processing project " + project_name + ": " + e.toString();
+                 				error_count = error_count + 1;
+                 			}
+                 			// Optional: Stop processing if hitting too many errors
+                 			if(error_count > 10)
+                 			{
+                 				info "Too many errors encountered (" + error_count + "), stopping sync to investigate.";
+                 				break;
+                 			}
+                 		}
+                 		// Mark sync complete if we processed all projects
+                 		if(current_index >= total_projects)
+                 		{
+                 			param.Last_Processed_Project_Index=0;
+                 			// Reset for next full sync
+                 			param.Sync_In_Progress=false;
+                 			// Clear the checkbox
+                 			info "========== FULL SYNC COMPLETE ==========";
+                 			info "Total projects: " + total_projects;
+                 			info "Successfully processed: " + success_count;
+                 			info "Errors encountered: " + error_count;
+                 		}
+                 		else
+                 		{
+                 			// Update progress for next batch
+                 			param.Last_Processed_Project_Index=current_index;
+                 			info "========== BATCH COMPLETE ==========";
+                 			info "Processed this batch: " + processed_count;
+                 			info "Success: " + success_count + ", Errors: " + error_count;
+                 			info "Progress: " + current_index + "/" + total_projects + " projects";
+                 			info "Next batch will start from index: " + (current_index + 1);
+                 		}
+                 	}
+                 	else
+                 	{
+                 		info "No projects found or empty response";
+                 		param.Sync_In_Progress=false;
+                 		// Clear checkbox if no data
+                 	}
+                 }
+				 void Z021_syncProcoreObservationsVR7()
+                 {
+                 	try 
+                 	{
+                 		info "========== STARTING PROCORE OBSERVATIONS SYNC ==========";
+                 		info "Current time: " + zoho.currenttime;
+                 		// Get parameter record to check last refresh time
+                 		param = Parameter[ID != 0];
+                 		if(param == null)
+                 		{
+                 			info "Error: No parameter record found";
+                 			return;
+                 		}
+                 		last_refreshed = param.Last_Refreshed;
+                 		company_id = param.ProcoreCompanyID;
+                 		info "Last token refresh: " + ifnull(last_refreshed,"Never");
+                 		info "Company ID: " + company_id;
+                 		// Check if access token exists
+                 		access_token = param.ProcoreAccessToken;
+                 		if(access_token == null || access_token == "")
+                 		{
+                 			info "Error: No access token found in parameters";
+                 			return;
+                 		}
+                 		info "Access token found (length: " + access_token.length() + " characters)";
+                 		// Start the sync process
+                 		info "Starting project and observations sync...";
+                 		thisapp.A002_VR9Live_syncProcoreProjectsAndObservations();
+                 		info "========== SYNC COMPLETED ==========";
+                 		info "Finished at: " + zoho.currenttime;
+                 	}
+                 	catch (exception)
+                 	{
+                 		info "Main sync function failed: " + exception;
+                 	}
+                 }
+				 void Z022_refreshProcoreTokenVR8()
+                 {
+                 	try 
+                 	{
+                 		info "Starting token refresh process...";
+                 		// Get parameter record
+                 		param = Parameter[ID != 0];
+                 		refresh_token = param.ProcoreRefreshToken;
+                 		client_id = param.ProcoreClientID;
+                 		client_secret = param.ProcoreSecret;
+                 		// Validate we have required credentials
+                 		if(refresh_token == null || refresh_token == "")
+                 		{
+                 			info "Error: No refresh token available";
+                 			return;
+                 		}
+                 		if(client_id == null || client_id == "")
+                 		{
+                 			info "Error: No client ID available";
+                 			return;
+                 		}
+                 		if(client_secret == null || client_secret == "")
+                 		{
+                 			info "Error: No client secret available";
+                 			return;
+                 		}
+                 		// Prepare refresh request
+                 		refresh_url = "https://login.procore.com/oauth/token";
+                 		form_data = Map();
+                 		form_data.put("grant_type","refresh_token");
+                 		form_data.put("refresh_token",refresh_token);
+                 		form_data.put("client_id",client_id);
+                 		form_data.put("client_secret",client_secret);
+                 		info "Making token refresh request...";
+                 		// Make refresh request
+                 		response = invokeurl
+                 		[
+                 			url :refresh_url
+                 			type :POST
+                 			parameters:form_data
+                 		];
+                 		info "Token refresh response received";
+                 		// Check if response contains error
+                 		if(response.contains("error"))
+                 		{
+                 			info "Token refresh failed with error: " + response;
+                 			return;
+                 		}
+                 		// Extract new tokens
+                 		new_access_token = response.get("access_token");
+                 		new_refresh_token = response.get("refresh_token");
+                 		expires_in = response.get("expires_in");
+                 		// Validate response
+                 		if(new_access_token == null || new_access_token == "")
+                 		{
+                 			info "Token refresh failed - no access_token in response";
+                 			info "Response: " + response;
+                 			return;
+                 		}
+                 		// Update parameter record with new tokens
+                 		param.ProcoreAccessToken=new_access_token;
+                 		// Update refresh token if provided (some APIs provide new refresh tokens)
+                 		if(new_refresh_token != null && new_refresh_token != "")
+                 		{
+                 			param.ProcoreRefreshToken=new_refresh_token;
+                 			info "Updated both access and refresh tokens";
+                 		}
+                 		else
+                 		{
+                 			info "Updated access token only (refresh token reused)";
+                 		}
+                 		// Update last refreshed timestamp
+                 		param.Last_Refreshed=zoho.currenttime;
+                 		// Calculate expiry time (optional)
+                 		if(expires_in != null)
+                 		{
+                 			current_time = zoho.currenttime;
+                 			expiry_time = current_time.addSeconds(expires_in);
+                 			// You can add a TokenExpiresAt field to track this
+                 			info "New token expires in " + expires_in + " seconds";
+                 		}
+                 		info "Token refresh completed successfully";
+                 	}
+                 	catch (refresh_exception)
+                 	{
+                 		info "Token refresh failed with exception: " + refresh_exception;
+                 	}
+                 }
+				 void Z023_syncProcoreObservationsVR6()
+                 {
+                 	try 
+                 	{
+                 		// REF160925
+                 		param = Parameter[ID != 0];
+                 		// Get current time and stored token expiry
+                 		current_time = zoho.currentdate;
+                 		access_token = param.ProcoreAccessToken;
+                 		Last_Refreshed = param.Last_Refreshed;
+                 		info "Current time: " + zoho.currenttime;
+                 		info "Last_Refreshed: " + Last_Refreshed;
+                 		info "Current access token: " + ifnull(access_token,"NULL").left(30) + "...";
+                 		// Initialize token refresh flag
+                 		token_needs_refresh = false;
+                 		if(token_needs_refresh = false)
+                 		{
+                 			// Now proceed with the actual sync operation
+                 			info "Starting Procore observations sync...";
+                 			// Create headers with the current (possibly refreshed) access token
+                 			headers = Map();
+                 			auth_value = "Bearer " + access_token;
+                 			headers.put("Authorization",auth_value);
+                 			headers.put("Procore-Company-Id","562949953427263");
+                 			// Required header
+                 			info "AT 72";
+                 			//info "Using access token for API call: " + access_token.left(30) + "...";
+                 			// API endpoint for observations - using your project ID
+                 			project_id = "562949953477266";
+                 			// Your actual project ID
+                 			procore_api_url = "https://us02.procore.com/rest/v1.0/observations/items?project_id=" + project_id;
+                 			info "Trying observations endpoint";
+                 			info procore_api_url;
+                 			response = invokeurl
+                 			[
+                 				url :procore_api_url
+                 				type :GET
+                 				headers:headers
+                 			];
+                 			info "Observations API response: " + response;
+                 			info "Final API Response: " + response;
+                 			info "========== PROCESS RESPONSE ========== " + response;
+                 			// ========== PROCESS RESPONSE ==========
+                 			if(response != null && response != "")
+                 			{
+                 				// Check if response is HTML (error page) instead of JSON
+                 				if(response.contains("<!DOCTYPE html") || response.contains("<html"))
+                 				{
+                 					info "Error: API returned HTML error page instead of JSON";
+                 					info "This usually means the endpoint doesn't exist (404) or there's an authentication issue";
+                 					info "Response: " + response.left(500) + "...";
+                 					return;
+                 				}
+                 				// Try to parse response as JSON with error handling
+                 				try 
+                 				{
+                 					// Check if the response contains an error message by looking for "message" in the string
+                 					if(response.contains("\"message\""))
+                 					{
+                 						info "API Error detected in response: " + response;
+                 						return;
+                 					}
+                 					// Try to parse as observations list
+                 					observations_list = response.toJSONList();
+                 					if(observations_list != null && observations_list.size() > 0)
+                 					{
+                 						success_count = 0;
+                 						error_count = 0;
+                 						total_records = observations_list.size();
+                 						info "Found " + total_records + " observations";
+                 						for each  observation in observations_list
+                 						{
+                 							try 
+                 							{
+                 								// Extract data from Procore with proper validation
+                 								procore_id_raw = observation.get("id");
+                 								if(procore_id_raw == null)
+                 								{
+                 									info "Skipping observation with null ID";
+                 									continue;
+                 								}
+                 								procore_id = procore_id_raw.toString();
+                 								procore_id_raw = procore_id_raw;
+                 								// Extract observation-specific fields
+                 								title = ifnull(observation.get("title"),"");
+                 								description = ifnull(observation.get("description"),"");
+                 								status = ifnull(observation.get("status"),"");
+                 								priority = ifnull(observation.get("priority"),"");
+                 								created_at = ifnull(observation.get("created_at"),"");
+                 								updated_at = ifnull(observation.get("updated_at"),"");
+                 								due_date = ifnull(observation.get("due_date"),"");
+                 								// Get assignee information
+                 								assignee_info = observation.get("assignee");
+                 								assignee_name = "";
+                 								assignee_email = "";
+                 								if(assignee_info != null)
+                 								{
+                 									assignee_name = ifnull(assignee_info.get("name"),"");
+                 									assignee_email = ifnull(assignee_info.get("email"),"");
+                 								}
+                 								// Get created by information
+                 								created_by_info = observation.get("created_by");
+                 								created_by_name = "";
+                 								created_by_email = "";
+                 								if(created_by_info != null)
+                 								{
+                 									created_by_name = ifnull(created_by_info.get("name"),"");
+                 									created_by_email = ifnull(created_by_info.get("email"),"");
+                 								}
+                 								// Location information
+                 								location_name = ifnull(observation.get("location_name"),"");
+                 								// Photo count or attachment info
+                 								photo_count = ifnull(observation.get("photo_count"),0);
+                 								attachments = ifnull(observation.get("attachments"),{});
+                 								attachment_count = 0;
+                 								if(attachments != null && attachments.size() != null)
+                 								{
+                 									attachment_count = attachments.size();
+                 								}
+                 								info "Processing observation ID: " + procore_id + " Title: " + title;
+                 								info "**************************************";
+                 								info "Description: " + description;
+                 								info "Status: " + status;
+                 								info "Priority: " + priority;
+                 								info "Assignee: " + assignee_name;
+                 								info "Location: " + location_name;
+                 								info "**************************************";
+                 								// Check if observation already exists
+                 								existing_record = Procore_Observations[Procore_Observation_ID == procore_id_raw];
+                 								if(existing_record.count() > 0)
+                 								{
+                 									existing_record.Title=title;
+                 									existing_record.Description=description;
+                 									existing_record.Status=status;
+                 									existing_record.Priority=priority;
+                 									existing_record.Location_Name=location_name;
+                 									existing_record.Due_Date=due_date;
+                 									existing_record.Photo_Count=photo_count;
+                 									existing_record.Attachment_Count=attachment_count;
+                 									existing_record.Last_Sync=zoho.currenttime;
+                 									info "Updated: " + title;
+                 								}
+                 								else
+                 								{
+                 									// Create new record - FIXED: Ensure Procore_Id is valid
+                 									if(procore_id != "" && procore_id != null)
+                 									{
+                 										insert into Procore_Observations
+                 										[
+                 											Added_User=zoho.loginuser
+                 											Procore_Observation_ID=procore_id
+                 											Title=title
+                 											Description=description
+                 											Status=status
+                 											Priority=priority
+                 											Assignee_name=assignee_name
+                 											Created_By_Name=created_by_name
+                 											Created_By_Email=created_by_email
+                 											Location_Name=location_name
+                 											Created_At=created_at
+                 											Updated_At=updated_at
+                 											Due_Date=due_date
+                 											Photo_Count=photo_count
+                 											Attachment_Count=attachment_count
+                 											Last_Sync=zoho.currenttime
+                 											Source="Procore"
+                 										]
+                 										info "Added: " + title;
+                 									}
+                 									else
+                 									{
+                 										info "Skipping insert - invalid Procore ID: " + procore_id;
+                 										error_count = error_count + 1;
+                 										continue;
+                 									}
+                 								}
+                 								success_count = success_count + 1;
+                 							}
+                 							catch (exception)
+                 							{
+                 								error_count = error_count + 1;
+                 								info "Error processing observation: " + exception;
+                 							}
+                 						}
+                 						info "Sync completed. Success: " + success_count + ", Errors: " + error_count;
+                 					}
+                 					else
+                 					{
+                 						info "No observations found in response - empty array returned";
+                 					}
+                 				}
+                 				catch (json_exception)
+                 				{
+                 					info "Error: Failed to parse response as JSON";
+                 					info "JSON Parse Error: " + json_exception;
+                 					info "Raw response: " + response.left(1000) + "...";
+                 					return;
+                 				}
+                 			}
+                 			else
+                 			{
+                 				info "No response from Procore API";
+                 			}
+                 		}
+                 	}
+                 	catch (exception)
+                 	{
+                 		info "Function failed: " + exception;
+                 	}
+                 }
+				 void Z024_syncObservationsForProjectVR8(string project_id, string project_name, string access_token)
+                 {
+                 	try 
+                 	{
+                 		info "Processing Project: " + project_name + " (ID: " + project_id + ")";
+                 		// Recreate headers inside the function
+                 		headers = Map();
+                 		headers.put("Authorization","Bearer " + access_token);
+                 		headers.put("Procore-Company-Id","562949953427263");
+                 		// Get observations for this project
+                 		api_url = "https://us02.procore.com/rest/v1.0/observations/items?project_id=" + project_id;
+                 		response = invokeurl
+                 		[
+                 			url :api_url
+                 			type :GET
+                 			headers:headers
+                 		];
+                 		if(response != null && response != "")
+                 		{
+                 			// Check if response is HTML (error page) instead of JSON
+                 			if(response.contains("<!DOCTYPE html") || response.contains("<html"))
+                 			{
+                 				info "Error: API returned HTML error page for project " + project_name;
+                 				return;
+                 			}
+                 			// Check for API error messages
+                 			if(response.contains("\"errors\"") || response.contains("\"message\""))
+                 			{
+                 				info "API Error for project " + project_name + ": " + response;
+                 				return;
+                 			}
+                 			observations_list = response.toJSONList();
+                 			if(observations_list != null && observations_list.size() > 0)
+                 			{
+                 				info "Found " + observations_list.size() + " observations for project: " + project_name;
+                 				for each  observation in observations_list
+                 				{
+                 					try 
+                 					{
+                 						// Extract data from Procore with proper validation
+                 						procore_id_raw = observation.get("id");
+                 						if(procore_id_raw == null)
+                 						{
+                 							info "Skipping observation with null ID in project " + project_name;
+                 							continue;
+                 						}
+                 						procore_id = procore_id_raw.toString();
+                 						// Extract observation-specific fields
+                 						title = ifnull(observation.get("title"),"");
+                 						description = ifnull(observation.get("description"),"");
+                 						status = ifnull(observation.get("status"),"");
+                 						priority = ifnull(observation.get("priority"),"");
+                 						created_at = ifnull(observation.get("created_at"),"");
+                 						updated_at = ifnull(observation.get("updated_at"),"");
+                 						due_date = ifnull(observation.get("due_date"),"");
+                 						// Get assignee information
+                 						assignee_info = observation.get("assignee");
+                 						assignee_name = "";
+                 						assignee_email = "";
+                 						if(assignee_info != null)
+                 						{
+                 							assignee_name = ifnull(assignee_info.get("name"),"");
+                 							assignee_email = ifnull(assignee_info.get("email"),"");
+                 						}
+                 						// Get created by information
+                 						created_by_info = observation.get("created_by");
+                 						created_by_name = "";
+                 						created_by_email = "";
+                 						if(created_by_info != null)
+                 						{
+                 							created_by_name = ifnull(created_by_info.get("name"),"");
+                 							created_by_email = ifnull(created_by_info.get("email"),"");
+                 						}
+                 						// Location information
+                 						location_name = ifnull(observation.get("location_name"),"");
+                 						// Photo count or attachment info
+                 						photo_count = ifnull(observation.get("photo_count"),0);
+                 						attachments = ifnull(observation.get("attachments"),{});
+                 						attachment_count = 0;
+                 						if(attachments != null && attachments.size() != null)
+                 						{
+                 							attachment_count = attachments.size();
+                 						}
+                 						info "Processing observation ID: " + procore_id + " Title: " + title;
+                 						// Check if observation already exists
+                 						existing_record = Procore_Observations[Procore_Observation_ID == procore_id.toLong()];
+                 						if(existing_record.count() > 0)
+                 						{
+                 							// Update existing record
+                 							existing_record.Title=title;
+                 							existing_record.Description=description;
+                 							existing_record.Status=status;
+                 							existing_record.Priority=priority;
+                 							existing_record.Location_Name=location_name;
+                 							existing_record.Due_Date=due_date;
+                 							existing_record.Photo_Count=photo_count;
+                 							existing_record.Attachment_Count=attachment_count;
+                 							existing_record.Project_ID=project_id.toString();
+                 							existing_record.Updated_At=updated_at;
+                 							existing_record.Assignee_name=assignee_name;
+                 							existing_record.Assignee_Email=assignee_email;
+                 							existing_record.Created_By_Name=created_by_name;
+                 							existing_record.Created_By_Email=created_by_email;
+                 							existing_record.Last_Sync=zoho.currenttime;
+                 							info "Updated: " + title;
+                 						}
+                 						else
+                 						{
+                 							// Create new record
+                 							if(procore_id != "" && procore_id != null)
+                 							{
+                 								insert into Procore_Observations
+                 								[
+                 									Added_User=zoho.loginuser
+                 									Procore_Observation_ID=procore_id
+                 									Title=title
+                 									Description=description
+                 									Status=status
+                 									Priority=priority
+                 									Assignee_name=assignee_name
+                 									Assignee_Email=assignee_email
+                 									Created_By_Name=created_by_name
+                 									Created_By_Email=created_by_email
+                 									Location_Name=location_name
+                 									Created_At=created_at
+                 									Updated_At=updated_at
+                 									Due_Date=due_date
+                 									Photo_Count=photo_count
+                 									Attachment_Count=attachment_count
+                 									Project_ID=project_id.toString()
+                 									Last_Sync=zoho.currenttime
+                 									Source="Procore"
+                 								]
+                 								info "Added: " + title;
+                 							}
+                 							else
+                 							{
+                 								info "Skipping insert - invalid Procore ID: " + procore_id;
+                 							}
+                 						}
+                 					}
+                 					catch (observation_exception)
+                 					{
+                 						info "Error processing observation in project " + project_name + ": " + observation_exception;
+                 					}
+                 				}
+                 			}
+                 			else
+                 			{
+                 				info "No observations found for project: " + project_name;
+                 			}
+                 		}
+                 		else
+                 		{
+                 			info "No response from observations API for project: " + project_name;
+                 		}
+                 	}
+                 	catch (project_exception)
+                 	{
+                 		info "Error processing project " + project_name + ": " + project_exception;
+                 	}
+                 }
+			 }
+		 }
+		workflow
+		{
+
+
+
+
+
+
+		functions
+		{
+			Sentiment_Analysis2 as "Sentiment_Analysis2"
+			{
+				type =  functions
+				form = Procore_Observations
+				execution type = for each record	
+				on start
+				{
+				}
+			}
+		}
+	}
+	share_settings
+	{
+			"Read"
+			{
+				name = "Read"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have read permission for all components\n"
+			}
+			"Write"
+			{
+				name = "Write"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have write permission for all components\n"
+			}
+			"Developer"
+			{
+				name = "Developer"
+				type = Developer
+				permissions = {Chat:false, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "Developer Profile\n"
+			}
+			"Administrator"
+			{
+				name = "Administrator"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have all the permissions.\n"
+			}
+			"Customer"
+			{
+				name = "Customer"
+				type = Customer_Portal
+				permissions = {Chat:false, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This is the default profile having only add and view permission.\n"
+			}
+			roles
+			{
+				"CEO"
+				{
+					description = "User belonging to this role can access data of all other users."
+				}
+			}
+	}
+
+	customize
+	{
+		icon
+		{
+			image = "image_1764918301237.png"
+		}
+	}
+
+	web
+	{
+		forms
+		{
+			form Parameter
+			{
+				label placement = left
+			}
+			form Procore_Actions
+			{
+				label placement = left
+			}
+			form Procore_Change_Orders
+			{
+				label placement = left
+			}
+			form Procore_Companies
+			{
+				label placement = left
+			}
+			form Procore_Daily_Logs
+			{
+				label placement = left
+			}
+			form Procore_Observations
+			{
+				label placement = left
+			}
+			form Procore_Projects
+			{
+				label placement = left
+			}
+			form Procore_RFIs
+			{
+				label placement = left
+			}
+			form Procore_Submittals
+			{
+				label placement = left
+			}
+			form Procore_Sync_Log
+			{
+				label placement = left
+			}
+			form Procore_Users
+			{
+				label placement = left
+			}
+		}
+		reports
+		{
+			report Procore_Companies_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_Company_ID
+								Company_Name
+								Company_Type
+								Address
+								Phone
+								Primary_Contact
+								Is_Active
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Company_ID
+								Company_Name
+								Company_Type
+								Address
+								Phone
+								Primary_Contact
+								Is_Active
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Projects_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Project_ID_MultiLine as "Project ID MultiLine"
+								Procore_Project_ID
+								Project_Name
+								Project_Number
+								Company_ID
+								Owner_Company_ID
+								Project_Stage
+								Start_Date
+								Completion_Date
+								Project_Value
+								Currency
+								Address
+								Status
+								Created_Date
+								Last_Synced
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Project_ID
+								Project_Name
+								Project_Number
+								Company_ID
+								Owner_Company_ID
+								Project_Stage
+								Start_Date
+								Completion_Date
+								Project_Value
+								Currency
+								Address
+								Status
+								Created_Date
+								Last_Synced
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Users_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_User_ID
+								Full_Name
+								Email
+								Job_Title
+								Company_ID
+								Phone
+								Status
+								User_Type
+								Permissions
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_User_ID
+								Full_Name
+								Email
+								Job_Title
+								Company_ID
+								Phone
+								Status
+								User_Type
+								Permissions
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_RFIs_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_RFI_ID
+								RFI_Number
+								Project_ID
+								Subject1 as "Subject"
+								Question
+								Status
+								Priority
+								Created_By
+								Assigned_To
+								Due_Date
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_RFI_ID
+								RFI_Number
+								Project_ID
+								Subject1 as "Subject"
+								Question
+								Status
+								Priority
+								Created_By
+								Assigned_To
+								Due_Date
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Submittals_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_Submittal_ID
+								Submittal_Number
+								Project_ID
+								Title
+								Specification_Section
+								Status
+								Submittal_Type
+								Created_By
+								Reviewer
+								Due_Date
+								Reviewed_Date
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Submittal_ID
+								Submittal_Number
+								Project_ID
+								Title
+								Specification_Section
+								Status
+								Submittal_Type
+								Created_By
+								Reviewer
+								Due_Date
+								Reviewed_Date
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Daily_Logs_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_Daily_Log_ID
+								Project_ID
+								Log_Date
+								Weather_AM
+								Weather_PM
+								Temperature_High
+								Temperature_Low
+								Work_Summary
+								Total_Workers_On_Site
+								Created_By
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Daily_Log_ID
+								Project_ID
+								Log_Date
+								Weather_AM
+								Weather_PM
+								Temperature_High
+								Temperature_Low
+								Work_Summary
+								Total_Workers_On_Site
+								Created_By
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Change_Orders_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Procore_Change_Order_ID
+								Change_Order_Number
+								Project_ID
+								Title
+								Description
+								Status
+								Change_Type
+								Cost_Impact
+								Schedule_Impact_Days
+								Created_By
+								Approved_By
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Change_Order_ID
+								Change_Order_Number
+								Project_ID
+								Title
+								Description
+								Status
+								Change_Type
+								Cost_Impact
+								Schedule_Impact_Days
+								Created_By
+								Approved_By
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Observations_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Project_ID
+								Location_Name
+								Description
+								Safety_Description
+								Created_Date
+								Chargeable
+								Is_Chargeable
+								Charge_Reason
+								Charge_Confidence
+								Charge_Category
+								Immediate_Action_Required
+								Is_Safety_Concern
+								Procore_Observation_ID
+								ID
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Observation_ID
+								Observation_Number
+								Observation_Type
+								Category
+								Title
+								Description
+								Status
+								Priority
+								Location_Name
+								Created_By
+								Assigned_To
+								Due_Date
+								Resolved_Date
+								Cost_Impact
+								Schedule_Impact_Days
+								Photo_Count
+								Weather_Conditions
+								Temperature
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Procore_Sync_Log_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Sync_ID
+								Sync_Type
+								Sync_Status
+								Records_Processed
+								Error_Message
+								Sync_Started
+								Sync_Completed
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Sync_ID
+								Sync_Type
+								Sync_Status
+								Records_Processed
+								Error_Message
+								Sync_Started
+								Sync_Completed
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Procore_Actions
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Project_ID
+								Project_name as "Project name"
+								Project_Number
+								Procore_Observation_ID
+								Action_field1 as "Action"
+								Priority
+								Status
+								Due_Date
+								Assigned_To
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Project_ID
+								Procore_Observation_ID
+								Action_field1 as "Action"
+								Priority
+								Status
+								Due_Date
+								Assigned_To
+								Created_Date
+								Completed_Date
+								Action_Order
+								Is_Safety_Related
+								Risk_Level
+								Requires_Approval
+								Approved_By
+								Approved_Date
+								Estimated_Hours
+								Notes
+								Related_Trade
+								Project_Number
+								Action_Count
+								Project_name as "Project name"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Parameters
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								ProcoreClientID
+								ProcoreSecret
+								ProcoreCompanyID
+								ProcoreAccessToken
+								ProcoreRefreshToken
+								ProcoreTokenRefreshedAt
+								ProcoreTokenExpires
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								ProcoreClientID
+								ProcoreSecret
+								ProcoreCompanyID
+								ProcoreAccessToken
+								ProcoreRefreshToken
+								ProcoreTokenRefreshedAt
+								ProcoreTokenExpires
+								ProcoreAutorisationCode
+								ProcoreApp
+								ProcoreInstallationKey
+								ProcoreRedirect
+								ProcodeReAuthorisation
+								Last_Refreshed
+								float_api_key1 as "Float_Api_Key"
+								Last_Processed_Project_Index
+								last_processed_index
+								processed_project_ids
+								LastProcessedProjectIndex
+								ProcessedProjectIds
+								Sync_In_Progress
+								ClaudeAPI
+								Multi_Line as "Multi Line"
+								Generated_HTML
+								Last_Generated
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+		}
+		menu
+		{
+			space Space
+			{
+				displayname = "Space"
+				icon = "objects-spaceship"
+
+				section ZC_App_Preferences
+				{
+					displayname = "App Preferences"
+					icon = "design-app"
+					systemcomponent
+					{
+						type = localization
+						displayname = "Language Selection"
+						icon = "education-language"
+					}
+					systemcomponent
+					{
+						type = connection
+						displayname = "Integrations"
+						icon = "tech-2-connection"
+					}
+				}
+				section ZC_Approvals
+				{
+					displayname = "Approvals"
+					icon = "ui-2-hourglass"
+					systemcomponent
+					{
+						type = approval
+						approval status = pending
+						displayname = "Pending Tasks"
+						icon = "ui-2-hourglass"
+					}
+					systemcomponent
+					{
+						type = approval
+						approval status = completed
+						displayname = "Completed Tasks"
+						icon = "design-todo"
+					}
+				}
+				section SharedAnalytics_Section
+				{
+					type = shared_user_report_section
+					displayname = "Reports"
+					icon = "business-chart-bar-33"
+				}
+				section Parameters
+				{
+					displayname = "Parameters"
+					icon = "travel-swiss-knife"
+					form  Parameter
+					{
+						icon = "design-vector"
+					}
+					report All_Parameters
+					{
+						icon = "design-vector"
+					}
+				}
+			}
+			space Float_Space
+			{
+				displayname = "Float"
+				icon = "objects-spaceship"
+
+			}
+			space Procore
+			{
+				displayname = "Procore"
+				icon = "objects-spaceship"
+
+				section Procore_Companies
+				{
+					displayname = "Procore_Companies"
+					icon = "tech-desktop"
+					form  Procore_Companies
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Companies_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Projects
+				{
+					displayname = "Procore_Projects"
+					icon = "tech-desktop"
+					form  Procore_Projects
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Projects_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Actions
+				{
+					displayname = "Procore Actions"
+					icon = "media-1-action-74"
+					form  Procore_Actions
+					{
+						icon = "media-1-action-74"
+					}
+					report All_Procore_Actions
+					{
+						icon = "tech-desktop"
+					}
+				}
+				section Procore_Users
+				{
+					displayname = "Procore_Users"
+					icon = "tech-desktop"
+					form  Procore_Users
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Users_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_RFIs
+				{
+					displayname = "Procore_RFIs"
+					icon = "tech-desktop"
+					form  Procore_RFIs
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_RFIs_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Observations
+				{
+					displayname = "Procore_Observations"
+					icon = "tech-desktop"
+					form  Procore_Observations
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Observations_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Sync_Log
+				{
+					displayname = "Procore_Sync_Log"
+					icon = "tech-desktop"
+					form  Procore_Sync_Log
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Sync_Log_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Change_Orders
+				{
+					displayname = "Procore_Change_Orders"
+					icon = "tech-desktop"
+					form  Procore_Change_Orders
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Change_Orders_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Daily_Logs
+				{
+					displayname = "Procore_Daily_Logs"
+					icon = "tech-desktop"
+					form  Procore_Daily_Logs
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Daily_Logs_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section Procore_Submittals
+				{
+					displayname = "Procore_Submittals"
+					icon = "tech-desktop"
+					form  Procore_Submittals
+					{
+						icon = "tech-desktop"
+					}
+					report Procore_Submittals_Report
+					{
+						icon = "business-laptop-71"
+					}
+				}
+			}
+			preference
+			{
+				icon
+				{
+					style = solid
+					show = {space,section,component}
+				}
+			}
+		}
+		customize
+		{
+			new theme = 6
+			font = "rubik"
+			color options
+			{
+				color = "1"
+			}
+			logo
+			{
+				preference = "none"
+				placement = "left"
+			}
+		}
+	}
+	phone
+	{
+		forms
+		{
+			form Parameter
+			{
+				label placement = auto
+			}
+			form Procore_Actions
+			{
+				label placement = auto
+			}
+			form Procore_Change_Orders
+			{
+				label placement = auto
+			}
+			form Procore_Companies
+			{
+				label placement = auto
+			}
+			form Procore_Daily_Logs
+			{
+				label placement = auto
+			}
+			form Procore_Observations
+			{
+				label placement = auto
+			}
+			form Procore_Projects
+			{
+				label placement = auto
+			}
+			form Procore_RFIs
+			{
+				label placement = auto
+			}
+			form Procore_Submittals
+			{
+				label placement = auto
+			}
+			form Procore_Sync_Log
+			{
+				label placement = auto
+			}
+			form Procore_Users
+			{
+				label placement = auto
+			}
+		}
+		reports
+		{
+			report Procore_Observations_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = Custom
+		 				selectedlayout = "Custom Layout 1"
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on tap
+						(
+							View Record   	   
+    					)
+						on long press
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Procore_Observation_ID
+								Observation_Number
+								Observation_Type
+								Category
+								Title
+								Description
+								Status
+								Priority
+								Location_Name
+								Created_By
+								Assigned_To
+								Due_Date
+								Resolved_Date
+								Cost_Impact
+								Schedule_Impact_Days
+								Photo_Count
+								Weather_Conditions
+								Temperature
+								Created_Date
+								Last_Sync
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = yellow
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	tablet
+	{
+		forms
+		{
+			form Parameter
+			{
+				label placement = auto
+			}
+			form Procore_Actions
+			{
+				label placement = auto
+			}
+			form Procore_Change_Orders
+			{
+				label placement = auto
+			}
+			form Procore_Companies
+			{
+				label placement = auto
+			}
+			form Procore_Daily_Logs
+			{
+				label placement = auto
+			}
+			form Procore_Observations
+			{
+				label placement = auto
+			}
+			form Procore_Projects
+			{
+				label placement = auto
+			}
+			form Procore_RFIs
+			{
+				label placement = auto
+			}
+			form Procore_Submittals
+			{
+				label placement = auto
+			}
+			form Procore_Sync_Log
+			{
+				label placement = auto
+			}
+			form Procore_Users
+			{
+				label placement = auto
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = yellow
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	translation
+{
+{"Language_Settings":{"LANGAGUE_WITH_LOGIN":"browser"}}
+}
+}

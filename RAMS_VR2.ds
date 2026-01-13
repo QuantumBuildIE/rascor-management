@@ -1,0 +1,2798 @@
+/*
+ * Author       : quantumbuild1
+ * Generated on : 09-Jan-2026 11:52:42
+ * Version      : 1.0
+ */
+ application "RAMS VR2"
+ {
+ 	date format = "dd-MMM-yyyy"
+ 	time zone = "Asia/Calcutta"
+ 	time format = "24-hr"
+ 	forms
+	{
+		form MCP_Audit_Log
+		{
+			displayname = "MCP Audit Log"
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Log_ID
+			(
+    			type = autonumber
+				start index = 1
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Ref
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Transaction_Type
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Source_Record_Link
+			(
+    			type = text
+				initial value = "Source_Record_Link"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Timestamp
+			(
+    			type = datetime
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Input_Prompt
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Output_Content
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			AI_Status
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Source_Context_Links
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Method_Step_Subform
+		{
+			displayname = "Method Step Subform"
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Step_Number
+			(
+				type = decimal
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Master_Form
+			(
+				type = picklist	
+				displayname = "Project Master Form"
+				values  = Project_Master_Data.ID
+    			displayformat = [ID]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Ref
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Step_Title
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Detailed_Procedure
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Link_to_Risk
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Required_Permits
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			SPA_Signoff_Link
+			(
+    			type = url
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Parameters
+		{
+			success message = "Parameter Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Template_Configs
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		properties
+		{
+			total entries
+			{
+				allowed count = 1
+			}
+		}
+		}
+		form Project_Master_Data
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Project_Name
+			(
+    			type = text
+				initial value = "Paddington Green Police Station (Trillium)"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Type
+			(
+				type = picklist
+				maxchar = 100
+				values = {"Remedial Injection","RASCOtank New Build","Car Park Coating","Ground Gas Barrier"}
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Ref
+			(
+    			type = text
+				initial value = "UK230176"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Client_Name
+			(
+    			type = text
+				initial value = "GCL"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Site_Address
+			(
+    			type = text
+				initial value = "London, W2 1LG"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Area_of_Activity
+			(
+    			type = text
+				initial value = "Basement Sub-structure and Ground Floor"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Proposed_Start_Date
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Safety_Officer
+			(
+    			type = name
+     			prefix
+     			(
+	     			 type = prefix
+	     			 displayname ="Prefix"
+	     			 visibility = false
+	     			 value = {"Mr.","Mrs.","Ms."}
+     			) 
+     			first_name
+     			(
+	     			 type = first_name
+	     			 displayname ="First Name"
+     			) 
+     			last_name
+     			(
+	     			 type = last_name
+	     			 displayname ="Last Name"
+	     			 visibility = false
+     			) 
+     			suffix
+     			(
+	     			 type = suffix
+	     			 displayname ="Suffix"
+	     			 visibility = false
+     			) 
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			AI_Final_RAMS_Link
+			(
+    			type = url
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			RAMS_Status
+			(
+    			type = text
+				initial value = "Approved"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Date_Approved
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Method_Statement_Body
+			(
+    			type = richtext
+				height = 200px
+				toolbar = enable
+				[
+					style, font-color, background-color, link, bullets-and-numbering, 
+					font-size : {1, 2, 3, 4, 5, 6, 7}
+				]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form RAMS_Document_Generator
+		{
+			displayname = "RAMS Document Generator"
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Project_Master_Form
+			(
+				type = picklist	
+				displayname = "Project Master Form"
+				values  = Project_Master_Data.ID
+    			displayformat = [ID]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Method_Statement_Body
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Risk_Assessment_Table
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Document_Name
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Generation_Status
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form RASCOR_Library
+		{
+			displayname = "RASCOR Library"
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			SOP_ID
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Topic
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Task_Keyword
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			RASCOR_Policy_Snippet
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			SOP_Procedure_Details
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Applicable_Legislation
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			GD_Document_Link
+			(
+    			type = url
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Risk_Assessment_Subform
+		{
+			displayname = "Risk Assessment Subform"
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Task_Activity
+			(
+    			type = text
+    			description
+    			[
+    				type = help_text
+    			 	message = "CRITICAL INPUT: Triggers the MCP Orchestrator."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Ref
+			(
+    			type = text
+				displayname = "Project Ref"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Project_Master_Form
+			(
+				type = picklist	
+				displayname = "Project Master Form"
+				values  = Project_Master_Data.ID
+    			displayformat = [ID]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Location_Area
+			(
+    			type = text
+    			description
+    			[
+    				type = help_text
+    			 	message = "Used by the Orchestrator for context (e.g., UK legislation)."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Hazard_Identified1
+			(
+				type = list	
+				displayname = "Hazard_Identified"
+				values = {"Slips","Trip","falls","Irritation of eyes","Allergic reaction","Accidental mixing leading to toxic fumes"}
+				height = 60px
+    			description
+    			[
+    				type = help_text
+    			 	message = "Manual input, describing the potential harm (e.g., Fall from Height)."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Who_At_Risk
+			(
+				type = radiobuttons
+				values = {"Rascor employees","Rascor employees/Other trades"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Initial_Likelihood_L1
+			(
+				type = number
+				displayname = "Initial_Likelihood (L1)"
+    			description
+    			[
+    				type = help_text
+    			 	message = "List of roles (Employees, Public, Contractors)."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Initial_Severity_S1
+			(
+				type = number
+				displayname = "Initial_Severity (S1)"
+    			description
+    			[
+    				type = help_text
+    			 	message = "User sets the severity before controls."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Initial_Risk_Rating_R1
+			(
+				type = number
+				displayname = "Initial_Risk_Rating (R1)"
+    			description
+    			[
+    				type = help_text
+    			 	message = "Calculated: $\\text{L1} \\times \\text{S1}$ score."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Relevant_Legislation
+			(
+    			type = text
+    			description
+    			[
+    				type = help_text
+    			 	message = "AI Generated: Populated by the MCP Orchestrator using the RASCOR Library context."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Control_Measures
+			(
+    			type = text
+    			description
+    			[
+    				type = help_text
+    			 	message = "AI Generated: Detailed controls (mitigations) generated by the AI."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Reference_SOPs
+			(
+    			type = text
+    			description
+    			[
+    				type = help_text
+    			 	message = "Links to the SOPs used by the AI (e.g., SOP-09 Cutting)."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Residual_Likelihood_L2
+			(
+				type = number
+				displayname = "Residual_Likelihood (L2)"
+    			description
+    			[
+    				type = help_text
+    			 	message = "User sets the likelihood after controls are applied."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Residual_Severity_S2
+			(
+				type = number
+				displayname = "Residual_Severity (S2)"
+    			description
+    			[
+    				type = help_text
+    			 	message = "User sets the severity after controls are applied."
+    			]
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Residual_Risk_Rating_R2
+			(
+				type = radiobuttons
+				displayname = "Residual_Risk_Rating (R2)"
+				values = {"2 (Low)","5 (Low)"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Action_By
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Date_Completed
+			(
+    			type = date
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+					reset
+					(
+   						type = reset
+   						displayname = "Reset"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+	}
+	reports
+	{
+		list Risk_Assessment_Subform1
+		{
+			displayName = "Risk Assessment Subform"
+			show all rows from Risk_Assessment_Subform    
+			(
+				Task_Activity
+				Location_Area
+				Who_At_Risk
+				Initial_Likelihood_L1 as "Initial_Likelihood (L1)"
+				Initial_Severity_S1 as "Initial_Severity (S1)"
+				Initial_Risk_Rating_R1 as "Initial_Risk_Rating (R1)"
+				Relevant_Legislation
+				Control_Measures
+				Residual_Likelihood_L2 as "Residual_Likelihood (L2)"
+				Residual_Severity_S2 as "Residual_Severity (S2)"
+				Residual_Risk_Rating_R2 as "Residual_Risk_Rating (R2)"
+				Action_By
+				Date_Completed
+			)
+		}
+		list Method_Step_Subform_Report
+		{
+			displayName = "Method Step Subform Report"
+			show all rows from Method_Step_Subform    
+			(
+				Step_Number
+				Step_Title
+				Detailed_Procedure
+				Link_to_Risk
+				Required_Permits
+				SPA_Signoff_Link
+			)
+		}
+		list MCP_Audit_Log1
+		{
+			displayName = "MCP Audit Log"
+			show all rows from MCP_Audit_Log    
+			(
+				Source_Record_Link
+				Timestamp
+				AI_Status
+				Source_Context_Links
+			)
+		}
+		list All_Rascor_Libraries
+		{
+			displayName = "All Rascor Libraries"
+			show all rows from RASCOR_Library    
+			(
+				SOP_ID
+				Topic
+				Task_Keyword
+				RASCOR_Policy_Snippet
+				SOP_Procedure_Details
+				Applicable_Legislation
+				GD_Document_Link
+			)
+		}
+		list All_Project_Masters
+		{
+			displayName = "All Project Masters"
+			show all rows from Project_Master_Data    
+			(
+				Project_Name
+				Project_Ref
+				Client_Name
+				Site_Address
+				Area_of_Activity
+				Proposed_Start_Date
+				Safety_Officer 
+	 			(
+	      			displayformat = [first_name+""+prefix+""+last_name+""+suffix]
+	 			)
+				AI_Final_RAMS_Link
+				RAMS_Status
+				Date_Approved
+				custom action "Generate_RAMS_PDF"
+				(
+	  			workflow = Generate_RAMS_PDF
+				show action in edit record menu = true
+				column header = "Generate_RAMS_PDF"
+				)
+			)
+		}
+		list RAMS_Document_Generator_Report
+		{
+			displayName = "RAMS Document Generator Report"
+			show all rows from RAMS_Document_Generator    
+			(
+				Method_Statement_Body
+				Risk_Assessment_Table
+				Document_Name
+				Generation_Status
+			)
+		}
+		default list All_Parameters
+		{
+			displayName = "All Parameters"
+			show all rows from Parameters    
+			(
+				Template_Configs
+			)
+		}
+	}
+	pages
+	{
+		page DashBoard
+		{
+			displayname = "Dashboard"
+			Content="<zml    \t\t\n\t\t\n\t\t\n\t\t\n\t\t\n>\n\t<layout>\n\t<row>\n\t<column\n   \t\t width='100%'\n   \t>\n\t<search \n\telementName='Search'\n\tpaddingTop = '0px'\n\tpaddingLeft = '0px'\n\tpaddingRight = '0px'\n\tpaddingBottom = '0px'\n\tbgtype = 'none'\n\tbgColor = 'transparent'\n\n\tshape = 'flat'\n\tresultComponent = 'report'\n\tlinkName = 'MCP_Audit_Log1'\n\ttarget = 'new-window'\n\tcriteriaString = 'Source_Record_Link.contains(input.searchString)'\n\tfontFamily = 'default'\n\tappLinkName = 'thisapp'\n\tstyle = '4'\n\tplaceholder = 'Enter Source_Record_Link'\n\n>\n<searchbar color=\"#000000\" bgColor=\"#ffffff\" fontSize=\"15px\"\n\/><searchbutton color=\"#ffffff\" bgColor=\"#0072F4\" \nfontSize=\"15px\"  \/><\/search>\n<\/column>\n<\/row><row>\n\t<column\n   \t\t width='30%'\n   \t>\n\t<panel elementName='Welcome_Panel 1'\n \n >\n\t<pr \n\t\t\twidth='fill'\n\t\theight='fill'\n>\n\t<pc \n\t\tpaddingTop = '17px'\n\tpaddingLeft = '17px'\n\tpaddingRight = '0px'\n\tpaddingBottom = '17px'\n\tbgColor = '#FFFFFF'\n\n\t\twidth = '100%'\n\t\thAlign = 'left'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<image  \n\t\tmarginBottom = '0px'\n\tmarginTop = '0px'\n\n\tcolor = '#8D85DE'\n\twidth = '52px'\n\theight = '52px'\n\ttype = 'icon'\n\tvalue = 'users-badge-13'\n\tsize = '22px'\n\tcornerRadius = '26px'\n\ticonType = 'outline'\n\/>\n<\/pc><pc \n\t\n>\n\t<pr \n\t>\n\t<pc \n\t\n>\n\t<text \n\n\tmarginLeft = '10px'\n\tmarginRight = '0px' \n\tmarginBottom = '10px'\n\tcolor = '#000000'\n\tsize = '16px'\n\ttype = 'Text'\n\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\n\n\n\n\n\t  value = 'Welcome'\n>\n<\/text>\n\n<\/pc>\n<\/pr><pr \n\t>\n\t<pc \n\t\n>\n\t<text \n\n\tmarginLeft = '10px'\n\tmarginBottom = '0px'\n\tmarginTop = '0px'\n\tcolor = '#726BC2'\n\tsize = '18px'\n\tbold = 'true' \n\ttype = 'Text'\n\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\n\n\n\n\n\t  value = '${zoho.loginuserid}'\n>\n<\/text>\n\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/panel>\n<\/column><column\n   \t\t width='25%'\n   \t>\n\t<panel elementName='Default_Panel 1'\n \n >\n\t<pr \n\t\t\twidth='fill'\n\t\theight='fill'\n>\n\t<pc \n\t\tpadding = '0px'\n\tbgColor = '#FAE8FF'\n\n\t\twidth = '100%'\n\t\thAlign = 'center'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='fill'\n\t\theight='fill'\n>\n\t<pc \n\t\tpadding = '20px'\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\t\twidth = '63%'\n\t\thAlign = 'center'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<text \n\n\tcolor = '#000000'\n\tsize = '16px'\n\ttype = 'Text'\n\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\n\n\n\n\n\t  value = 'Total Sheet2'\n>\n<\/text>\n\n<\/pc>\n<\/pr>\n<\/pc><pc \n\t\tpaddingTop = '17px'\n\tpaddingLeft = '0px'\n\tpaddingRight = '17px'\n\tpaddingBottom = '17px'\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\t\twidth = '18%'\n\t\thAlign = 'center'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<text \n\n\tcolor = '#FF4C2F'\n\tsize = '20px'\n\tbold = 'true' \n\ttype = 'Form Data'\n\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\n\tdisplayType = 'actual'\n\tthousandsSeperator = 'LOCALE'\n\tdecimalSeperator = 'DOT'\n\tnumberScale = 'none'\n\n\n\n\n\t  value = 'thisapp.MCP_Audit_Log.ID.count'\n>\n<\/text>\n\n<\/pc>\n<\/pr>\n<\/pc><pc \n\t\tpaddingTop = '17px'\n\tpaddingLeft = '0px'\n\tpaddingRight = '17px'\n\tpaddingBottom = '17px'\n\tbgColor = 'transparent'\n\n\t\twidth = '19%'\n\t\thAlign = 'center'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<image  \n\t\n\tcolor = '#2D2D2D'\n\twidth = '40px'\n\theight = '40px'\n\ttype = 'icon'\n\tvalue = 'business-laptop-71'\n\tsize = '22px'\n\tcornerRadius = '20px'\n\ticonType = 'outline'\n\/>\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/panel>\n<\/column><column\n   \t\t width='45%'\n   \t>\n\t<panel elementName='Panel_Button 1'\n \n >\n\t<pr \n\t\t\twidth='fill'\n\t\theight='fill'\n>\n\t<pc \n\t\tpadding = '0px'\n\tbgColor = '#EAE3FF'\n\n\t\twidth = '100%'\n\t\thAlign = 'center'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='fill'\n\t\theight='fill'\n>\n\t<pc \n\t\tpaddingTop = '17px'\n\tpaddingLeft = '17px'\n\tpaddingRight = '0px'\n\tpaddingBottom = '17px'\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\t\twidth = '20%'\n\t\thAlign = 'left'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<text \n\n\tcolor = '#000000'\n\tsize = '16px'\n\ttype = 'Text'\n\n\tbgColor = 'rgba(0, 0, 0, 0)'\n\n\n\n\n\n\n\t  value = 'Quick Links:'\n>\n<\/text>\n\n<\/pc>\n<\/pr>\n<\/pc><pc \n\t\tpadding = '20px'\n\tbgColor = 'transparent'\n\n\t\twidth = '40%'\n\t\thAlign = 'center'\n\t\tvAlign = 'middle'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n\t\tvAlign = 'middle'\n>\n\t<button \n\t\tmarginLeft = '0px'\n\tmarginRight = '0px' \n\tmarginBottom = '0px'\n\tmarginTop = '0px'\n\n    action = 'OpenForm'\n\t\tcomponentLinkName = 'MCP_Audit_Log'\n\t\ttarget = 'new-window'\n\tcolor = '#FFFFFF'\n\tsize = '16px'\n\ttext ='Add New Sheet2'\n\t\ttype = 'rounded'\n\t\tbgColor = '#8D85DE'\n\t\tcornerRadius = '45.5938px' \n\/>\n<\/pc>\n<\/pr>\n<\/pc><pc \n\t\tpaddingTop = '17px'\n\tpaddingLeft = '0px'\n\tpaddingRight = '17px'\n\tpaddingBottom = '17px'\n\tbgColor = 'transparent'\n\n\t\twidth = '40%'\n\t\thAlign = 'center'\n>\n\t<pr \n\t\t\twidth='auto'\n\t\theight='auto'\n>\n\t<pc \n\t\n>\n\t<button \n\t\tmarginLeft = '0px'\n\tmarginRight = '0px' \n\tmarginBottom = '0px'\n\tmarginTop = '0px'\n\n    action = 'OpenReport'\n\t\tcomponentLinkName = 'MCP_Audit_Log1'\n\t\ttarget = 'new-window'\n\tcolor = '#FFFFFF'\n\tsize = '16px'\n\ttext ='Show Sheet2 Report'\n\t\ttype = 'rounded'\n\t\tbgColor = '#8D85DE'\n\t\tcornerRadius = '45.5938px' \n\/>\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/pc>\n<\/pr>\n<\/panel>\n<\/column>\n<\/row><row>\n\t<column\n   \t\t width='100%'\n   \t>\n\t<report \n\telementName='Report'\n\n\t\tappLinkName = 'thisapp'\n\t\tlinkName = 'MCP_Audit_Log1'\n\t\n\t\tiszreport = 'false'\n\t\t\t\t\tzc_AddRec = 'false'\n\t\t\t\t\tzc_EditRec = 'false'\n\t\t\t\t\tzc_Print = 'false'\n\t\t\t\t\tzc_Export = 'false'\n\t\t\t\t\tzc_DelRec = 'false'\n\t\t\t\t\tzc_DuplRec = 'false'\n\t\t\t\t\tzc_Search = 'false'\n\t\t\t\t\tzc_EditBulkRec = 'false'\n\t\t\t\t\tzc_BulkDelete = 'false'\n\t\t\t\t\tzc_BulkDuplicate = 'false'\n\theightType = 'auto'\n\theightValue = '700'\n\n\/>\n<\/column>\n<\/row>\n<\/layout>\n<\/zml>"
+		}
+	}
+
+
+		 functions
+		 {
+			 Deluge
+			 {
+				 string calculateRiskLevel(int score)
+                 {
+                 	// Function Name: calculateRiskLevel
+                 	// Purpose: Converts the numerical Risk Score (Likelihood x Severity) into a qualitative Risk Level string based on the RASCOR matrix.
+                 	// Input: score (int) - The calculated numerical risk score (e.g., 20).
+                 	// Output: string - The qualitative risk level (e.g., "Extreme (E)").
+                 	riskLevel = "";
+                 	// RASCOR Risk Level Evaluation Matrix (Source Page 27, extracted thresholds)
+                 	// Almost Certain: 20-25
+                 	// Probable: 15-16
+                 	// Very possible: 10-12
+                 	// Possible: 5-9
+                 	// Unlikely: 1-4
+                 	if(score >= 20)
+                 	{
+                 		// Corresponds to 'Almost Certain' and the highest scores (20-25)
+                 		riskLevel = "Extreme (E)";
+                 	}
+                 	else if(score >= 15)
+                 	{
+                 		// Corresponds to 'Probable' (15-16)
+                 		riskLevel = "High (H)";
+                 	}
+                 	else if(score >= 10)
+                 	{
+                 		// Corresponds to 'Very possible' (10-12)
+                 		riskLevel = "Medium-High (M-H)";
+                 	}
+                 	else if(score >= 5)
+                 	{
+                 		// Corresponds to 'Possible' (5-9)
+                 		riskLevel = "Medium (M)";
+                 	}
+                 	else if(score >= 1)
+                 	{
+                 		// Corresponds to 'Unlikely' (1-4)
+                 		riskLevel = "Low (L)";
+                 	}
+                 	else
+                 	{
+                 		// Should only happen if L2 or S2 is zero, which is typically not allowed.
+                 		riskLevel = "Negligible (N)";
+                 	}
+                 	return riskLevel + " (" + score + ")";
+                 }
+				 void generate_final_rams(int projectMasterID)
+                 {
+                 	projectMasterID = "";
+                 	// Function Name: generate_final_rams
+                 	// Purpose: Merges all project data (Master, Risks, Steps) into a Zoho Writer template, saves to Drive, and logs the URL.
+                 	// Trigger: Attached to a "Generate Final RAMS Document" button on the Project Master Form.
+                 	// --- 1. DATA ASSEMBLY ---    
+                 	// Retrieve the main project data (Parent Record)
+                 	projectData = Project_Master_Data[ID == projectMasterID];
+                 	// Query ALL linked Risk Assessments (Child Records)
+                 	riskRecords = Risk_Assessment_Subform[Project_Ref == ""];
+                 	// Query ALL linked Method Steps (Child Records)
+                 	methodRecords = Method_Step_Subform[Project_Ref == ""];
+                 	// --- 2. PREPARE THE DATA MAP FOR MERGE ---
+                 	// MergeMap holds all data that Zoho Writer will inject into the template
+                 	mergeMap = Map();
+                 	// A. Single Field Data (Directly from Project Master Form)
+                 	mergeMap.put("Project_Name",projectData.Project_Name);
+                 	mergeMap.put("Project_Ref",projectData.Project_Ref);
+                 	mergeMap.put("Client_Name",projectData.Client_Name);
+                 	mergeMap.put("Site_Address",projectData.Site_Address);
+                 	mergeMap.put("Safety_Officer",projectData.Safety_Officer);
+                 	// B. Prepare the Risk Assessment Table Data (List of Maps)
+                 	riskTableData = list();
+                 	for each  risk in riskRecords
+                 	{
+                 		row = Map();
+                 		// Placeholders in Zoho Writer Template must match these keys (e.g., ${RA_Task})
+                 		row.put("RA_Task",risk.Task_Activity);
+                 		row.put("RA_R1_Score",risk.Initial_Risk_Rating_R1);
+                 		row.put("RA_Controls",risk.Control_Measures);
+                 		// AI Generated Text
+                 		row.put("RA_R2_Score",risk.Residual_Risk_Rating_R2);
+                 		// Calculated Level
+                 		row.put("RA_Legislation",risk.Relevant_Legislation);
+                 		// AI Generated Text
+                 		riskTableData.add(row);
+                 	}
+                 	// CRITICAL: Put the entire list of maps under a single key for the table placeholder in the template
+                 	mergeMap.put("Risk_Table",riskTableData);
+                 	// C. Prepare the Method Step Table Data (List of Maps)
+                 	methodTableData = list();
+                 	for each  step in methodRecords
+                 	{
+                 		row = Map();
+                 		row.put("MS_StepNum",step.Step_Number);
+                 		row.put("MS_Title",step.Step_Title);
+                 		row.put("MS_Procedure",step.Detailed_Procedure);
+                 		// AI Generated Text
+                 		row.put("MS_Permits",step.Required_Permits);
+                 		methodTableData.add(row);
+                 	}
+                 	mergeMap.put("Method_Steps_Table",methodTableData);
+                 	// --- 3. EXECUTE DOCUMENT MERGE AND CONVERSION ---
+                 	// Define the unique output file name
+                 	outputFileName = projectData.Project_Ref + "_RAMS.pdf";
+                 	/*
+                  	 // This task requires the pre-designed Zoho Writer template ID
+                 	ramsDocument = zoho.writer.mergeAndStore(
+                     "YOUR_ZO_WRITER_TEMPLATE_ID", // <<< REPLACE THIS TEMPLATE ID
+                     mergeMap,
+                     "pdf",
+                     outputFileName
+                 	);
+                  
+                     // --- 4. UPLOAD TO GOOGLE DRIVE ---
+                     
+                     // This calls the helper function you created to handle security and file transfer
+                     driveURL = uploadFileToGoogleDrive(ramsDocument, outputFileName);
+                     
+                     // --- 5. FINAL UPDATE AND LINKING ---
+                     
+                     if (driveURL != "UPLOAD_FAILED")
+                     {
+                         // Update the Project Master record with the link and status
+                         update Project_Master_Form [
+                             AI_Final_RAMS_Link : driveURL,
+                             RAMS_Status : "Pending Review",
+                             Date_Approved : today
+                         ] where ID == projectMasterID;
+                         
+                         info "Final RAMS document successfully generated and uploaded to Drive: " + driveURL;
+                     }
+                     else
+                     {
+                         // Log failure to the user
+                         info "ERROR: Document Generation failed. Check audit logs and Google Drive connection.";
+                         update Project_Master_Form [
+                             RAMS_Status : "Generation Failed"
+                         ] where ID == projectMasterID;
+                     }
+                 	  */
+                 }
+				 map get_RASCOR_Context(string task, string location)
+                 {
+                 	// Function Name: get_RASCOR_Context
+                 	// Purpose: To search the RASCOR Library Form and retrieve SOPs/Legislation for the AI prompt.
+                 	// Inputs: task (string - the Task_Activity from the user), location (string - the project location)
+                 	// Output: map containing contextual strings and links
+                 	// Initialize the map to hold all retrieved context snippets
+                 	contextMap = Map();
+                 	// Store default value for comparison later
+                 	defaultLegislation = "Health and Safety at Work etc. Act 1974 (HASAWA) is the minimum requirement.";
+                 	// --- 1. SET DEFAULTS (Essential for preventing errors if no match is found) ---
+                 	contextMap.put("SOP_Text","No specific RASCOR SOP found for this task. Adhere to general industry best practices.");
+                 	contextMap.put("Policy_Excerpt","RASCOR requires compliance with all relevant health and safety legislation.");
+                 	contextMap.put("Legislation_Context",defaultLegislation);
+                 	contextMap.put("Context_Links","N/A");
+                 	// --- 2. SEARCH SOP AND POLICY LIBRARY ---
+                 	// Deluge Criteria: Look for records where the 'Task_Keyword' field contains the user's input 'task'
+                 	sopCriteria = "Task_Keyword.contains(\"" + task + "\")";
+                 	// Execute the search against the RASCOR Library Form
+                 	// Replace "your_owner_name" with your actual Zoho Creator owner/account name
+                 	sopRecords = RASCOR_Library[Task_Keyword.contains(task)];
+                 	if(sopRecords.count(ID) > 0)
+                 	{
+                 		// Use the first matching record as the primary source of context
+                 		sopData = sopRecords.get(0);
+                 		// Extract key text snippets and overwrite defaults
+                 		contextMap.put("SOP_Text",ifnull(sopData.get("SOP_Procedure_Details"),""));
+                 		contextMap.put("Policy_Excerpt",ifnull(sopData.get("RASCOR_Policy_Snippet"),""));
+                 		contextMap.put("Legislation_Context",ifnull(sopData.get("Applicable_Legislation"),""));
+                 		// Compile audit links for the MCP Log
+                 		contextLinks = sopData.get("SOP_ID") + " | " + sopData.get("GD_Document_Link");
+                 		contextMap.put("Context_Links",contextLinks);
+                 	}
+                 	// --- 3. EXPAND LEGISLATION BASED ON LOCATION ---
+                 	// Check if legislation is still the default value
+                 	if(contextMap.get("Legislation_Context") == defaultLegislation)
+                 	{
+                 		if(location.containsIgnoreCase("UK"))
+                 		{
+                 			// Inject a common UK standard if a specific SOP wasn't found
+                 			contextMap.put("Legislation_Context",contextMap.get("Legislation_Context") + "; CDM Regulations 2015.");
+                 		}
+                 	}
+                 	// --- 4. RETURN CONSOLIDATED CONTEXT MAP ---
+                 	info contextMap;
+                 	return contextMap;
+                 }
+				 map invoke_AI_Agent(string aiPrompt)
+                 {
+                 	// Initialize the response map
+                 	apiResponseMap = Map();
+                 	// --- Configuration (Replace with your actual API details) ---
+                 	aiEndpoint = "https://api.openai.com/v1/chat/completions";
+                 	apiKey = "YOUR_AI_AGENT_API_KEY";
+                 	// Your secret token
+                 	// --- Prepare Headers ---
+                 	headerMap = Map();
+                 	headerMap.put("Authorization","Bearer " + apiKey);
+                 	headerMap.put("Content-Type","application/json");
+                 	// --- Prepare Payload (OpenAI Chat Completions format) ---
+                 	messageMap = Map();
+                 	messageMap.put("role","user");
+                 	messageMap.put("content",aiPrompt);
+                 	messagesList = List();
+                 	messagesList.add(messageMap);
+                 	payloadMap = Map();
+                 	payloadMap.put("model","gpt-3.5-turbo");
+                 	payloadMap.put("messages",messagesList);
+                 	payloadMap.put("max_tokens",1000);
+                 	// --- Execute the secure API call ---
+                 	response = invokeurl
+                 	[
+                 		url :aiEndpoint
+                 		type :POST
+                 		parameters:payloadMap.toString()
+                 		headers:headerMap
+                 		detailed:true
+                 	];
+                 	// --- Process and Return Output ---
+                 	// Change: Use null check (response != null) instead of containsKey for 'responseCode'
+                 	if(response != null && response.get("responseCode") != null)
+                 	{
+                 		statusCode = response.get("responseCode");
+                 		apiResponseMap.put("statusCode",statusCode);
+                 		// Use == for comparison
+                 		if(statusCode == 200)
+                 		{
+                 			responseBody = response.get("responseText");
+                 			// Deluge's toMap() function is correct for converting JSON string to Map
+                 			responseJson = responseBody.toMap();
+                 			// --- CRITICAL FIXES FOR NESTED STRUCTURE ---
+                 			// 1. Check for "choices" key by checking if the value is not null (Deluge equivalent of containsKey)
+                 			if(responseJson.get("choices") != null)
+                 			{
+                 				choices = responseJson.get("choices");
+                 				if(choices.size() > 0)
+                 				{
+                 					firstChoice = choices.get(0);
+                 					// 2. Safely access the nested 'message' map before accessing 'content'
+                 					messageMap = firstChoice.get("message");
+                 					if(messageMap != null)
+                 					{
+                 						// 3. Extract the final content
+                 						messageContent = messageMap.get("content");
+                 						apiResponseMap.put("response",messageContent);
+                 					}
+                 				}
+                 			}
+                 		}
+                 		else
+                 		{
+                 			// API returned an error
+                 			apiResponseMap.put("response","API Error: " + response.get("responseText"));
+                 		}
+                 	}
+                 	else
+                 	{
+                 		// Handle cases where no response was received
+                 		apiResponseMap.put("statusCode",504);
+                 		apiResponseMap.put("response","API connection timeout or no response.");
+                 	}
+                 	return apiResponseMap;
+                 }
+				 void MCP_Orchestrator(bigint inputRecordID)
+                 {
+                 	// Function Name: MCP_Orchestrator
+                 	// Purpose: Master controller for auditing, context retrieval, AI prompting, and form updating.
+                 	// Trigger: Attach to 'on success' or 'on user input' of the Task_Activity field in the Risk_Assessment_Subform.
+                 	// --- 1. INITIALIZATION & DATA RETRIEVAL ---
+                 	taskActivity = "";
+                 	locationArea = "";
+                 	projectMasterID = 0;
+                 	// Fetch the data from the currently saved Risk Assessment record
+                 	raRecords = Risk_Assessment_Subform[ID == inputRecordID];
+                 	for each  rec in raRecords
+                 	{
+                 		taskActivity = ifnull(rec.Task_Activity,"");
+                 		locationArea = ifnull(rec.Location_Area,"");
+                 		projectMasterID = rec.Project_Ref;
+                 		break;
+                 	}
+                 	if(taskActivity == "")
+                 	{
+                 		// Exit if no task is defined
+                 		return;
+                 	}
+                 	// --- 2. AUDIT START (WRITE TO MCP LOG) ---
+                 	mcpLogID = insert into MCP_Audit_Log
+                 	[
+                 		Added_User=zoho.loginuser
+                 		AI_Status="Processing"
+                 		Input_Prompt="Pending..."
+                 		Output_Content="Pending..."
+                 		Project_Ref=projectMasterID
+                 		Source_Context_Links="Pending..."
+                 		Source_Record_Link=inputRecordID.toString()
+                 		Timestamp=zoho.currenttime
+                 		Transaction_Type="AI: Generate Controls & Legislation"
+                 	];
+                 	// --- 3. CONTEXT RETRIEVAL (INTEGRATED RASCOR LIBRARY QUERY) ---
+                 	// Initialize context variables
+                 	contextMap = Map();
+                 	defaultLegislation = "Health and Safety at Work etc. Act 1974 (HASAWA) is the minimum requirement.";
+                 	contextMap.put("SOP_Text","No specific RASCOR SOP found for this task. Adhere to general industry best practices.");
+                 	contextMap.put("Policy_Excerpt","RASCOR requires compliance with all relevant health and safety legislation.");
+                 	contextMap.put("Legislation_Context",defaultLegislation);
+                 	contextMap.put("Context_Links","N/A");
+                 	// Search RASCOR_Library_Form
+                 	sopRecords = RASCOR_Library[Task_Keyword.contains(taskActivity)];
+                 	for each  sopData in sopRecords
+                 	{
+                 		contextMap.put("SOP_Text",ifnull(sopData.SOP_Procedure_Details,""));
+                 		contextMap.put("Policy_Excerpt",ifnull(sopData.RASCOR_Policy_Snippet,""));
+                 		contextMap.put("Legislation_Context",ifnull(sopData.Applicable_Legislation,""));
+                 		contextLinks = ifnull(sopData.SOP_ID,"") + " | " + ifnull(sopData.GD_Document_Link,"");
+                 		contextMap.put("Context_Links",contextLinks);
+                 		break;
+                 	}
+                 	// --- 4. EXPAND LEGISLATION & CONSTRUCT PROMPT ---
+                 	// Add CDM if generic legislation was used AND it's a UK project
+                 	if(contextMap.get("Legislation_Context") == defaultLegislation)
+                 	{
+                 		if(locationArea.containsIgnoreCase("UK"))
+                 		{
+                 			contextMap.put("Legislation_Context",contextMap.get("Legislation_Context") + "; CDM Regulations 2015.");
+                 		}
+                 	}
+                 	// Construct the final prompt for the AI Agent
+                 	aiPrompt = "TASK: " + taskActivity + " LOCATION: " + locationArea;
+                 	aiPrompt = aiPrompt + " CONTEXT: RASCOR POLICY: " + contextMap.get("Policy_Excerpt") + " | RASCOR SOP: " + contextMap.get("SOP_Text") + " | LEGISLATION: " + contextMap.get("Legislation_Context");
+                 	aiPrompt = aiPrompt + " INSTRUCTION: Generate a detailed list of Control Measures (mitigations) and cite the primary Relevant Legislation from the CONTEXT provided. Output as clean rich text.";
+                 	// Update the MCP Log with the exact prompt sent and context links
+                 	mcpLogRecords = MCP_Audit_Log[ID == mcpLogID];
+                 	for each  mcpRec in mcpLogRecords
+                 	{
+                 		mcpRec.Input_Prompt=aiPrompt;
+                 		mcpRec.Source_Context_Links=contextMap.get("Context_Links");
+                 	}
+                 	// --- 5. AI INVOCATION & OUTPUT PROCESSING ---
+                 	aiResponseMap = thisapp.invoke_AI_Agent(aiPrompt);
+                 	if(aiResponseMap.get("statusCode") == 200)
+                 	{
+                 		fullAIOutput = aiResponseMap.get("response");
+                 		// Use AI output directly (or implement JSON parsing if structured output is needed)
+                 		generatedControls = fullAIOutput;
+                 		generatedLegislation = fullAIOutput;
+                 		// --- 6. AUDIT COMPLETION (SUCCESS) ---
+                 		mcpSuccessRecords = MCP_Audit_Log[ID == mcpLogID];
+                 		for each  mcpSuccessRec in mcpSuccessRecords
+                 		{
+                 			mcpSuccessRec.Output_Content=fullAIOutput.toString();
+                 			mcpSuccessRec.AI_Status="Success";
+                 		}
+                 		// --- 7. RISK CALCULATION & FINAL UPDATE ---
+                 		// Fetch current record again for calculations
+                 		raUpdateRecords = Risk_Assessment_Subform[ID == inputRecordID];
+                 		for each  raRec in raUpdateRecords
+                 		{
+                 			residualLikelihood = ifnull(raRec.Residual_Likelihood_L2,0);
+                 			residualSeverity = ifnull(raRec.Residual_Severity_S2,0);
+                 			residualScore = residualLikelihood * residualSeverity;
+                 			riskLevel = thisapp.calculateRiskLevel(residualScore);
+                 			// Update the original form fields
+                 			raRec.Relevant_Legislation=generatedLegislation;
+                 			raRec.Control_Measures=generatedControls;
+                 			raRec.Residual_Risk_Rating_R2=riskLevel;
+                 		}
+                 	}
+                 	else
+                 	{
+                 		// --- 6. AUDIT COMPLETION (FAILURE) ---
+                 		errorDetails = "AI Call Failed. Status: " + aiResponseMap.get("statusCode");
+                 		mcpFailRecords = MCP_Audit_Log[ID == mcpLogID];
+                 		for each  mcpFailRec in mcpFailRecords
+                 		{
+                 			mcpFailRec.AI_Status="Failed: " + errorDetails;
+                 		}
+                 		// Provide user feedback on the form
+                 		raFailRecords = Risk_Assessment_Subform[ID == inputRecordID];
+                 		for each  raFailRec in raFailRecords
+                 		{
+                 			raFailRec.Control_Measures="AI Failed. MANUAL REVIEW REQUIRED. Check MCP Audit Log " + mcpLogID;
+                 		}
+                 	}
+                 }
+				 void MergeToWriter()
+                 {
+                 	// Function Name: Generate_RAMS_PDF
+                 	// Location: Custom Button on the Project Master Data Form/Report (e.g., 'All Project Masters')
+                 	// ----------------------------------------------------------------------------------
+                 	// SECTION 0: DEFINE HTML CONTENT VARIABLES (CRITICAL MODULAR CONTENT)
+                 	// NOTE: Replace the placeholder text with your full, detailed, HTML-formatted instructions.
+                 	// ----------------------------------------------------------------------------------
+                 	// --- Remedial Injection Content ---
+                 	remedial_method_HTML = "<strong>3.0 Injection Procedure:</strong><br><ul><li>Drill holes at 45 degrees.</li><li>Safety: <strong>MANDATORY use of hearing and eye protection.</strong></li></ul>";
+                 	remedial_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Chemical Exposure</td><td>Use Nitrile gloves, check MSDS.</td></tr></table>";
+                 	// --- RASCOtank New Build Content ---
+                 	new_build_method_HTML = "<strong>3.0 RASCOtank Application:</strong><br><ul><li>Confirm substrate is clean and level.</li><li>Apply waterstop to joints.</li></ul>";
+                 	new_build_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Working at Edge</td><td>PSCS to provide edge protection.</td></tr></table>";
+                 	// --- Car Park Coating Content ---
+                 	car_park_method_HTML = "<strong>3.0 Deck Preparation:</strong><br><ul><li>Scarification to remove old coating.</li><li>Safety: <strong>High noise and dust risk.</strong></li></ul>";
+                 	car_park_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Noise</td><td>Mandatory hearing protection (ear muffs).</td></tr></table>";
+                 	// ----------------------------------------------------------------------------------
+                 	// PART 1: SETUP & DATA RETRIEVAL
+                 	// ----------------------------------------------------------------------------------
+                 	masterRecordID = 1;
+                 	// --- CRITICAL PLACEHOLDERS: REPLACE WITH YOUR ACTUAL VALUES ---
+                 	writerTemplateID = "4dai9f72dbd79e5e04a5fb3a0ff16a78e56c9";
+                 	// <<< Get this from the Writer URL
+                 	creatorApplicationName = "RAMS VR2";
+                 	masterFormName = "Project_Master_Data";
+                 	// Use the exact link name of your Project Master Form
+                 	generatorFormName = "RAMS_Document_Generator";
+                 	// Use the exact link name of your Generator Form
+                 	connectionLinkName = "zoho_writer_connection";
+                 	// <<< Use the EXACT name of your Authorized Writer Connection >>>
+                 	// Get the full data of the Project Master record (Uses standard Deluge Fetch Syntax)
+                 	masterRecord = Project_Master_Data[ID == masterRecordID];
+                 	projectTitle = masterRecord.get(0).get("Project_Title");
+                 	projectType = masterRecord.get(0).get("Project_Type");
+                 	// ----------------------------------------------------------------------------------
+                 	// PART 2: CREATE THE DYNAMIC ASSEMBLY RECORD (The "View")
+                 	// ----------------------------------------------------------------------------------
+                 	generatorRecordMap = Map();
+                 	generatorRecordMap.put("Project_Lookup",masterRecordID);
+                 	// --- POPULATE MODULAR CONTENT (Logic replaces Function 1) ---
+                 	if(projectType == "Remedial Injection")
+                 	{
+                 		generatorRecordMap.put("Method_Statement_Body",remedial_method_HTML);
+                 		generatorRecordMap.put("Risk_Assessment_Table",remedial_risk_table_HTML);
+                 	}
+                 	else if(projectType == "RASCOtank New Build")
+                 	{
+                 		generatorRecordMap.put("Method_Statement_Body",new_build_method_HTML);
+                 		generatorRecordMap.put("Risk_Assessment_Table",new_build_risk_table_HTML);
+                 	}
+                 	else if(projectType == "Car Park Coating")
+                 	{
+                 		generatorRecordMap.put("Method_Statement_Body",car_park_method_HTML);
+                 		generatorRecordMap.put("Risk_Assessment_Table",car_park_risk_table_HTML);
+                 	}
+                 	// Add other Project Types here
+                 	// ...
+                 	else
+                 	{
+                 		info "Error: Method Statement not defined for this Project Type (" + projectType + "). Please update the Deluge code.";
+                 	}
+                 	// 2c. INSERT THE NEW RECORD
+                 	generatorRecordID = insert into RAMS_Document_Generator
+                 	[
+                 		Added_User=zoho.loginuser
+                 	];
+                 	// ----------------------------------------------------------------------------------
+                 	// PART 3: EXECUTE MERGE AND SAVE PDF (Uses robust invokeurl API call)
+                 	// ----------------------------------------------------------------------------------
+                 	writerAPIServiceURL = "https://writer.zoho.com/api/v1/document/merge";
+                 	// 1. BUILD MERGE DATA PAYLOAD
+                 	merge_data_payload = Map();
+                 	merge_data_payload.put("entity",generatorFormName);
+                 	merge_data_payload.put("entityId",generatorRecordID);
+                 	merge_data_payload.put("applicationName",creatorApplicationName);
+                 	// 2. BUILD EXPORT AND SAVE PARAMETERS
+                 	export_params = Map();
+                 	export_params.put("output_format","pdf");
+                 	export_params.put("output_file_name","RAMS_" + projectTitle + "_" + zoho.currentdate + ".pdf");
+                 	export_params.put("save_to_creator",true);
+                 	// CRITICAL: Enables saving back to Creator
+                 	export_params.put("creator_app_name",creatorApplicationName);
+                 	export_params.put("creator_form_name",masterFormName);
+                 	// Attach to the Master Form
+                 	export_params.put("creator_record_id",masterRecordID);
+                 	// Attach to the specific Master Record ID
+                 	// 3. BUILD THE FINAL API PARAMETERS MAP
+                 	apiParameters = Map();
+                 	apiParameters.put("template_id",writerTemplateID);
+                 	apiParameters.put("merge_data",merge_data_payload);
+                 	apiParameters.put("export_options",export_params);
+                 	connectionLinkName = true;
+                 	//connectionLinkName.put("template_id", writerTemplateID);
+                 	// 4. CALL THE API using invokeurl (Uses functional syntax to avoid previous errors)
+                 	//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, connectionLinkName);
+                 	//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, "zoho_writer_connection");
+                 	//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, Map(), "zoho_writer_connection");
+                 	writerResponse = invokeurl
+                 	[
+                 		url :writerAPIServiceURL
+                 		type :POST
+                 		parameters:apiParameters
+                 		headers:Map()
+                 		connection:"zoho_writer_connection"
+                 	];
+                 	// ----------------------------------------------------------------------------------
+                 	// PART 4: CLEANUP AND FEEDBACK (Audit and Reporting)
+                 	// ----------------------------------------------------------------------------------
+                 	// Parse the JSON response from the API call
+                 	responseJSON = writerResponse.toJSONList();
+                 	info responseJSON;
+                 	/*
+                 if (responseJSON.get("status") == "success")
+                 {
+                     // Clean up the temporary Generator record (Deletes the record)
+                     zoho.creator.deleteRecord(creatorApplicationName, generatorFormName, generatorRecordID); 
+                     
+                     // Update the master record audit field
+                     zoho.creator.updateRecord(creatorApplicationName, masterFormName, masterRecordID, {"Date_RAMS_Generated": zoho.currentdatetime()});
+                     
+                     // Return Success Message
+                     info "RAMS PDF successfully generated and attached to the project record.";
+                 }
+                 else
+                 {
+                     // On Failure: Log the error message to the master record for troubleshooting.
+                     // Assuming you have a 'Generation_Status' field on your Project Master Data form.
+                     zoho.creator.updateRecord(creatorApplicationName, masterFormName, masterRecordID, {"Generation_Status": responseJSON.get("message")});
+                     
+                     // Return Failure Message
+                     info "RAMS Generation failed. Error: " + responseJSON.get("message");
+                 }
+                 
+                 // ----------------------------------------------------------------------------------
+                 // PART 5: END OF FUNCTION
+                 // ----------------------------------------------------------------------------------
+                 // Function execution terminates upon reaching a 'return' statement in Part 4.
+                 
+                 */
+                 }
+				 string parse_for_controls(string aiOutput)
+                 {
+                 	// Function Name: parse_for_controls
+                 	// Purpose: Extracts the detailed Control Measures list from the AI's full response.
+                 	// Assuming the AI output starts the controls section with "## Controls:"
+                 	// Look for the starting tag (e.g., "## Controls:")
+                 	startTag = "## Controls:";
+                 	// Look for the ending tag (e.g., "## Legislation:") or end of string
+                 	endTag = "## Legislation:";
+                 	// Find the starting position of the controls section
+                 	startIndex = aiOutput.indexOf(startTag);
+                 	if(startIndex >= 0)
+                 	{
+                 		// Adjust the start position to skip the tag itself
+                 		startIndex = startIndex + startTag.length();
+                 		// Find the ending position (where the next section begins)
+                 		endIndex = aiOutput.indexOf(endTag,startIndex);
+                 		if(endIndex >= 0)
+                 		{
+                 			// Extract the substring between the two tags
+                 			return aiOutput.substring(startIndex,endIndex).trim();
+                 		}
+                 		else
+                 		{
+                 			// If the legislation tag is not found, take the rest of the string
+                 			return aiOutput.substring(startIndex).trim();
+                 		}
+                 	}
+                 	// Return the original output if parsing fails (for manual review)
+                 	return "Parsing Error or missing Controls section. Review AI output.";
+                 }
+				 string parse_for_legislation(string aiOutput)
+                 {
+                 	// Function Name: parse_for_legislation
+                 	// Purpose: Extracts the Relevant Legislation citations from the AI's full response.
+                 	// Assuming the AI output starts the legislation section with "## Legislation:"
+                 	// Look for the starting tag
+                 	startTag = "## Legislation:";
+                 	// Find the starting position
+                 	startIndex = aiOutput.indexOf(startTag);
+                 	if(startIndex >= 0)
+                 	{
+                 		// Adjust the start position to skip the tag itself
+                 		startIndex = startIndex + startTag.length();
+                 		// Since legislation is usually the final requested piece, take the rest of the string
+                 		return aiOutput.substring(startIndex).trim();
+                 	}
+                 	// Return the original output if parsing fails
+                 	return "Parsing Error or missing Legislation section.";
+                 }
+				 string RAMS_HTML_Version(int PM_id)
+                 {
+                 	return "";
+                 }
+				 string uploadFileToGoogleDrive(string file, string fileName)
+                 {
+                 	fileViewUrl = "To be Finished";
+                 	/*
+                 	// Function Name: uploadFileToGoogleDrive
+                 	// Purpose: Uploads the generated file object to a specified Google Drive folder.
+                 	// Input: fileData (file) - The file object created by zoho.writer.merge.
+                 	//        fileName (string) - The desired name for the file (e.g., UK230176_RAMS.pdf).
+                 	// Output: string - The Google Drive View URL, or "UPLOAD_FAILED" on error.
+                 
+                 	// --- Configuration ---
+                     // This is the specific RASCOR folder ID where the final RAMS PDFs will be stored.
+                     gDriveFolderID = "1XhHI8lT7WLq3IIirsY-PMuBqt5KaAZWm"; 
+                     
+                     // This must match the name of the Connection you set up in Zoho Creator Settings.
+                     connectionName = "RASCOR_GD_Upload"; 
+                 
+                     // 1. Perform the upload using the specialized Zoho task
+                     uploadResponse = zoho.files.upload
+                     [
+                         file : fileData
+                         folderId : gDriveFolderID
+                         service : "google.drive"
+                         connection : connectionName
+                     ];
+                     
+                     // 2. Check for success and extract file details
+                     if (uploadResponse.get("status") == "success")
+                     {
+                         // The unique ID of the newly uploaded file on Google Drive
+                         fileID = uploadResponse.get("id"); 
+                         
+                         // 3. Construct the standard Google Drive view URL for the Project Master Form
+                         fileViewUrl = "https://drive.google.com/file/d/" + fileID + "/view";
+                         
+                         return fileViewUrl;
+                     }
+                     else
+                     {
+                         // Log the failure details for troubleshooting
+                         info "Google Drive Upload Failed: " + uploadResponse.get("error_message");
+                         return "UPLOAD_FAILED";
+                     }
+                 	*/
+                 	return fileViewUrl;
+                 }
+			 }
+		 }
+		workflow
+		{
+		form
+		{
+			Trigger_MCP_Orchestrator as "Trigger_MCP_Orchestrator"
+			{
+				type =  form
+				form = Risk_Assessment_Subform
+				record event = on add or edit
+
+				on user input of Task_Activity
+				{
+					actions 
+					{
+						custom deluge script
+						(
+											recID = input.ID;
+										thisapp.MCP_Orchestrator(recID);
+						)
+					}
+				}
+
+			}
+		}
+
+
+
+
+
+
+		functions
+		{
+			Generate_RAMS_PDF as "Generate_RAMS_PDF"
+			{
+				type =  functions
+				form = Project_Master_Data
+				execution type = for each record	
+				on start
+				{
+					actions 
+					{
+					on click
+					(
+						// Function Name: Generate_RAMS_PDF
+										// Location: Custom Button on the Project Master Data Form/Report (e.g., 'All Project Masters')
+										// ----------------------------------------------------------------------------------
+										// SECTION 0: DEFINE HTML CONTENT VARIABLES (CRITICAL MODULAR CONTENT)
+										// NOTE: Replace the placeholder text with your full, detailed, HTML-formatted instructions.
+										// ----------------------------------------------------------------------------------
+										// --- Remedial Injection Content ---
+										remedial_method_HTML = "<strong>3.0 Injection Procedure:</strong><br><ul><li>Drill holes at 45 degrees.</li><li>Safety: <strong>MANDATORY use of hearing and eye protection.</strong></li></ul>";
+										remedial_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Chemical Exposure</td><td>Use Nitrile gloves, check MSDS.</td></tr></table>";
+										// --- RASCOtank New Build Content ---
+										new_build_method_HTML = "<strong>3.0 RASCOtank Application:</strong><br><ul><li>Confirm substrate is clean and level.</li><li>Apply waterstop to joints.</li></ul>";
+										new_build_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Working at Edge</td><td>PSCS to provide edge protection.</td></tr></table>";
+										// --- Car Park Coating Content ---
+										car_park_method_HTML = "<strong>3.0 Deck Preparation:</strong><br><ul><li>Scarification to remove old coating.</li><li>Safety: <strong>High noise and dust risk.</strong></li></ul>";
+										car_park_risk_table_HTML = "<table border='1' style='width:100%;'><tr><th>Hazard</th><th>Controls</th></tr><tr><td>Noise</td><td>Mandatory hearing protection (ear muffs).</td></tr></table>";
+										// ----------------------------------------------------------------------------------
+										// PART 1: SETUP & DATA RETRIEVAL
+										// ----------------------------------------------------------------------------------
+										masterRecordID = input.ID;
+										// --- CRITICAL PLACEHOLDERS: REPLACE WITH YOUR ACTUAL VALUES ---
+										writerTemplateID = "4dai9f72dbd79e5e04a5fb3a0ff16a78e56c9";
+										// <<< Get this from the Writer URL
+										creatorApplicationName = "RAMS VR2";
+										masterFormName = "Project_Master_Data";
+										// Use the exact link name of your Project Master Form
+										generatorFormName = "RAMS_Document_Generator";
+										// Use the exact link name of your Generator Form
+										connectionLinkName = "zoho_writer_connection";
+										// <<< Use the EXACT name of your Authorized Writer Connection >>>
+										// Get the full data of the Project Master record (Uses standard Deluge Fetch Syntax)
+										masterRecord = Project_Master_Data[ID == masterRecordID];
+										projectTitle = masterRecord.get(0).get("Project_Title");
+										projectType = masterRecord.get(0).get("Project_Type");
+										// ----------------------------------------------------------------------------------
+										// PART 2: CREATE THE DYNAMIC ASSEMBLY RECORD (The "View")
+										// ----------------------------------------------------------------------------------
+										generatorRecordMap = Map();
+										generatorRecordMap.put("Project_Lookup",masterRecordID);
+										// --- POPULATE MODULAR CONTENT (Logic replaces Function 1) ---
+										if(projectType == "Remedial Injection")
+										{
+											generatorRecordMap.put("Method_Statement_Body",remedial_method_HTML);
+											generatorRecordMap.put("Risk_Assessment_Table",remedial_risk_table_HTML);
+										}
+										else if(projectType == "RASCOtank New Build")
+										{
+											generatorRecordMap.put("Method_Statement_Body",new_build_method_HTML);
+											generatorRecordMap.put("Risk_Assessment_Table",new_build_risk_table_HTML);
+										}
+										else if(projectType == "Car Park Coating")
+										{
+											generatorRecordMap.put("Method_Statement_Body",car_park_method_HTML);
+											generatorRecordMap.put("Risk_Assessment_Table",car_park_risk_table_HTML);
+										}
+										// Add other Project Types here
+										// ...
+										else
+										{
+											info "Error: Method Statement not defined for this Project Type (" + projectType + "). Please update the Deluge code.";
+										}
+										// 2c. INSERT THE NEW RECORD
+										generatorRecordID = insert into RAMS_Document_Generator
+										[
+											Added_User=zoho.loginuser
+										];
+										// ----------------------------------------------------------------------------------
+										// PART 3: EXECUTE MERGE AND SAVE PDF (Uses robust invokeurl API call)
+										// ----------------------------------------------------------------------------------
+										writerAPIServiceURL = "https://writer.zoho.com/api/v1/document/merge";
+										// 1. BUILD MERGE DATA PAYLOAD
+										merge_data_payload = Map();
+										merge_data_payload.put("entity",generatorFormName);
+										merge_data_payload.put("entityId",generatorRecordID);
+										merge_data_payload.put("applicationName",creatorApplicationName);
+										// 2. BUILD EXPORT AND SAVE PARAMETERS
+										export_params = Map();
+										export_params.put("output_format","pdf");
+										export_params.put("output_file_name","RAMS_" + projectTitle + "_" + zoho.currentdate + ".pdf");
+										export_params.put("save_to_creator",true);
+										// CRITICAL: Enables saving back to Creator
+										export_params.put("creator_app_name",creatorApplicationName);
+										export_params.put("creator_form_name",masterFormName);
+										// Attach to the Master Form
+										export_params.put("creator_record_id",masterRecordID);
+										// Attach to the specific Master Record ID
+										// 3. BUILD THE FINAL API PARAMETERS MAP
+										apiParameters = Map();
+										apiParameters.put("template_id",writerTemplateID);
+										apiParameters.put("merge_data",merge_data_payload);
+										apiParameters.put("export_options",export_params);
+										connectionLinkName = true;
+										//connectionLinkName.put("template_id", writerTemplateID);
+										// 4. CALL THE API using invokeurl (Uses functional syntax to avoid previous errors)
+										//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, connectionLinkName);
+										//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, "zoho_writer_connection");
+										//writerResponse = invokeurl(writerAPIServiceURL, "POST", apiParameters, Map(), "zoho_writer_connection");
+										writerResponse = invokeurl
+										[
+											url :writerAPIServiceURL
+											type :POST
+											parameters:apiParameters
+											headers:Map()
+											connection:"zoho_writer_connection"
+										];
+										// ----------------------------------------------------------------------------------
+										// PART 4: CLEANUP AND FEEDBACK (Audit and Reporting)
+										// ----------------------------------------------------------------------------------
+										// Parse the JSON response from the API call
+										responseJSON = writerResponse.toJSONList();
+										info responseJSON;
+										/*
+										if (responseJSON.get("status") == "success")
+										{
+										    // Clean up the temporary Generator record (Deletes the record)
+										    zoho.creator.deleteRecord(creatorApplicationName, generatorFormName, generatorRecordID); 
+										    
+										    // Update the master record audit field
+										    zoho.creator.updateRecord(creatorApplicationName, masterFormName, masterRecordID, {"Date_RAMS_Generated": zoho.currentdatetime()});
+										    
+										    // Return Success Message
+										    info "RAMS PDF successfully generated and attached to the project record.";
+										}
+										else
+										{
+										    // On Failure: Log the error message to the master record for troubleshooting.
+										    // Assuming you have a 'Generation_Status' field on your Project Master Data form.
+										    zoho.creator.updateRecord(creatorApplicationName, masterFormName, masterRecordID, {"Generation_Status": responseJSON.get("message")});
+										    
+										    // Return Failure Message
+										    info "RAMS Generation failed. Error: " + responseJSON.get("message");
+										}
+										
+										// ----------------------------------------------------------------------------------
+										// PART 5: END OF FUNCTION
+										// ----------------------------------------------------------------------------------
+										// Function execution terminates upon reaching a 'return' statement in Part 4.
+										
+										*/
+					)
+					}
+				}
+			}
+		}
+	}
+	share_settings
+	{
+			"Read"
+			{
+				name = "Read"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have read permission for all components\n"
+			}
+			"Write"
+			{
+				name = "Write"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have write permission for all components\n"
+			}
+			"Developer"
+			{
+				name = "Developer"
+				type = Developer
+				permissions = {Chat:false, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "Developer Profile\n"
+			}
+			"Administrator"
+			{
+				name = "Administrator"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have all the permissions.\n"
+			}
+			"Customer"
+			{
+				name = "Customer"
+				type = Customer_Portal
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This is the default profile having only add and view permission.\n"
+			}
+			roles
+			{
+				"CEO"
+				{
+					description = "User belonging to this role can access data of all other users."
+				}
+			}
+	}
+
+	customize
+	{
+		icon
+		{
+			image = "image_1765203724993.png"
+		}
+	}
+
+	connections
+	{
+		zoho_writer_connection
+		(
+			displayname = "Zoho Writer Connection"
+			auth per env = true
+			connector = zoho_writer
+			permissions = {"copy_document","create_document_with_template","create_document_with_text","create_document_with_url","delete_document","disable_track_changes","download_document","enable_track_changes","get_all_documents","get_all_fields","get_all_fillable_templates","get_all_folders","get_all_merge_templates","get_all_sign_templates","get_all_templates","get_folder","get_template","lock_document","mark_as_final_document","mark_document_as_favourite","mark_document_as_ready","merge_and_invoke_function","merge_and_send_email","merge_and_send_for_signature","merge_and_share_fillable_link","merge_and_store","publish_document","remove_from_favorites","rename_document","restore_document","revert_final_document","search_documents","send_for_signature","trash_document","unlock_document","unpublish_document","update_document_description","upload_document"}
+		)
+	}
+	web
+	{
+		forms
+		{
+			form MCP_Audit_Log
+			{
+				label placement = left
+			}
+			form Method_Step_Subform
+			{
+				label placement = left
+			}
+			form Parameters
+			{
+				label placement = left
+			}
+			form Project_Master_Data
+			{
+				label placement = left
+			}
+			form RAMS_Document_Generator
+			{
+				label placement = left
+			}
+			form RASCOR_Library
+			{
+				label placement = left
+			}
+			form Risk_Assessment_Subform
+			{
+				label placement = left
+			}
+		}
+		reports
+		{
+			report Risk_Assessment_Subform1
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Task_Activity
+								Location_Area
+								Who_At_Risk
+								Initial_Likelihood_L1 as "Initial_Likelihood (L1)"
+								Initial_Severity_S1 as "Initial_Severity (S1)"
+								Initial_Risk_Rating_R1 as "Initial_Risk_Rating (R1)"
+								Relevant_Legislation
+								Control_Measures
+								Residual_Likelihood_L2 as "Residual_Likelihood (L2)"
+								Residual_Severity_S2 as "Residual_Severity (S2)"
+								Residual_Risk_Rating_R2 as "Residual_Risk_Rating (R2)"
+								Action_By
+								Date_Completed
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Task_Activity
+								Location_Area
+								Who_At_Risk
+								Initial_Likelihood_L1 as "Initial_Likelihood (L1)"
+								Initial_Severity_S1 as "Initial_Severity (S1)"
+								Initial_Risk_Rating_R1 as "Initial_Risk_Rating (R1)"
+								Relevant_Legislation
+								Control_Measures
+								Residual_Likelihood_L2 as "Residual_Likelihood (L2)"
+								Residual_Severity_S2 as "Residual_Severity (S2)"
+								Residual_Risk_Rating_R2 as "Residual_Risk_Rating (R2)"
+								Action_By
+								Date_Completed
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Method_Step_Subform_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Step_Number
+								Step_Title
+								Detailed_Procedure
+								Link_to_Risk
+								Required_Permits
+								SPA_Signoff_Link
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Step_Number
+								Step_Title
+								Detailed_Procedure
+								Link_to_Risk
+								Required_Permits
+								SPA_Signoff_Link
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report MCP_Audit_Log1
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Source_Record_Link
+								Timestamp
+								AI_Status
+								Source_Context_Links
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Print 
+    		 				Add 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+							Print   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+		     				title = "Overview"
+							fields
+							(
+								Source_Record_Link
+								Timestamp
+								AI_Status
+								Source_Context_Links
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Print 
+    	 				)
+    				)
+				)
+			}
+			report All_Rascor_Libraries
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								SOP_ID
+								Topic
+								Task_Keyword
+								RASCOR_Policy_Snippet
+								SOP_Procedure_Details
+								Applicable_Legislation
+								GD_Document_Link
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								SOP_ID
+								Topic
+								Task_Keyword
+								RASCOR_Policy_Snippet
+								SOP_Procedure_Details
+								Applicable_Legislation
+								GD_Document_Link
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Project_Masters
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Project_Name
+								Project_Ref
+								Client_Name
+								Site_Address
+								Area_of_Activity
+								Proposed_Start_Date
+								Safety_Officer
+								AI_Final_RAMS_Link
+								RAMS_Status
+								Date_Approved
+								"Generate_RAMS_PDF"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Project_Name
+								Project_Ref
+								Client_Name
+								Site_Address
+								Area_of_Activity
+								Proposed_Start_Date
+								Safety_Officer
+								AI_Final_RAMS_Link
+								RAMS_Status
+								Date_Approved
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report RAMS_Document_Generator_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Method_Statement_Body
+								Risk_Assessment_Table
+								Document_Name
+								Generation_Status
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    		 				Add 
+    		 				Print 
+    		 				Import 
+    		 				Export 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Print   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							Print   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Method_Statement_Body
+								Risk_Assessment_Table
+								Document_Name
+								Generation_Status
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Print 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Parameters
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Template_Configs
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Template_Configs
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+		}
+		menu
+		{
+			space Space
+			{
+				displayname = "Space"
+				icon = "objects-spaceship"
+
+				section Section_1
+				{
+					displayname = "Dashboard"
+					icon = "ui-1-dashboard-half"
+					page DashBoard
+					{
+						icon = "ui-1-dashboard-half"
+					}
+				}
+				section MCP_Audit_Log
+				{
+					displayname = "MCP Audit Log"
+					icon = "business-laptop-71"
+					form  MCP_Audit_Log
+					{
+						icon = "ui-1-bold-add"
+					}
+					report MCP_Audit_Log1
+					{
+						icon = "business-laptop-71"
+					}
+				}
+				section ZC_App_Preferences
+				{
+					displayname = "App Preferences"
+					icon = "design-app"
+					systemcomponent
+					{
+						type = localization
+						displayname = "Language Selection"
+						icon = "education-language"
+					}
+					systemcomponent
+					{
+						type = connection
+						displayname = "Integrations"
+						icon = "tech-2-connection"
+					}
+				}
+				section ZC_Approvals
+				{
+					displayname = "Approvals"
+					icon = "ui-2-hourglass"
+					systemcomponent
+					{
+						type = approval
+						approval status = pending
+						displayname = "Pending Tasks"
+						icon = "ui-2-hourglass"
+					}
+					systemcomponent
+					{
+						type = approval
+						approval status = completed
+						displayname = "Completed Tasks"
+						icon = "design-todo"
+					}
+				}
+				section SharedAnalytics_Section
+				{
+					type = shared_user_report_section
+					displayname = "Reports"
+					icon = "business-chart-bar-33"
+				}
+				section Risk_Assessment_Subform
+				{
+					displayname = "Risk Assessment Subform"
+					icon = "ui-1-database"
+					form  Risk_Assessment_Subform
+					{
+						icon = "ui-1-database"
+					}
+					report Risk_Assessment_Subform1
+					{
+						icon = "ui-1-database"
+					}
+				}
+				section RASCOR_Library
+				{
+					displayname = "RASCOR Library"
+					icon = "business-books"
+					form  RASCOR_Library
+					{
+						icon = "business-books"
+					}
+					report All_Rascor_Libraries
+					{
+						icon = "business-books"
+					}
+				}
+				section Method_Step_Subform
+				{
+					displayname = "Method Step Subform"
+					icon = "design-2-form"
+					form  Method_Step_Subform
+					{
+						icon = "design-2-form"
+					}
+					report Method_Step_Subform_Report
+					{
+						icon = "design-2-form"
+					}
+				}
+				section Project_Master_Data
+				{
+					displayname = "Project_Master_Data"
+					icon = "education-books-46"
+					form  Project_Master_Data
+					{
+						icon = "education-books-46"
+					}
+					report All_Project_Masters
+					{
+						icon = "education-books-46"
+					}
+				}
+				section RAMS_Document_Generator
+				{
+					displayname = "RAMS Document Generator"
+					icon = "education-paper"
+					form  RAMS_Document_Generator
+					{
+						icon = "education-paper"
+					}
+					report RAMS_Document_Generator_Report
+					{
+						icon = "education-paper"
+					}
+				}
+				section Parameters
+				{
+					displayname = "Parameters"
+					icon = "travel-swiss-knife"
+					form  Parameters
+					{
+						icon = "travel-swiss-knife"
+					}
+					report All_Parameters
+					{
+						icon = "tech-desktop"
+					}
+				}
+			}
+			preference
+			{
+				icon
+				{
+					style = solid
+					show = {space,section,component}
+				}
+			}
+		}
+		customize
+		{
+			new theme = 6
+			font = "rubik"
+			color options
+			{
+				color = "4"
+			}
+			logo
+			{
+				preference = "none"
+				placement = "left"
+			}
+		}
+	}
+	phone
+	{
+		forms
+		{
+			form MCP_Audit_Log
+			{
+				label placement = auto
+			}
+			form Method_Step_Subform
+			{
+				label placement = auto
+			}
+			form Parameters
+			{
+				label placement = auto
+			}
+			form Project_Master_Data
+			{
+				label placement = auto
+			}
+			form RAMS_Document_Generator
+			{
+				label placement = auto
+			}
+			form RASCOR_Library
+			{
+				label placement = auto
+			}
+			form Risk_Assessment_Subform
+			{
+				label placement = auto
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = blue
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	tablet
+	{
+		forms
+		{
+			form MCP_Audit_Log
+			{
+				label placement = auto
+			}
+			form Method_Step_Subform
+			{
+				label placement = auto
+			}
+			form Parameters
+			{
+				label placement = auto
+			}
+			form Project_Master_Data
+			{
+				label placement = auto
+			}
+			form RAMS_Document_Generator
+			{
+				label placement = auto
+			}
+			form RASCOR_Library
+			{
+				label placement = auto
+			}
+			form Risk_Assessment_Subform
+			{
+				label placement = auto
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = blue
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	translation
+{
+{"Language_Settings":{"LANGAGUE_WITH_LOGIN":"browser"}}
+}
+}

@@ -1,0 +1,1914 @@
+/*
+ * Author       : quantumbuild1
+ * Generated on : 09-Jan-2026 11:55:52
+ * Version      : 1.0
+ */
+ application "Frotcom Integration Hub"
+ {
+ 	date format = "dd-MMM-yyyy"
+ 	time zone = "Europe/Dublin"
+ 	time format = "24-hr"
+ 	forms
+	{
+		form Frotcom_Sync_Log
+		{
+			displayname = "Frotcom Sync Log"
+			success message = "Frotcom Sync Log Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Sync_ID
+			(
+    			type = autonumber
+				displayname = "Sync ID"
+				start index = 1
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Sync_Type
+			(
+				type = picklist
+				displayname = "Sync Type"
+				maxchar = 100
+				values = {"Vehicles","Tracking","Full Sync"}
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Status
+			(
+				type = picklist
+				maxchar = 100
+				values = {"Success","Failed","Partial"}
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Records_Processed
+			(
+				type = number
+				displayname = "Records Processed"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Records_Created
+			(
+				type = number
+				displayname = "Records Created"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Records_Updated
+			(
+				type = number
+				displayname = "Records Updated"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Errors
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Start_Time
+			(
+    			type = datetime
+				displayname = "Start Time"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			End_Time
+			(
+    			type = datetime
+				displayname = "End Time"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Duration_Seconds
+			(
+				type = decimal
+				displayname = "Duration Seconds"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Frotcom_Vehicle_Tracking
+		{
+			displayname = "Frotcom Vehicle Tracking"
+			success message = "Frotcom Vehicle Tracking Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Vehicle_ID
+			(
+    			type = text
+				displayname = "Vehicle ID"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Vehicle_Name
+			(
+				type = picklist	
+				displayname = "Vehicle Name"
+				values  = Vehicle_Reference.ID
+    			displayformat = [License_Plate]
+				sortorder = ascending
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			License_Plate
+			(
+    			type = text
+				displayname = "License Plate"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Latitude
+			(
+				type = decimal
+				maxchar = 12
+				decimalplace = 8
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Longitude
+			(
+				type = decimal
+				maxchar = 12
+				decimalplace = 8
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Speed_KPH
+			(
+				type = decimal
+				displayname = "Speed KPH"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Direction_Deg
+			(
+				type = number
+				displayname = "Direction Deg"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_GPS_Time
+			(
+    			type = datetime
+				displayname = "Last GPS Time"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Communication_Time
+			(
+    			type = datetime
+				displayname = "Last Communication Time"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Odometer_KM
+			(
+				type = decimal
+				displayname = "Odometer KM"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Is_On_Trip
+			(
+    			type = checkbox
+				displayname = "Is On Trip"
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Place_ID
+			(
+    			type = text
+				displayname = "Place ID"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Communication_Status
+			(
+				type = picklist
+				displayname = "Communication Status"
+				maxchar = 100
+				values = {"Online","Offline","Delayed"}
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Timestamp
+			(
+    			type = datetime
+				initial value = "${zoho.currenttime}"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Frotcom_Sync_Trigger
+		{
+			success message = "Data Added Successfully!"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Trigger_Type
+			(
+				type = picklist
+				maxchar = 100
+				values = {"Vehicle_Tracking","Vehicle_Reference"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Trigger_Time
+			(
+    			type = datetime
+				displayname = "Trigger Time"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+				private = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Parameter
+		{
+			success message = "Parameter Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			Parameter_Name
+			(
+    			type = text
+				displayname = "Parameter Name"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Parameter_Value
+			(
+    			type = textarea
+				displayname = "Parameter Value"
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Description
+			(
+    			type = textarea
+				height = 100px
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Category
+			(
+				type = picklist
+				maxchar = 100
+				values = {"API","Sync","Authentication"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Is_Active
+			(
+    			type = checkbox
+				displayname = "Is Active"
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+		form Vehicle_Reference
+		{
+			displayname = "Vehicle Reference"
+			success message = "Vehicle Reference Added Successfully"
+			Section
+			(
+				type = section
+	 			row = 1
+	 			column = 0   
+				width = medium
+			)
+			must have unique Vehicle_ID
+			(
+    			type = text
+				displayname = "Vehicle ID"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			must have unique License_Plate
+			(
+    			type = text
+				displayname = "License Plate"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Vehicle_Name
+			(
+    			type = text
+				displayname = "Vehicle Name"
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Manufacturer
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Model
+			(
+    			type = text
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Vehicle_Type
+			(
+				type = picklist
+				displayname = "Vehicle Type"
+				maxchar = 100
+				values = {"Truck","Van","Car","Heavy Equipment"}
+				others option = true
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Active
+			(
+    			type = checkbox
+				initial value = false
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+			Last_Sync
+			(
+    			type = datetime
+				displayname = "Last Sync"
+				initial value = "${zoho.currenttime}"
+				timedisplayoptions = "hh:mm:ss"
+				alloweddays = 0,1,2,3,4,5,6
+	 			row = 1
+	 			column = 1   
+				width = medium
+			)
+	
+			actions
+			{
+				on add
+				{
+					submit
+					(
+   						type = submit
+   						displayname = "Submit"
+					)
+				}
+				on edit
+				{
+					update
+					(
+   						type = submit
+   						displayname = "Update"
+					)
+					cancel
+					(
+   						type = cancel
+   						displayname = "Cancel"
+					)
+				}
+			}
+		}
+	}
+	reports
+	{
+		default list All_Vehicle_References
+		{
+			displayName = "All Vehicle References"
+			show all rows from Vehicle_Reference    
+			(
+				Vehicle_ID as "Vehicle ID"
+				License_Plate as "License Plate"
+				Vehicle_Name as "Vehicle Name"
+				Manufacturer
+				Model
+				Vehicle_Type as "Vehicle Type"
+				Active
+				Last_Sync as "Last Sync"
+			)
+		}
+		default list All_Frotcom_Vehicle_Trackings
+		{
+			displayName = "All Frotcom Vehicle Trackings"
+			show all rows from Frotcom_Vehicle_Tracking    
+			(
+				Vehicle_ID as "Vehicle ID"
+				Vehicle_Name as "Vehicle Name"
+				Latitude
+				Longitude
+				Speed_KPH as "Speed KPH"
+				Direction_Deg as "Direction Deg"
+				Last_GPS_Time as "Last GPS Time"
+				Last_Communication_Time as "Last Communication Time"
+				Odometer_KM as "Odometer KM"
+				Is_On_Trip as "Is On Trip"
+				Place_ID as "Place ID"
+				Communication_Status as "Communication Status"
+				Timestamp
+				License_Plate as "License Plate"
+			)
+			sort by
+			(
+				Last_GPS_Time descending
+			)
+		}
+		default list All_Frotcom_Sync_Logs
+		{
+			displayName = "All Frotcom Sync Logs"
+			show all rows from Frotcom_Sync_Log    
+			(
+				Sync_ID as "Sync ID"
+				Sync_Type as "Sync Type"
+				Status
+				Records_Processed as "Records Processed"
+				Records_Created as "Records Created"
+				Records_Updated as "Records Updated"
+				Errors
+				Start_Time as "Start Time"
+				End_Time as "End Time"
+				Duration_Seconds as "Duration Seconds"
+				Modified_Time as "Modified Time"
+			)
+		}
+		default list All_Parameters
+		{
+			displayName = "All Parameters"
+			show all rows from Parameter    
+			(
+				Parameter_Name as "Parameter Name"
+				Parameter_Value as "Parameter Value"
+				Description
+				Category
+				Is_Active as "Is Active"
+			)
+		}
+		default list Frotcom_Sync_Trigger_Report
+		{
+			displayName = "Frotcom_Sync_Trigger Report"
+			show all rows from Frotcom_Sync_Trigger    
+			(
+				Trigger_Time as "Trigger Time"
+				Trigger_Type
+			)
+		}
+	}
+
+
+		 functions
+		 {
+			 Deluge
+			 {
+				 string API_triggerVehicleTrackingSync()
+                 {
+                 	try 
+                 	{
+                 		info "=== External Trigger Received ===";
+                 		info "Caller: Azure Backend";
+                 		info "Time: " + zoho.currenttime;
+                 		// Optional: Add basic authentication check
+                 		// auth_token = getParameter("api_trigger_token");
+                 		// if(input_token != auth_token) { return error }
+                 		// Run the tracking sync
+                 		thisapp.F002_syncVehicleTracking();
+                 		// Return success
+                 		response = Map();
+                 		response.put("code",3000);
+                 		response.put("message","Vehicle tracking sync triggered successfully");
+                 		response.put("timestamp",zoho.currenttime);
+                 		return response.toString();
+                 	}
+                 	catch (e)
+                 	{
+                 		error_response = Map();
+                 		error_response.put("code",5000);
+                 		error_response.put("message","Failed to trigger sync: " + e);
+                 		return error_response.toString();
+                 	}
+                 	return "";
+                 }
+				 string F000_getFrotcomToken()
+                 {
+                 	try 
+                 	{
+                 		// Get credentials from parameters
+                 		frotcom_base = thisapp.getParameter("frotcom_api_base_url");
+                 		username = thisapp.getParameter("frotcom_username");
+                 		password = thisapp.getParameter("frotcom_password");
+                 		if(frotcom_base == "" || username == "" || password == "")
+                 		{
+                 			info "Missing Frotcom credentials in Parameters";
+                 			return "";
+                 		}
+                 		// Authenticate
+                 		auth_url = frotcom_base + "/v2/authorize";
+                 		auth_body = Map();
+                 		auth_body.put("provider","thirdparty");
+                 		auth_body.put("username",username);
+                 		auth_body.put("password",password);
+                 		auth_resp = invokeurl
+                 		[
+                 			url :auth_url
+                 			type :POST
+                 			parameters:auth_body.toString()
+                 			headers:{"Content-Type":"application/json"}
+                 		];
+                 		// Extract token (try multiple possible keys)
+                 		token = "";
+                 		if(auth_resp != null)
+                 		{
+                 			if(auth_resp.containKey("api_key"))
+                 			{
+                 				token = auth_resp.get("api_key");
+                 			}
+                 			else if(auth_resp.containKey("token"))
+                 			{
+                 				token = auth_resp.get("token");
+                 			}
+                 			else if(auth_resp.containKey("key"))
+                 			{
+                 				token = auth_resp.get("key");
+                 			}
+                 		}
+                 		if(token == "" || token == null)
+                 		{
+                 			info "Failed to obtain Frotcom API token";
+                 			info auth_resp;
+                 			return "";
+                 		}
+                 		return token;
+                 	}
+                 	catch (e)
+                 	{
+                 		info "Exception in F000_getFrotcomToken: " + e;
+                 		return "";
+                 	}
+                 	// This should never be reached, but required by Deluge
+                 	return "";
+                 }
+				 void F001_syncFrotcomVehicles()
+                 {
+                 	try 
+                 	{
+                 		// Start sync log
+                 		sync_start = zoho.currenttime;
+                 		info "=== Starting Frotcom Vehicle Sync ===";
+                 		info "Start time: " + sync_start;
+                 		// Get authentication token
+                 		token = thisapp.F000_getFrotcomToken();
+                 		if(token == "")
+                 		{
+                 			info "Cannot proceed without valid token";
+                 			// Log failed sync
+                 			insert into Frotcom_Sync_Log
+                 			[
+                 				Sync_Type="Vehicles"
+                 				Status="Failed"
+                 				Errors="Failed to obtain API token"
+                 				Start_Time=sync_start
+                 				End_Time=zoho.currenttime
+                 				Records_Processed=0
+                 				Records_Created=0
+                 				Records_Updated=0
+                 				Added_User=zoho.loginuser
+                 			]
+                 			return;
+                 		}
+                 		info "✓ Token obtained successfully";
+                 		// Fetch all vehicles from Frotcom
+                 		frotcom_base = thisapp.getParameter("frotcom_api_base_url");
+                 		veh_url = frotcom_base + "/v2/vehicles?api_key=" + token;
+                 		veh_resp = invokeurl
+                 		[
+                 			url :veh_url
+                 			type :GET
+                 		];
+                 		if(veh_resp == null)
+                 		{
+                 			info "No response from Frotcom API";
+                 			// Log failed sync
+                 			insert into Frotcom_Sync_Log
+                 			[
+                 				Sync_Type="Vehicles"
+                 				Status="Failed"
+                 				Errors="No response from Frotcom API"
+                 				Start_Time=sync_start
+                 				End_Time=zoho.currenttime
+                 				Records_Processed=0
+                 				Records_Created=0
+                 				Records_Updated=0
+                 				Added_User=zoho.loginuser
+                 			]
+                 			return;
+                 		}
+                 		info "✓ Received vehicle data from Frotcom";
+                 		// DEBUG: Show first vehicle structure
+                 		if(veh_resp != null && veh_resp.size() > 0)
+                 		{
+                 			info "=== FIRST VEHICLE STRUCTURE ===";
+                 			info veh_resp.get(0);
+                 			info "================================";
+                 		}
+                 		// Process each vehicle
+                 		records_processed = 0;
+                 		records_created = 0;
+                 		records_updated = 0;
+                 		errors_list = List();
+                 		for each  vehicle in veh_resp
+                 		{
+                 			try 
+                 			{
+                 				records_processed = records_processed + 1;
+                 				// Use correct field names from API
+                 				vehicle_id = vehicle.get("id");
+                 				// Changed from vehicleId
+                 				license_plate = vehicle.get("licensePlate");
+                 				// Vehicle name might not exist, use license plate as fallback
+                 				vehicle_name = vehicle.get("vehicleName");
+                 				if(vehicle_name == null || vehicle_name == "")
+                 				{
+                 					vehicle_name = license_plate;
+                 				}
+                 				manufacturer = vehicle.get("manufacturer");
+                 				model = vehicle.get("model");
+                 				info "Processing: " + license_plate + " (ID: " + vehicle_id + ")";
+                 				vehicle_id_str = vehicle_id.toString();
+                 				if(vehicle_id_str == null || vehicle_id_str == "")
+                 				{
+                 					errors_list.add("Vehicle missing vehicleId, skipping");
+                 					continue;
+                 				}
+                 				// Check if vehicle already exists
+                 				existing = Vehicle_Reference[Vehicle_ID == vehicle_id_str];
+                 				if(existing.count() > 0)
+                 				{
+                 					// Update existing record
+                 					for each  rec in existing
+                 					{
+                 						rec.Vehicle_ID=vehicle_id_str;
+                 						rec.License_Plate=license_plate;
+                 						rec.Vehicle_Name=vehicle_name;
+                 						rec.Manufacturer=manufacturer;
+                 						rec.Model=model;
+                 						rec.Active=true;
+                 						rec.Last_Sync=zoho.currenttime;
+                 					}
+                 					records_updated = records_updated + 1;
+                 					info "Updated: " + license_plate;
+                 				}
+                 				else
+                 				{
+                 					// Create new record
+                 					insert into Vehicle_Reference
+                 					[
+                 						Vehicle_ID=vehicle_id_str
+                 						License_Plate=license_plate
+                 						Vehicle_Name=vehicle_name
+                 						Manufacturer=manufacturer
+                 						Model=model
+                 						Active=true
+                 						Last_Sync=zoho.currenttime
+                 						Added_User=zoho.loginuser
+                 					]
+                 					records_created = records_created + 1;
+                 					info "Created: " + license_plate;
+                 				}
+                 			}
+                 			catch (e)
+                 			{
+                 				error_msg = "Error processing vehicle " + vehicle_id + ": " + e;
+                 				errors_list.add(error_msg);
+                 				info error_msg;
+                 			}
+                 		}
+                 		// Calculate sync duration
+                 		sync_end = zoho.currenttime;
+                 		duration = ((sync_end - sync_start)) / 1000;
+                 		// seconds
+                 		// Determine sync status
+                 		sync_status = "Success";
+                 		if(errors_list.size() > 0)
+                 		{
+                 			if(records_created == 0 && records_updated == 0)
+                 			{
+                 				sync_status = "Failed";
+                 			}
+                 			else
+                 			{
+                 				sync_status = "Partial";
+                 			}
+                 		}
+                 		// Log sync results
+                 		insert into Frotcom_Sync_Log
+                 		[
+                 			Sync_Type="Vehicles"
+                 			Status=sync_status
+                 			Records_Processed=records_processed
+                 			Records_Created=records_created
+                 			Records_Updated=records_updated
+                 			Errors=errors_list.toString()
+                 			Start_Time=sync_start
+                 			End_Time=sync_end
+                 			Duration_Seconds=duration
+                 			Added_User=zoho.loginuser
+                 		]
+                 		info "";
+                 		info "=== Sync Complete ===";
+                 		info "Status: " + sync_status;
+                 		info "Processed: " + records_processed;
+                 		info "Created: " + records_created;
+                 		info "Updated: " + records_updated;
+                 		info "Errors: " + errors_list.size();
+                 		info "Duration: " + duration + " seconds";
+                 	}
+                 	catch (e)
+                 	{
+                 		info "Exception in F001_syncFrotcomVehicles: " + e;
+                 		// Log exception
+                 		insert into Frotcom_Sync_Log
+                 		[
+                 			Sync_Type="Vehicles"
+                 			Status="Failed"
+                 			Errors="Exception: " + e
+                 			Start_Time=sync_start
+                 			End_Time=zoho.currenttime
+                 			Records_Processed=0
+                 			Records_Created=0
+                 			Records_Updated=0
+                 			Added_User=zoho.loginuser
+                 		]
+                 	}
+                 }
+				 void F002_syncVehicleTracking()
+                 {
+                 	try 
+                 	{
+                 		// Start sync log
+                 		sync_start = zoho.currenttime;
+                 		info "=== Starting Frotcom Vehicle Tracking Sync ===";
+                 		info "Start time: " + sync_start;
+                 		// Get authentication token
+                 		token = thisapp.F000_getFrotcomToken();
+                 		if(token == "")
+                 		{
+                 			info "Cannot proceed without valid token";
+                 			// Log failed sync
+                 			insert into Frotcom_Sync_Log
+                 			[
+                 				Sync_Type="Tracking"
+                 				Status="Failed"
+                 				Errors="Failed to obtain API token"
+                 				Start_Time=sync_start
+                 				End_Time=zoho.currenttime
+                 				Records_Processed=0
+                 				Records_Created=0
+                 				Records_Updated=0
+                 				Added_User=zoho.loginuser
+                 			]
+                 			return;
+                 		}
+                 		info "✓ Token obtained successfully";
+                 		// Fetch all vehicles tracking data from Frotcom
+                 		frotcom_base = thisapp.getParameter("frotcom_api_base_url");
+                 		veh_url = frotcom_base + "/v2/vehicles?api_key=" + token;
+                 		veh_resp = invokeurl
+                 		[
+                 			url :veh_url
+                 			type :GET
+                 		];
+                 		if(veh_resp == null)
+                 		{
+                 			info "No response from Frotcom API";
+                 			// Log failed sync
+                 			insert into Frotcom_Sync_Log
+                 			[
+                 				Sync_Type="Tracking"
+                 				Status="Failed"
+                 				Errors="No response from Frotcom API"
+                 				Start_Time=sync_start
+                 				End_Time=zoho.currenttime
+                 				Records_Processed=0
+                 				Records_Created=0
+                 				Records_Updated=0
+                 				Added_User=zoho.loginuser
+                 			]
+                 			return;
+                 		}
+                 		info "✓ Received vehicle tracking data from Frotcom";
+                 		// Process each vehicle's tracking data
+                 		records_processed = 0;
+                 		records_created = 0;
+                 		records_updated = 0;
+                 		errors_list = List();
+                 		for each  vehicle in veh_resp
+                 		{
+                 			try 
+                 			{
+                 				records_processed = records_processed + 1;
+                 				// Extract tracking data
+                 				vehicle_id = vehicle.get("id").toString();
+                 				license_plate = vehicle.get("licensePlate");
+                 				latitude = vehicle.get("latitude");
+                 				longitude = vehicle.get("longitude");
+                 				speed_kph = vehicle.get("speed");
+                 				direction_deg = vehicle.get("direction");
+                 				last_gps = vehicle.get("lastGps");
+                 				last_communication = vehicle.get("lastCommunication");
+                 				odometer_km = vehicle.get("odometerGps");
+                 				is_on_trip = vehicle.get("isOnTrip");
+                 				place_id = vehicle.get("placeId");
+                 				comm_status = vehicle.get("communicationStatus");
+                 				if(vehicle_id == null || vehicle_id == "")
+                 				{
+                 					errors_list.add("Vehicle missing ID, skipping");
+                 					continue;
+                 				}
+                 				// Get vehicle name from reference
+                 				vehicle_name = license_plate;
+                 				// Check if tracking record exists for this vehicle
+                 				existing = Frotcom_Vehicle_Tracking[Vehicle_ID == vehicle_id];
+                 				if(existing.count() > 0)
+                 				{
+                 					// Update existing tracking record
+                 					for each  rec in existing
+                 					{
+                 						rec.Vehicle_ID=vehicle_id;
+                 						rec.Vehicle_Name=vehicle_name;
+                 						rec.Latitude=latitude;
+                 						rec.Longitude=longitude;
+                 						rec.Speed_KPH=speed_kph;
+                 						rec.Direction_Deg=direction_deg;
+                 						rec.Last_GPS_Time=last_gps;
+                 						rec.Last_Communication_Time=last_communication;
+                 						rec.Odometer_KM=odometer_km;
+                 						rec.Is_On_Trip=is_on_trip;
+                 						rec.Place_ID=place_id;
+                 						rec.Communication_Status=comm_status;
+                 					}
+                 					records_updated = records_updated + 1;
+                 				}
+                 				else
+                 				{
+                 					// Create new tracking record
+                 					insert into Frotcom_Vehicle_Tracking
+                 					[
+                 						Vehicle_ID=vehicle_id
+                 						Vehicle_Name=vehicle_name
+                 						Latitude=latitude
+                 						Longitude=longitude
+                 						Speed_KPH=speed_kph
+                 						Direction_Deg=direction_deg
+                 						Last_GPS_Time=last_gps
+                 						Last_Communication_Time=last_communication
+                 						Odometer_KM=odometer_km
+                 						Is_On_Trip=is_on_trip
+                 						Place_ID=place_id
+                 						Communication_Status=comm_status
+                 						Added_User=zoho.loginuser
+                 					]
+                 					records_created = records_created + 1;
+                 				}
+                 				info "Processed: " + license_plate + " at (" + latitude + "," + longitude + ")";
+                 			}
+                 			catch (e)
+                 			{
+                 				error_msg = "Error processing vehicle " + vehicle_id + ": " + e;
+                 				errors_list.add(error_msg);
+                 				info error_msg;
+                 			}
+                 		}
+                 		// Calculate sync duration
+                 		sync_end = zoho.currenttime;
+                 		duration = (((sync_end - sync_start)) / 1000).toLong();
+                 		// Determine sync status
+                 		sync_status = "Success";
+                 		if(errors_list.size() > 0)
+                 		{
+                 			if(records_created == 0 && records_updated == 0)
+                 			{
+                 				sync_status = "Failed";
+                 			}
+                 			else
+                 			{
+                 				sync_status = "Partial";
+                 			}
+                 		}
+                 		// Log sync results
+                 		insert into Frotcom_Sync_Log
+                 		[
+                 			Sync_Type="Tracking"
+                 			Status=sync_status
+                 			Records_Processed=records_processed
+                 			Records_Created=records_created
+                 			Records_Updated=records_updated
+                 			Errors=errors_list.toString()
+                 			Start_Time=sync_start
+                 			End_Time=sync_end
+                 			Duration_Seconds=duration
+                 			Added_User=zoho.loginuser
+                 		]
+                 		info "";
+                 		info "=== Tracking Sync Complete ===";
+                 		info "Status: " + sync_status;
+                 		info "Processed: " + records_processed;
+                 		info "Created: " + records_created;
+                 		info "Updated: " + records_updated;
+                 		info "Errors: " + errors_list.size();
+                 		info "Duration: " + duration + " seconds";
+                 	}
+                 	catch (e)
+                 	{
+                 		info "Exception in F002_syncVehicleTracking: " + e;
+                 		// Log exception
+                 		insert into Frotcom_Sync_Log
+                 		[
+                 			Sync_Type="Tracking"
+                 			Status="Failed"
+                 			Errors="Exception: " + e
+                 			Start_Time=sync_start
+                 			End_Time=zoho.currenttime
+                 			Records_Processed=0
+                 			Records_Created=0
+                 			Records_Updated=0
+                 			Added_User=zoho.loginuser
+                 		]
+                 	}
+                 }
+				 string getParameter(string parameter_name)
+                 {
+                 	try 
+                 	{
+                 		// Use correct zoho.creator.getRecords syntax with all 7 mandatory parameters
+                 		param_records = zoho.creator.getRecords("quantumbuild1","frotcom-integration-hub","All_Parameters","",1,200,"creator_connection");
+                 		if(param_records != null && param_records.get("code") == 3000)
+                 		{
+                 			data_list = param_records.get("data");
+                 			for each  param in data_list
+                 			{
+                 				current_name = param.get("Parameter_Name");
+                 				if(current_name != null && current_name.toString() == parameter_name)
+                 				{
+                 					param_value = param.get("Parameter_Value");
+                 					if(param_value != null)
+                 					{
+                 						return param_value.toString();
+                 					}
+                 					return "";
+                 				}
+                 			}
+                 		}
+                 		info "Parameter not found: " + parameter_name;
+                 		return "";
+                 	}
+                 	catch (e)
+                 	{
+                 		info "Error getting parameter: " + e;
+                 		return "";
+                 	}
+                 	return "";
+                 }
+			 }
+		 }
+		workflow
+		{
+		form
+		{
+			Frotcom_Sync_Trigger as "Frotcom_Sync_Trigger"
+			{
+				type =  form
+				form = Frotcom_Sync_Trigger
+				record event = on add or edit
+
+				on success
+				{
+					actions 
+					{
+						custom deluge script
+						(
+											// On Frotcom_Sync_Trigger submission
+										if(input.Trigger_Type == "Vehicle_Tracking")
+										{
+											thisapp.F002_syncVehicleTracking();
+										}
+										else if(input.Trigger_Type == "Vehicle_Reference")
+										{
+											thisapp.F001_syncFrotcomVehicles();
+										}
+						)
+					}
+				}
+
+			}
+		}
+
+
+
+
+
+
+	}
+	share_settings
+	{
+			"Read"
+			{
+				name = "Read"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have read permission for all components\n"
+			}
+			"Write"
+			{
+				name = "Write"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have write permission for all components\n"
+			}
+			"Developer"
+			{
+				name = "Developer"
+				type = Developer
+				permissions = {Chat:false, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "Developer Profile\n"
+			}
+			"Administrator"
+			{
+				name = "Administrator"
+				type = Users_Permissions
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This profile will have all the permissions.\n"
+			}
+			"Customer"
+			{
+				name = "Customer"
+				type = Customer_Portal
+				permissions = {Chat:true, Predefined:true, ApiAccess:true, PIIAccess:true, ePHIAccess:true}
+				description = "This is the default profile having only add and view permission.\n"
+			}
+			roles
+			{
+				"CEO"
+				{
+					description = "User belonging to this role can access data of all other users."
+				}
+			}
+	}
+
+
+	connections
+	{
+		creator_connection
+		(
+			displayname = "creator_connection"
+			user access = true
+			auth per env = true
+			connector = zoho_oauth
+			permissions = {"ZohoCreator.form.CREATE","ZohoCreator.report.CREATE","ZohoCreator.report.READ","ZohoCreator.report.UPDATE"}
+		)
+	}
+	web
+	{
+		forms
+		{
+			form Frotcom_Sync_Log
+			{
+				label placement = left
+			}
+			form Frotcom_Vehicle_Tracking
+			{
+				label placement = left
+			}
+			form Frotcom_Sync_Trigger
+			{
+				label placement = left
+			}
+			form Parameter
+			{
+				label placement = left
+			}
+			form Vehicle_Reference
+			{
+				label placement = left
+			}
+		}
+		reports
+		{
+			report All_Vehicle_References
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Vehicle_ID as "Vehicle ID"
+								License_Plate as "License Plate"
+								Vehicle_Name as "Vehicle Name"
+								Manufacturer
+								Model
+								Vehicle_Type as "Vehicle Type"
+								Active
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Vehicle_ID as "Vehicle ID"
+								License_Plate as "License Plate"
+								Vehicle_Name as "Vehicle Name"
+								Manufacturer
+								Model
+								Vehicle_Type as "Vehicle Type"
+								Active
+								Last_Sync as "Last Sync"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Frotcom_Vehicle_Trackings
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Vehicle_ID as "Vehicle ID"
+								Vehicle_Name as "Vehicle Name"
+								License_Plate as "License Plate"
+								Latitude
+								Longitude
+								Speed_KPH as "Speed KPH"
+								Direction_Deg as "Direction Deg"
+								Last_GPS_Time as "Last GPS Time"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Vehicle_ID as "Vehicle ID"
+								Vehicle_Name as "Vehicle Name"
+								Latitude
+								Longitude
+								Speed_KPH as "Speed KPH"
+								Direction_Deg as "Direction Deg"
+								Last_GPS_Time as "Last GPS Time"
+								Last_Communication_Time as "Last Communication Time"
+								Odometer_KM as "Odometer KM"
+								Is_On_Trip as "Is On Trip"
+								Place_ID as "Place ID"
+								Communication_Status as "Communication Status"
+								Timestamp
+								License_Plate as "License Plate"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Frotcom_Sync_Logs
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Sync_ID as "Sync ID"
+								Sync_Type as "Sync Type"
+								Status
+								Records_Processed as "Records Processed"
+								Records_Created as "Records Created"
+								Records_Updated as "Records Updated"
+								Errors
+								Modified_Time as "Modified Time"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Sync_ID as "Sync ID"
+								Sync_Type as "Sync Type"
+								Status
+								Records_Processed as "Records Processed"
+								Records_Created as "Records Created"
+								Records_Updated as "Records Updated"
+								Errors
+								Start_Time as "Start Time"
+								End_Time as "End Time"
+								Duration_Seconds as "Duration Seconds"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report All_Parameters
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Parameter_Name as "Parameter Name"
+								Parameter_Value as "Parameter Value"
+								Description
+								Category
+								Is_Active as "Is Active"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Parameter_Name as "Parameter Name"
+								Parameter_Value as "Parameter Value"
+								Description
+								Category
+								Is_Active as "Is Active"
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+			report Frotcom_Sync_Trigger_Report
+			{
+				quickview
+				(
+					layout
+					(
+		 				type = -1
+						datablock1
+						(
+							layout type = -1
+							fields
+							(
+								Trigger_Time as "Trigger Time"
+								Trigger_Type
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+						record
+						(
+							Edit   	   
+							Duplicate   	   
+							Delete   	   
+    					)
+    				)
+    				action
+    				(
+						on click
+						(
+							View Record   	   
+    					)
+						on right click
+						(
+							Edit   	   
+							Delete   	   
+							Duplicate   	   
+							View Record   	   
+    					)
+     				)
+				)
+
+				detailview
+				(
+					layout
+					(
+		 				type = 1
+						datablock1
+						(
+							layout type = -2
+							fields
+							(
+								Trigger_Time as "Trigger Time"
+								Trigger_Type
+							)
+						)
+					)
+					menu
+    				(
+    	 				header
+    	 				(
+    		 				Edit 
+    		 				Duplicate 
+    		 				Delete 
+    	 				)
+    				)
+				)
+			}
+		}
+		menu
+		{
+			space Space
+			{
+				displayname = "Space"
+				icon = "objects-spaceship"
+
+				section App_Preferences
+				{
+					displayname = "App Preferences"
+					icon = "design-app"
+					systemcomponent
+					{
+						type = localization
+						displayname = "Language Selection"
+						icon = "education-language"
+					}
+					systemcomponent
+					{
+						type = connection
+						displayname = "Integrations"
+						icon = "tech-2-connection"
+					}
+				}
+				section Approvals
+				{
+					displayname = "Approvals"
+					icon = "ui-2-hourglass"
+					systemcomponent
+					{
+						type = approval
+						approval status = pending
+						displayname = "Pending Tasks"
+						icon = "ui-2-hourglass"
+					}
+					systemcomponent
+					{
+						type = approval
+						approval status = completed
+						displayname = "Completed Tasks"
+						icon = "design-todo"
+					}
+				}
+				section SharedAnalytics_Section
+				{
+					type = shared_user_report_section
+					displayname = "Reports"
+					icon = "business-chart-bar-33"
+				}
+				section Parameters
+				{
+					displayname = "Parameters"
+					icon = "travel-swiss-knife"
+					form  Parameter
+					{
+						icon = "design-vector"
+					}
+					report All_Parameters
+					{
+						icon = "tech-desktop"
+					}
+				}
+			}
+			space Frotcom
+			{
+				displayname = "Frotcom"
+				icon = "objects-spaceship"
+
+				section Vehicle_References
+				{
+					displayname = "Vehicle References"
+					icon = "transportation-car"
+					form  Vehicle_Reference
+					{
+						icon = "transportation-car"
+					}
+					report All_Vehicle_References
+					{
+						icon = "tech-desktop"
+					}
+				}
+				section Frotcom_Vehicle_Trackings
+				{
+					displayname = "Frotcom Vehicle Trackings"
+					icon = "transportation-car"
+					form  Frotcom_Vehicle_Tracking
+					{
+						icon = "shopping-delivery-track"
+					}
+					report All_Frotcom_Vehicle_Trackings
+					{
+						icon = "tech-desktop"
+					}
+				}
+				section Frotcom_Sync_Logs
+				{
+					displayname = "Frotcom Sync Logs"
+					icon = "tech-sync"
+					form  Frotcom_Sync_Log
+					{
+						icon = "tech-sync"
+					}
+					report All_Frotcom_Sync_Logs
+					{
+						icon = "tech-desktop"
+					}
+				}
+				section Frotcom_Sync_Trigger
+				{
+					displayname = "Frotcom_Sync_Trigger"
+					icon = "tech-desktop"
+					form  Frotcom_Sync_Trigger
+					{
+						icon = "tech-desktop"
+					}
+					report Frotcom_Sync_Trigger_Report
+					{
+						icon = "tech-desktop"
+					}
+				}
+			}
+			preference
+			{
+				icon
+				{
+					style = solid
+					show = {space,section,component}
+				}
+			}
+		}
+		customize
+		{
+			new theme = 6
+			font = "lato"
+			color options
+			{
+				color = "1"
+			}
+			logo
+			{
+				preference = "none"
+				placement = "left"
+			}
+		}
+	}
+	phone
+	{
+		forms
+		{
+			form Frotcom_Sync_Log
+			{
+				label placement = auto
+			}
+			form Frotcom_Vehicle_Tracking
+			{
+				label placement = auto
+			}
+			form Frotcom_Sync_Trigger
+			{
+				label placement = auto
+			}
+			form Parameter
+			{
+				label placement = auto
+			}
+			form Vehicle_Reference
+			{
+				label placement = auto
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = lightred
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	tablet
+	{
+		forms
+		{
+			form Frotcom_Sync_Log
+			{
+				label placement = auto
+			}
+			form Frotcom_Vehicle_Tracking
+			{
+				label placement = auto
+			}
+			form Frotcom_Sync_Trigger
+			{
+				label placement = auto
+			}
+			form Parameter
+			{
+				label placement = auto
+			}
+			form Vehicle_Reference
+			{
+				label placement = auto
+			}
+		}
+		customize
+		{
+			layout = slidingpane
+			font = "default"
+			style = "3"
+			color options
+			{
+				color = lightred
+			}
+			logo
+			{
+				preference = "none"
+			}
+		}
+	}
+	translation
+{
+{"Language_Settings":{"LANGAGUE_WITH_LOGIN":"browser"}}
+}
+}
