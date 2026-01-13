@@ -36,12 +36,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", policy =>
     {
-        var allowedOriginsEnv = builder.Configuration["Cors__AllowedOrigins"];
-        var allowedOrigins = string.IsNullOrEmpty(allowedOriginsEnv) 
-            ? new[] { "http://localhost:3000" }
-            : allowedOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://rascorweb-production.up.railway.app"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
