@@ -211,49 +211,43 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 }
 
-// Register recurring jobs
-RecurringJob.AddOrUpdate<DailyAttendanceProcessorJob>(
-    "daily-attendance-processor",
-    job => job.ExecuteAsync(CancellationToken.None),
-    "0 1 * * *", // Run at 1:00 AM daily
-    new RecurringJobOptions
-    {
-        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") // Ireland time
-    });
+// Register recurring jobs using DI-based approach (required for production)
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    var irelandTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
 
-// Toolbox Talks background jobs
-RecurringJob.AddOrUpdate<ProcessToolboxTalkSchedulesJob>(
-    "process-toolbox-talk-schedules",
-    job => job.ExecuteAsync(CancellationToken.None),
-    "30 6 * * *", // Run at 6:30 AM daily
-    new RecurringJobOptions
-    {
-        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") // Ireland time
-    });
+    recurringJobManager.AddOrUpdate<DailyAttendanceProcessorJob>(
+        "daily-attendance-processor",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "0 1 * * *", // Run at 1:00 AM daily
+        new RecurringJobOptions { TimeZone = irelandTimeZone });
 
-RecurringJob.AddOrUpdate<SendToolboxTalkRemindersJob>(
-    "send-toolbox-talk-reminders",
-    job => job.ExecuteAsync(CancellationToken.None),
-    "0 8 * * *", // Run at 8:00 AM daily
-    new RecurringJobOptions
-    {
-        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") // Ireland time
-    });
+    // Toolbox Talks background jobs
+    recurringJobManager.AddOrUpdate<ProcessToolboxTalkSchedulesJob>(
+        "process-toolbox-talk-schedules",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "30 6 * * *", // Run at 6:30 AM daily
+        new RecurringJobOptions { TimeZone = irelandTimeZone });
 
-RecurringJob.AddOrUpdate<UpdateOverdueToolboxTalksJob>(
-    "update-overdue-toolbox-talks",
-    job => job.ExecuteAsync(CancellationToken.None),
-    "0 * * * *"); // Run every hour
+    recurringJobManager.AddOrUpdate<SendToolboxTalkRemindersJob>(
+        "send-toolbox-talk-reminders",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "0 8 * * *", // Run at 8:00 AM daily
+        new RecurringJobOptions { TimeZone = irelandTimeZone });
 
-// RAMS background jobs
-RecurringJob.AddOrUpdate<RamsDailyDigestJob>(
-    "rams-daily-digest",
-    job => job.ExecuteAsync(CancellationToken.None),
-    "0 8 * * 1-5", // Run at 8:00 AM on weekdays (Monday-Friday)
-    new RecurringJobOptions
-    {
-        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") // Ireland time
-    });
+    recurringJobManager.AddOrUpdate<UpdateOverdueToolboxTalksJob>(
+        "update-overdue-toolbox-talks",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "0 * * * *"); // Run every hour
+
+    // RAMS background jobs
+    recurringJobManager.AddOrUpdate<RamsDailyDigestJob>(
+        "rams-daily-digest",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "0 8 * * 1-5", // Run at 8:00 AM on weekdays (Monday-Friday)
+        new RecurringJobOptions { TimeZone = irelandTimeZone });
+}
 
 app.Run();
 
