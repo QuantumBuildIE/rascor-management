@@ -29,153 +29,294 @@ public static class SiteAttendanceSeeder
             return;
         }
 
-        var employeesToCreate = new List<Employee>
-        {
-            new Employee
+            var employeesToCreate = new List<Employee>
             {
-                Id = Guid.Parse("e1111111-1111-1111-1111-111111111111"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP001",
-                FirstName = "Michael",
-                LastName = "O'Brien",
-                Email = "michael.obrien@rascor.ie",
-                Phone = "+353 1 555 0101",
-                Mobile = "+353 86 555 0101",
-                JobTitle = "Site Supervisor",
-                Department = "Construction",
-                PrimarySiteId = Guid.Parse("22222222-2222-2222-2222-222222222222"), // Quantum Build
-                IsActive = true,
-                StartDate = new DateTime(2022, 3, 15, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e2222222-2222-2222-2222-222222222222"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP002",
-                FirstName = "Sean",
-                LastName = "Murphy",
-                Email = "sean.murphy@rascor.ie",
-                Phone = "+353 1 555 0102",
-                Mobile = "+353 87 555 0102",
-                JobTitle = "Carpenter",
-                Department = "Construction",
-                PrimarySiteId = Guid.Parse("22222222-2222-2222-2222-222222222222"), // Quantum Build
-                IsActive = true,
-                StartDate = new DateTime(2021, 6, 1, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e3333333-3333-3333-3333-333333333333"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP003",
-                FirstName = "Aoife",
-                LastName = "Walsh",
-                Email = "aoife.walsh@rascor.ie",
-                Phone = "+353 1 555 0103",
-                Mobile = "+353 85 555 0103",
-                JobTitle = "Electrician",
-                Department = "Electrical",
-                PrimarySiteId = Guid.Parse("33333333-3333-3333-3333-333333333333"), // South West Gate
-                IsActive = true,
-                StartDate = new DateTime(2023, 1, 10, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e4444444-4444-4444-4444-444444444444"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP004",
-                FirstName = "Patrick",
-                LastName = "Kelly",
-                Email = "patrick.kelly@rascor.ie",
-                Phone = "+353 1 555 0104",
-                Mobile = "+353 86 555 0104",
-                JobTitle = "Plumber",
-                Department = "Plumbing",
-                PrimarySiteId = Guid.Parse("33333333-3333-3333-3333-333333333333"), // South West Gate
-                IsActive = true,
-                StartDate = new DateTime(2022, 8, 20, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e5555555-5555-5555-5555-555555555555"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP005",
-                FirstName = "Ciara",
-                LastName = "Ryan",
-                Email = "ciara.ryan@rascor.ie",
-                Phone = "+353 1 555 0105",
-                Mobile = "+353 87 555 0105",
-                JobTitle = "Project Manager",
-                Department = "Management",
-                PrimarySiteId = Guid.Parse("44444444-4444-4444-4444-444444444444"), // Marmalade Lane
-                IsActive = true,
-                StartDate = new DateTime(2021, 1, 5, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e6666666-6666-6666-6666-666666666666"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP006",
-                FirstName = "Declan",
-                LastName = "Byrne",
-                Email = "declan.byrne@rascor.ie",
-                Phone = "+353 1 555 0106",
-                Mobile = "+353 85 555 0106",
-                JobTitle = "General Operative",
-                Department = "Construction",
-                PrimarySiteId = Guid.Parse("55555555-5555-5555-5555-555555555555"), // Rathbourne Crossing
-                IsActive = true,
-                StartDate = new DateTime(2023, 4, 1, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e7777777-7777-7777-7777-777777777777"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP007",
-                FirstName = "Niamh",
-                LastName = "Doyle",
-                Email = "niamh.doyle@rascor.ie",
-                Phone = "+353 1 555 0107",
-                Mobile = "+353 86 555 0107",
-                JobTitle = "Safety Officer",
-                Department = "Health & Safety",
-                PrimarySiteId = null, // Works across sites
-                IsActive = true,
-                StartDate = new DateTime(2022, 11, 15, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            },
-            new Employee
-            {
-                Id = Guid.Parse("e8888888-8888-8888-8888-888888888888"),
-                TenantId = DataSeeder.DefaultTenantId,
-                EmployeeCode = "EMP008",
-                FirstName = "Brian",
-                LastName = "McCarthy",
-                Email = "brian.mccarthy@rascor.ie",
-                Phone = "+353 1 555 0108",
-                Mobile = "+353 87 555 0108",
-                JobTitle = "Crane Operator",
-                Department = "Construction",
-                PrimarySiteId = Guid.Parse("66666666-6666-6666-6666-666666666666"), // Castleforbes Prem Inn
-                IsActive = true,
-                StartDate = new DateTime(2021, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "system"
-            }
-        };
+                new Employee
+                {
+                    Id = Guid.Parse("e1111111-1111-1111-1111-111111111111"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP001",
+                    FirstName = "Lee",
+                    LastName = "Berns",
+                    Email = "leeberns98@hotmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = new DateTime(2022, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e2222222-2222-2222-2222-222222222222"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP002",
+                    FirstName = "John",
+                    LastName = "Whyte",
+                    Email = "jwhyte747@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = new DateTime(2021, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e3333333-3333-3333-3333-333333333333"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP003",
+                    FirstName = "Ethan",
+                    LastName = "Vickers",
+                    Email = "ethan.vickers@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Electrical",
+                    IsActive = true,
+                    StartDate = new DateTime(2023, 1, 10, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e4444444-4444-4444-4444-444444444444"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP004",
+                    FirstName = "Dylan",
+                    LastName = "Byrne",
+                    Email = "dylan.byrne12322@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Plumbing",
+                    IsActive = true,
+                    StartDate = new DateTime(2022, 8, 20, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e5555555-5555-5555-5555-555555555555"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP005",
+                    FirstName = "Shane",
+                    LastName = "Redmond",
+                    Email = "u3094959461@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Management",
+                    IsActive = true,
+                    StartDate = new DateTime(2021, 1, 5, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e6666666-6666-6666-6666-666666666666"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP006",
+                    FirstName = "Éanna",
+                    LastName = "O'Mhaoleoin",
+                    Email = "eanna9malone@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = new DateTime(2023, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e7777777-7777-7777-7777-777777777777"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP007",
+                    FirstName = "Mark",
+                    LastName = "Kelly",
+                    Email = "mark.kelly@rascor.com",
+                    JobTitle = "Project Manager",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = new DateTime(2022, 11, 15, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e8888888-8888-8888-8888-888888888888"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP008",
+                    FirstName = "Jnr",
+                    LastName = "Jnr",
+                    Email = "Jnr.Rascor@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = new DateTime(2021, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("e9999999-9999-9999-9999-999999999999"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP009",
+                    FirstName = "Antonio",
+                    LastName = "Andrade",
+                    Email = "antonio.andrade@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = null,
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a1010101-0101-0101-0101-010101010101"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP010",
+                    FirstName = "Sean",
+                    LastName = "Alegra",
+                    Email = "sean.alegra@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a2020202-0202-0202-0202-020202020202"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP011",
+                    FirstName = "Damian",
+                    LastName = "Whelan",
+                    Email = "damian.whelan@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a3030303-0303-0303-0303-030303030303"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP012",
+                    FirstName = "Jakub",
+                    LastName = "Waszkowski",
+                    Email = "jakub.waszkowski@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a4040404-0404-0404-0404-040404040404"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP013",
+                    FirstName = "Eduardo",
+                    LastName = "Rodrigues",
+                    Email = "eduardo.rodrigues@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a5050505-0505-0505-0505-050505050505"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP014",
+                    FirstName = "Grant",
+                    LastName = "Edgar",
+                    Email = "grant.edgar@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a6060606-0606-0606-0606-060606060606"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP015",
+                    FirstName = "Luke",
+                    LastName = "Buls",
+                    Email = "luke.buls.rascor@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a7070707-0707-0707-0707-070707070707"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP016",
+                    FirstName = "Edi",
+                    LastName = "Ruggeri",
+                    Email = "edi.ruggeri@rascor.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a8080808-0808-0808-0808-080808080808"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP017",
+                    FirstName = "Donal",
+                    LastName = "Scannell",
+                    Email = "quantumbuildrascor@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("a9090909-0909-0909-0909-090909090909"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP018",
+                    FirstName = "Eddie",
+                    LastName = "Heffernan",
+                    Email = "eddieheffernan@gmail.com",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                },
+                new Employee
+                {
+                    Id = Guid.Parse("b1010101-0101-0101-0101-010101010101"),
+                    TenantId = DataSeeder.DefaultTenantId,
+                    EmployeeCode = "EMP019",
+                    FirstName = "Donal",
+                    LastName = "Scannell",
+                    Email = "donal@quantumbuild.ai",
+                    JobTitle = "General Operative",
+                    Department = "Construction",
+                    IsActive = true,
+                    StartDate = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "system"
+                }
+            };
 
         await employees.AddRangeAsync(employeesToCreate);
         await context.SaveChangesAsync();
