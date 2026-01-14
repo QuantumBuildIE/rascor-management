@@ -127,6 +127,14 @@ jobs:
       - name: Build .NET solution
         run: dotnet build --no-restore --configuration Release
 
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Run database migrations
+        run: dotnet ef database update --project src/Rascor.Infrastructure --startup-project src/Rascor.API
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+
       - name: Install Playwright dependencies
         working-directory: tests/Rascor.Tests.E2E
         run: |
@@ -143,25 +151,73 @@ jobs:
 
       - name: Start API server
         run: |
-          dotnet run --project src/Rascor.API --configuration Release &
-          sleep 30
+          dotnet run --project src/Rascor.API --configuration Release > api.log 2>&1 &
+          echo $! > api.pid
+          sleep 10
         env:
           ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           ASPNETCORE_ENVIRONMENT: Testing
           ASPNETCORE_URLS: http://localhost:5222
+          JwtSettings__Secret: "E2ETestSecretKeyThatIsAtLeast32CharactersLongForSecurity!"
+          JwtSettings__Issuer: "RascorE2ETests"
+          JwtSettings__Audience: "RascorE2ETests"
+          JwtSettings__ExpiryInMinutes: "60"
+
+      - name: Verify API started
+        run: |
+          echo "Checking if API process is running..."
+          if [ -f api.pid ]; then
+            PID=$(cat api.pid)
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "API process $PID is running"
+            else
+              echo "API process $PID has died"
+              echo "=== API Logs ==="
+              cat api.log || echo "No log file found"
+              exit 1
+            fi
+          fi
+          
+          echo "Checking API health endpoint..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5222/health > /dev/null 2>&1; then
+              echo "API health check passed!"
+              exit 0
+            fi
+            echo "Waiting for API... attempt $i/30"
+            sleep 2
+          done
+          
+          echo "API failed to respond to health checks"
+          echo "=== API Logs ==="
+          cat api.log || echo "No log file found"
+          exit 1
 
       - name: Start frontend server
         working-directory: web
         run: |
-          npm run start &
+          npm run start > ../frontend.log 2>&1 &
+          echo $! > ../frontend.pid
           sleep 15
         env:
           NEXT_PUBLIC_API_URL: http://localhost:5222
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -s http://localhost:5222/health > /dev/null; do sleep 2; done'
-          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
+          echo "Checking frontend..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null 2>&1; then
+              echo "Frontend is ready!"
+              exit 0
+            fi
+            echo "Waiting for frontend... attempt $i/30"
+            sleep 2
+          done
+          
+          echo "Frontend failed to start"
+          echo "=== Frontend Logs ==="
+          cat frontend.log || echo "No log file found"
+          exit 1
 
       - name: Run E2E Smoke Tests
         working-directory: tests/Rascor.Tests.E2E
@@ -183,6 +239,20 @@ jobs:
         with:
           name: playwright-smoke-screenshots
           path: tests/Rascor.Tests.E2E/test-results
+
+      - name: Upload API logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-smoke-api-logs
+          path: api.log
+
+      - name: Upload Frontend logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-smoke-frontend-logs
+          path: frontend.log
 
   e2e-critical-tests:
     name: E2E Critical Flow Tests
@@ -223,6 +293,14 @@ jobs:
       - name: Build .NET solution
         run: dotnet build --no-restore --configuration Release
 
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Run database migrations
+        run: dotnet ef database update --project src/Rascor.Infrastructure --startup-project src/Rascor.API
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+
       - name: Install Playwright dependencies
         working-directory: tests/Rascor.Tests.E2E
         run: |
@@ -239,25 +317,73 @@ jobs:
 
       - name: Start API server
         run: |
-          dotnet run --project src/Rascor.API --configuration Release &
-          sleep 30
+          dotnet run --project src/Rascor.API --configuration Release > api.log 2>&1 &
+          echo $! > api.pid
+          sleep 10
         env:
           ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           ASPNETCORE_ENVIRONMENT: Testing
           ASPNETCORE_URLS: http://localhost:5222
+          JwtSettings__Secret: "E2ETestSecretKeyThatIsAtLeast32CharactersLongForSecurity!"
+          JwtSettings__Issuer: "RascorE2ETests"
+          JwtSettings__Audience: "RascorE2ETests"
+          JwtSettings__ExpiryInMinutes: "60"
+
+      - name: Verify API started
+        run: |
+          echo "Checking if API process is running..."
+          if [ -f api.pid ]; then
+            PID=$(cat api.pid)
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "API process $PID is running"
+            else
+              echo "API process $PID has died"
+              echo "=== API Logs ==="
+              cat api.log || echo "No log file found"
+              exit 1
+            fi
+          fi
+          
+          echo "Checking API health endpoint..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5222/health > /dev/null 2>&1; then
+              echo "API health check passed!"
+              exit 0
+            fi
+            echo "Waiting for API... attempt $i/30"
+            sleep 2
+          done
+          
+          echo "API failed to respond to health checks"
+          echo "=== API Logs ==="
+          cat api.log || echo "No log file found"
+          exit 1
 
       - name: Start frontend server
         working-directory: web
         run: |
-          npm run start &
+          npm run start > ../frontend.log 2>&1 &
+          echo $! > ../frontend.pid
           sleep 15
         env:
           NEXT_PUBLIC_API_URL: http://localhost:5222
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -s http://localhost:5222/health > /dev/null; do sleep 2; done'
-          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
+          echo "Checking frontend..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null 2>&1; then
+              echo "Frontend is ready!"
+              exit 0
+            fi
+            echo "Waiting for frontend... attempt $i/30"
+            sleep 2
+          done
+          
+          echo "Frontend failed to start"
+          echo "=== Frontend Logs ==="
+          cat frontend.log || echo "No log file found"
+          exit 1
 
       - name: Run E2E Critical Flow Tests
         working-directory: tests/Rascor.Tests.E2E
@@ -279,6 +405,20 @@ jobs:
         with:
           name: playwright-critical-screenshots
           path: tests/Rascor.Tests.E2E/test-results
+
+      - name: Upload API logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-critical-api-logs
+          path: api.log
+
+      - name: Upload Frontend logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-critical-frontend-logs
+          path: frontend.log
 
   test-summary:
     name: Test Summary
