@@ -1,4 +1,5 @@
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace Rascor.Tests.Integration.ToolboxTalks;
 
@@ -534,6 +535,7 @@ public class ToolboxTalkCrudTests : IntegrationTestBase
         Guid Id,
         string Title,
         string? Description,
+        [property: JsonConverter(typeof(JsonStringEnumConverter))]
         ToolboxTalkFrequency Frequency,
         string FrequencyDisplay,
         string? VideoUrl,
@@ -558,6 +560,7 @@ public class ToolboxTalkCrudTests : IntegrationTestBase
         Guid Id,
         int QuestionNumber,
         string QuestionText,
+        [property: JsonConverter(typeof(JsonStringEnumConverter))]
         QuestionType QuestionType,
         List<string>? Options,
         string CorrectAnswer,

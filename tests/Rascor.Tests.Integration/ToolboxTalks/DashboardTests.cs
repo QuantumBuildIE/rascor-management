@@ -1,4 +1,5 @@
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace Rascor.Tests.Integration.ToolboxTalks;
 
@@ -451,6 +452,7 @@ public class DashboardTests : IntegrationTestBase
         DateTime DueDate,
         int DaysOverdue,
         int RemindersSent,
+        [property: JsonConverter(typeof(JsonStringEnumConverter))]
         ScheduledTalkStatus Status
     );
 
@@ -458,6 +460,7 @@ public class DashboardTests : IntegrationTestBase
         Guid ScheduleId,
         string ToolboxTalkTitle,
         DateTime ScheduledDate,
+        [property: JsonConverter(typeof(JsonStringEnumConverter))]
         ToolboxTalkFrequency Frequency,
         string FrequencyDisplay,
         int AssignmentCount,
