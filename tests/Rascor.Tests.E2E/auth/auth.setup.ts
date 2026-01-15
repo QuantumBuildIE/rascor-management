@@ -47,7 +47,7 @@ setup('authenticate as site manager', async ({ page }) => {
   await page.click('button[type="submit"]');
 
   // Wait for redirect to stock orders (site manager home page)
-  await page.waitForURL(/\/(stock|dashboard)/, { timeout: 15000 });
+  await page.waitForURL(/\/(stock|dashboard|site-attendance)/, { timeout: 15000 });
 
   await page.context().storageState({ path: `${STORAGE_DIR}/sitemanager.json` });
 });
