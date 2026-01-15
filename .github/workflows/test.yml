@@ -197,7 +197,9 @@ jobs:
 
       - name: Run E2E Smoke Tests
         working-directory: tests/Rascor.Tests.E2E
-        run: npx playwright test --grep @smoke --reporter=html
+        run: | 
+             npx playwright test --project=setup
+             npx playwright test --grep @smoke --project=chromium --reporter=html
         env:
           BASE_URL: http://localhost:3000
           API_URL: http://localhost:5222
@@ -339,7 +341,9 @@ jobs:
 
       - name: Run E2E Critical Flow Tests
         working-directory: tests/Rascor.Tests.E2E
-        run: npx playwright test --grep @critical --reporter=html
+        run: |
+            npx playwright test --project=setup
+            npx playwright test --grep @critical --project=chromium --reporter=html
         env:
           BASE_URL: http://localhost:3000
           API_URL: http://localhost:5222
