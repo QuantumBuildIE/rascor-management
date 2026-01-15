@@ -3,18 +3,16 @@ import { ProductListPage, ProductFormPage } from '../../page-objects/stock-manag
 import { generateTestData, TAGS } from '../../fixtures/test-constants';
 
 test.describe('Products @smoke', () => {
-  test.use({ storageState: 'playwright/.auth/admin.json' });
-
-  test('should display product list', async ({ page }) => {
-    const productListPage = new ProductListPage(page);
+  test('should display product list', async ({ adminPage }) => {
+    const productListPage = new ProductListPage(adminPage);
     await productListPage.goto();
 
     await expect(productListPage.pageTitle).toBeVisible();
     await expect(productListPage.table).toBeVisible();
   });
 
-  test('should search products', async ({ page }) => {
-    const productListPage = new ProductListPage(page);
+  test('should search products', async ({ adminPage }) => {
+    const productListPage = new ProductListPage(adminPage);
     await productListPage.goto();
 
     await productListPage.search('cement');
@@ -22,16 +20,16 @@ test.describe('Products @smoke', () => {
     await productListPage.waitForPageLoad();
   });
 
-  test('should navigate to create product', async ({ page }) => {
-    const productListPage = new ProductListPage(page);
+  test('should navigate to create product', async ({ adminPage }) => {
+    const productListPage = new ProductListPage(adminPage);
     await productListPage.goto();
     await productListPage.clickCreate();
 
-    await expect(page).toHaveURL(/\/stock\/products\/new/);
+    await expect(adminPage).toHaveURL(/\/stock\/products\/new/);
   });
 
-  test('should create a new product @regression', async ({ page }) => {
-    const productFormPage = new ProductFormPage(page);
+  test('should create a new product @regression', async ({ adminPage }) => {
+    const productFormPage = new ProductFormPage(adminPage);
     await productFormPage.goto();
 
     const productCode = generateTestData.uniqueString('PROD');
@@ -51,15 +49,13 @@ test.describe('Products @smoke', () => {
     await productFormPage.saveAndWaitForSuccess();
 
     // Should be redirected to product list
-    await expect(page).toHaveURL(/\/stock\/products/);
+    await expect(adminPage).toHaveURL(/\/stock\/products/);
   });
 });
 
 test.describe('Products - Warehouse User', () => {
-  test.use({ storageState: 'playwright/.auth/warehouse.json' });
-
-  test('should be able to view products', async ({ page }) => {
-    const productListPage = new ProductListPage(page);
+  test('should be able to view products', async ({ warehousePage }) => {
+    const productListPage = new ProductListPage(warehousePage);
     await productListPage.goto();
 
     await expect(productListPage.table).toBeVisible();

@@ -7,38 +7,34 @@ import {
 import { TAGS } from '../../fixtures/test-constants';
 
 test.describe('Stock Orders @smoke', () => {
-  test.use({ storageState: 'playwright/.auth/admin.json' });
-
-  test('should display stock order list', async ({ page }) => {
-    const orderListPage = new StockOrderListPage(page);
+  test('should display stock order list', async ({ adminPage }) => {
+    const orderListPage = new StockOrderListPage(adminPage);
     await orderListPage.goto();
 
     await expect(orderListPage.pageTitle).toBeVisible();
     await expect(orderListPage.table).toBeVisible();
   });
 
-  test('should filter orders by status', async ({ page }) => {
-    const orderListPage = new StockOrderListPage(page);
+  test('should filter orders by status', async ({ adminPage }) => {
+    const orderListPage = new StockOrderListPage(adminPage);
     await orderListPage.goto();
 
     await orderListPage.filterByStatus('Draft');
     await orderListPage.waitForPageLoad();
   });
 
-  test('should navigate to create order', async ({ page }) => {
-    const orderListPage = new StockOrderListPage(page);
+  test('should navigate to create order', async ({ adminPage }) => {
+    const orderListPage = new StockOrderListPage(adminPage);
     await orderListPage.goto();
     await orderListPage.clickCreate();
 
-    await expect(page).toHaveURL(/\/stock\/orders\/new/);
+    await expect(adminPage).toHaveURL(/\/stock\/orders\/new/);
   });
 });
 
 test.describe('Stock Order Workflow @regression', () => {
-  test.use({ storageState: 'playwright/.auth/admin.json' });
-
-  test('should create a new stock order', async ({ page }) => {
-    const orderFormPage = new StockOrderFormPage(page);
+  test('should create a new stock order', async ({ adminPage }) => {
+    const orderFormPage = new StockOrderFormPage(adminPage);
     await orderFormPage.goto();
 
     // Select site and add items
@@ -48,18 +44,16 @@ test.describe('Stock Order Workflow @regression', () => {
 });
 
 test.describe('Stock Orders - Site Manager', () => {
-  test.use({ storageState: 'playwright/.auth/sitemanager.json' });
-
-  test('should be able to create orders', async ({ page }) => {
-    const orderListPage = new StockOrderListPage(page);
+  test('should be able to create orders', async ({ siteManagerPage }) => {
+    const orderListPage = new StockOrderListPage(siteManagerPage);
     await orderListPage.goto();
 
     await expect(orderListPage.createButton).toBeVisible();
   });
 
-  test('should not see approve button on pending orders', async ({ page }) => {
+  test('should not see approve button on pending orders', async ({ siteManagerPage }) => {
     // Site managers can create but not approve
-    const orderListPage = new StockOrderListPage(page);
+    const orderListPage = new StockOrderListPage(siteManagerPage);
     await orderListPage.goto();
 
     // This test would need actual pending orders in the database
@@ -68,10 +62,8 @@ test.describe('Stock Orders - Site Manager', () => {
 });
 
 test.describe('Stock Orders - Warehouse User', () => {
-  test.use({ storageState: 'playwright/.auth/warehouse.json' });
-
-  test('should see orders and workflow actions', async ({ page }) => {
-    const orderListPage = new StockOrderListPage(page);
+  test('should see orders and workflow actions', async ({ warehousePage }) => {
+    const orderListPage = new StockOrderListPage(warehousePage);
     await orderListPage.goto();
 
     await expect(orderListPage.table).toBeVisible();

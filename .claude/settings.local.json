@@ -64,7 +64,9 @@
       "Bash(git restore:*)",
       "Bash(git checkout:*)",
       "Bash(git reset:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(DEBUG=pw:api npx playwright test:*)",
+      "Bash(npx playwright --version)"
     ]
   }
 }

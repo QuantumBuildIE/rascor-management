@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import { apiClient, getStoredToken, setStoredToken, clearStoredTokens, setRememberMe, getRememberMe } from "@/lib/api/client";
-import type { User, LoginResponse, ApiResponse, MeResponse } from "@/types/auth";
+import type { User, LoginResponse, MeResponse } from "@/types/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -28,12 +28,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loadUser = useCallback(async (accessToken: string) => {
     try {
-      const response = await apiClient.get<ApiResponse<MeResponse>>("/auth/me", {
+      // The /me endpoint returns the user data directly, not wrapped in ApiResponse
+      const response = await apiClient.get<MeResponse>("/auth/me", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      if (response.data.success && response.data.data) {
-        const userData = response.data.data;
+      const userData = response.data;
+      if (userData && userData.id) {
         setUser({
           id: userData.id,
           email: userData.email,
