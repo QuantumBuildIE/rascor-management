@@ -27,6 +27,7 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
+      testDir: './auth',
     },
     {
       name: 'chromium',
