@@ -16,12 +16,17 @@ export class StockOrderListPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.pageTitle = page.locator('h1');
-    this.createButton = page.locator('a:has-text("New Order"), button:has-text("Create"), a[href*="/orders/new"]');
-    this.searchInput = page.locator('input[placeholder*="Search"], input[name="search"]');
-    this.statusFilter = page.locator('[data-filter="status"], select[name="status"]');
+    // UI uses "New Stock Order" text in a Button wrapped Link
+    this.createButton = page.locator('a:has-text("New Stock Order"), a[href="/stock/orders/new"]');
+    // Search placeholder is "Search by order # or site..."
+    this.searchInput = page.locator('input[placeholder="Search by order # or site..."]');
+    // Status filter uses Tabs component (TabsTrigger elements)
+    this.statusFilter = page.locator('[role="tablist"]');
+    // Site filter doesn't exist on orders list page currently
     this.siteFilter = page.locator('[data-filter="site"], select[name="siteId"]');
     this.table = page.locator('table');
-    this.pagination = page.locator('[data-testid="pagination"], nav[aria-label="pagination"]');
+    // DataTable renders pagination with Previous/Next buttons
+    this.pagination = page.locator('div:has(button:has-text("Previous"))');
   }
 
   /**
@@ -41,10 +46,12 @@ export class StockOrderListPage extends BasePage {
   }
 
   /**
-   * Filter by status
+   * Filter by status using tab buttons
    */
   async filterByStatus(status: string): Promise<void> {
-    await this.selectOption(this.statusFilter, status);
+    // Status filter uses Tabs - click the tab trigger with matching text
+    const tabTrigger = this.page.locator(`[role="tab"]:has-text("${status}")`);
+    await tabTrigger.click();
     await this.waitForPageLoad();
   }
 

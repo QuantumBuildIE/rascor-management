@@ -17,13 +17,17 @@ export class ProductListPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.pageTitle = page.locator('h1');
-    this.createButton = page.locator('a:has-text("New Product"), button:has-text("Create"), a[href*="/products/new"]');
-    this.searchInput = page.locator('input[placeholder*="Search"], input[name="search"]');
+    // UI uses "Add Product" text in a Button wrapped Link
+    this.createButton = page.locator('a:has-text("Add Product"), a[href="/stock/products/new"]');
+    // Search input has placeholder "Search products..."
+    this.searchInput = page.locator('input[placeholder="Search products..."]');
+    // Note: Category/Supplier filters don't exist on products list page currently
     this.categoryFilter = page.locator('[data-filter="category"], select[name="categoryId"]');
     this.supplierFilter = page.locator('[data-filter="supplier"], select[name="supplierId"]');
     this.table = page.locator('table');
-    this.pagination = page.locator('[data-testid="pagination"], nav[aria-label="pagination"]');
-    this.emptyState = page.locator('[data-testid="empty-state"], .empty-state');
+    // DataTable renders pagination with Previous/Next buttons
+    this.pagination = page.locator('div:has(button:has-text("Previous"))');
+    this.emptyState = page.locator('td:has-text("No products found")');
   }
 
   /**

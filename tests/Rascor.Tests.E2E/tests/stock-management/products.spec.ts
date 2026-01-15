@@ -34,12 +34,14 @@ test.describe('Products @smoke', () => {
     const productFormPage = new ProductFormPage(page);
     await productFormPage.goto();
 
-    const productName = generateTestData.uniqueString('Product');
+    const productCode = generateTestData.uniqueString('PROD');
+    const productName = generateTestData.uniqueString('Test Product');
 
     await productFormPage.fillForm({
-      name: productName,
-      sku: generateTestData.uniqueString('SKU'),
-      unit: 'Each',
+      productCode: productCode,
+      productName: productName,
+      categoryName: 'Adhesives', // Use existing seeded category
+      baseRate: 10.50,
       costPrice: 10.50,
       sellPrice: 15.00,
       reorderLevel: 10,

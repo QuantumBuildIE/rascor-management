@@ -3,11 +3,17 @@ import { BasePage } from '../BasePage';
 
 /**
  * Stock order form page object (create/edit)
+ *
+ * Form uses custom SearchSelect components:
+ * - SiteSearchSelect for siteId
+ * - LocationSearchSelect for sourceLocationId
+ * - ProductSearchSelect for line items
  */
 export class StockOrderFormPage extends BasePage {
   readonly pageTitle: Locator;
   readonly siteSelect: Locator;
-  readonly requiredByDateInput: Locator;
+  readonly sourceLocationSelect: Locator;
+  readonly requiredDateButton: Locator;
   readonly notesInput: Locator;
   readonly addLineButton: Locator;
   readonly lineItems: Locator;
@@ -18,14 +24,20 @@ export class StockOrderFormPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.pageTitle = page.locator('h1');
-    this.siteSelect = page.locator('[name="siteId"], #siteId');
-    this.requiredByDateInput = page.locator('[name="requiredByDate"], #requiredByDate');
-    this.notesInput = page.locator('[name="notes"], #notes');
-    this.addLineButton = page.locator('button:has-text("Add Line"), button:has-text("Add Item")');
-    this.lineItems = page.locator('[data-line], .order-line');
-    this.saveButton = page.locator('button:has-text("Save Draft"), button[type="submit"]');
+    // Form uses custom SearchSelect components - look for combobox/popover trigger buttons
+    this.siteSelect = page.locator('button:has-text("Select a site"), [role="combobox"]:near(:text("Site"))').first();
+    this.sourceLocationSelect = page.locator('button:has-text("Select a location"), [role="combobox"]:near(:text("Source Location"))').first();
+    // Date picker uses calendar popover
+    this.requiredDateButton = page.locator('button:has([class*="CalendarIcon"]), button:near(:text("Required Date"))');
+    this.notesInput = page.locator('textarea[name="notes"], textarea');
+    // Add line item button
+    this.addLineButton = page.locator('button:has-text("Add Item"), button:has([class*="PlusIcon"])');
+    // Line items are in a table
+    this.lineItems = page.locator('table tbody tr');
+    // Submit button text is "Create Order" for new, "Update Order" for edit
+    this.saveButton = page.locator('button[type="submit"]:has-text("Create Order"), button[type="submit"]:has-text("Update Order"), button[type="submit"]:has-text("Save")');
     this.submitButton = page.locator('button:has-text("Submit"), button:has-text("Submit for Approval")');
-    this.cancelButton = page.locator('button:has-text("Cancel"), a:has-text("Cancel")');
+    this.cancelButton = page.locator('button:has-text("Cancel")');
   }
 
   /**
