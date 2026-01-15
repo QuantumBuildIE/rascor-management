@@ -36,6 +36,7 @@ public static class StockManagementSeeder
             await SeedSamplePurchaseOrderAsync(context, suppliers[0], products, logger);
             await SeedSampleStockOrderAsync(context, products, locations, logger);
             await SeedHistoricalCollectedOrdersAsync(context, products, locations, logger);
+            await SeedTestOrdersInAllStatusesAsync(context, products, locations, logger);
 
             logger.LogInformation("Stock management test data seeding completed");
         }
@@ -43,13 +44,14 @@ public static class StockManagementSeeder
         {
             logger.LogInformation("Stock management base data already exists");
 
-            // Still try to seed historical data if not present
+            // Still try to seed historical and test data if not present
             var products = await context.Set<Product>().IgnoreQueryFilters().ToListAsync();
             var locations = await context.Set<StockLocation>().IgnoreQueryFilters().ToListAsync();
 
             if (products.Count > 0 && locations.Count > 0)
             {
                 await SeedHistoricalCollectedOrdersAsync(context, products, locations, logger);
+                await SeedTestOrdersInAllStatusesAsync(context, products, locations, logger);
             }
         }
     }
@@ -646,6 +648,164 @@ public static class StockManagementSeeder
         await context.SaveChangesAsync();
 
         logger.LogInformation("Seeded {OrderCount} historical collected orders with {LineCount} lines",
+            stockOrders.Count, stockOrderLines.Count);
+    }
+
+    /// <summary>
+    /// Seeds test orders in all possible statuses for E2E testing
+    /// </summary>
+    private static async Task SeedTestOrdersInAllStatusesAsync(DbContext context, List<Product> products, List<StockLocation> locations, ILogger logger)
+    {
+        // Check if test orders already exist
+        if (await context.Set<StockOrder>().IgnoreQueryFilters().AnyAsync(so => so.OrderNumber.StartsWith("SO-TEST-")))
+        {
+            logger.LogInformation("Test orders in all statuses already exist, skipping");
+            return;
+        }
+
+        var warehouse = locations[0]; // Main warehouse
+        var baseDate = DateTime.UtcNow;
+
+        // Define sites for test orders
+        var sites = new[]
+        {
+            (Id: Guid.Parse("22222222-2222-2222-2222-222222222222"), Name: "Quantum Build"),
+            (Id: Guid.Parse("33333333-3333-3333-3333-333333333333"), Name: "South West Gate"),
+            (Id: Guid.Parse("44444444-4444-4444-4444-444444444444"), Name: "Marmalade Lane"),
+        };
+
+        var stockOrders = new List<StockOrder>();
+        var stockOrderLines = new List<StockOrderLine>();
+
+        // Helper to create an order with lines
+        StockOrder CreateTestOrder(string orderNumber, StockOrderStatus status, int siteIndex, int daysAgo)
+        {
+            var site = sites[siteIndex % sites.Length];
+            var orderDate = DateTime.SpecifyKind(baseDate.AddDays(-daysAgo), DateTimeKind.Utc);
+
+            var order = new StockOrder
+            {
+                Id = Guid.NewGuid(),
+                TenantId = TenantId,
+                OrderNumber = orderNumber,
+                SiteId = site.Id,
+                SiteName = site.Name,
+                OrderDate = orderDate,
+                RequiredDate = DateTime.SpecifyKind(orderDate.AddDays(5), DateTimeKind.Utc),
+                Status = status,
+                RequestedBy = "Test User",
+                Notes = $"Test order for status {status}",
+                SourceLocationId = warehouse.Id,
+                CreatedAt = orderDate,
+                CreatedBy = "system"
+            };
+
+            // Set approval fields for statuses that require them
+            if (status >= StockOrderStatus.Approved && status != StockOrderStatus.Cancelled)
+            {
+                order.ApprovedBy = "System Administrator";
+                order.ApprovedDate = DateTime.SpecifyKind(orderDate.AddDays(1), DateTimeKind.Utc);
+            }
+
+            // Set collected date for collected orders
+            if (status == StockOrderStatus.Collected)
+            {
+                order.CollectedDate = DateTime.SpecifyKind(orderDate.AddDays(3), DateTimeKind.Utc);
+            }
+
+            return order;
+        }
+
+        // Add lines to an order and calculate total
+        void AddLinesToOrder(StockOrder order, int lineCount)
+        {
+            var selectedProducts = products.Take(lineCount).ToList();
+            decimal orderTotal = 0;
+
+            foreach (var product in selectedProducts)
+            {
+                var quantity = 5;
+                var line = new StockOrderLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = TenantId,
+                    StockOrderId = order.Id,
+                    ProductId = product.Id,
+                    QuantityRequested = quantity,
+                    QuantityIssued = order.Status == StockOrderStatus.Collected ? quantity : 0,
+                    UnitPrice = product.BaseRate,
+                    CreatedAt = order.CreatedAt,
+                    CreatedBy = "system"
+                };
+                stockOrderLines.Add(line);
+                orderTotal += quantity * product.BaseRate;
+            }
+
+            order.OrderTotal = orderTotal;
+        }
+
+        // Create 3 Draft orders
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-DRAFT-{i:D3}", StockOrderStatus.Draft, i - 1, 1);
+            AddLinesToOrder(order, 2);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 PendingApproval orders
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-PEND-{i:D3}", StockOrderStatus.PendingApproval, i - 1, 2);
+            AddLinesToOrder(order, 3);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 Approved orders (in addition to existing SO-2024-001)
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-APPR-{i:D3}", StockOrderStatus.Approved, i - 1, 3);
+            AddLinesToOrder(order, 2);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 AwaitingPick orders
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-PICK-{i:D3}", StockOrderStatus.AwaitingPick, i - 1, 4);
+            AddLinesToOrder(order, 3);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 ReadyForCollection orders
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-READY-{i:D3}", StockOrderStatus.ReadyForCollection, i - 1, 5);
+            AddLinesToOrder(order, 2);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 Collected orders (in addition to historical ones)
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-COLL-{i:D3}", StockOrderStatus.Collected, i - 1, 10);
+            AddLinesToOrder(order, 4);
+            stockOrders.Add(order);
+        }
+
+        // Create 3 Cancelled orders
+        for (var i = 1; i <= 3; i++)
+        {
+            var order = CreateTestOrder($"SO-TEST-CANC-{i:D3}", StockOrderStatus.Cancelled, i - 1, 7);
+            order.Notes = "Cancelled: Test order - no longer required";
+            AddLinesToOrder(order, 2);
+            stockOrders.Add(order);
+        }
+
+        await context.Set<StockOrder>().AddRangeAsync(stockOrders);
+        await context.Set<StockOrderLine>().AddRangeAsync(stockOrderLines);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {OrderCount} test orders in all statuses with {LineCount} lines",
             stockOrders.Count, stockOrderLines.Count);
     }
 
