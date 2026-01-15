@@ -169,7 +169,43 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Add health checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "database");
+
 var app = builder.Build();
+
+// Apply database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+        
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
+                pendingMigrations.Count,
+                string.Join(", ", pendingMigrations));
+            
+            await context.Database.MigrateAsync();
+            
+            logger.LogInformation("✓ Database migrations applied successfully");
+        }
+        else
+        {
+            logger.LogInformation("✓ Database schema is up to date");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "Failed to apply database migrations");
+        throw;
+    }
+}
 
 // Seed database with initial data
 await DataSeeder.SeedAsync(app.Services);
@@ -207,6 +243,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map health check endpoint
+app.MapHealthChecks("/health");
 
 // Configure Hangfire dashboard (only in development for security)
 if (app.Environment.IsDevelopment())
