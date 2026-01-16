@@ -84,7 +84,8 @@ test.describe('Stock Order Workflow @critical', () => {
     test('can create a new stock order', async ({ page }) => {
       // Navigate to new order page
       await page.goto('/stock/orders/new');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByRole('heading', { name: /new.*order|create.*order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Fill in the order form
       // Select site using SiteSearchSelect (button trigger for combobox)
@@ -154,20 +155,23 @@ test.describe('Stock Order Workflow @critical', () => {
     test('can submit draft order for approval', async ({ page }) => {
       // First, find or create a draft order
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for draft orders using tabs (not select dropdown)
       const draftTab = page.locator('[role="tab"]:has-text("Draft")');
       if (await draftTab.isVisible()) {
         await draftTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(draftTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Click on first draft order (if exists)
       const draftOrderRow = page.locator('tbody tr').first();
       if (await draftOrderRow.isVisible()) {
         await draftOrderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Submit the order - button text is "Submit for Approval"
         const submitButton = page.locator('button:has-text("Submit for Approval")');
@@ -186,20 +190,23 @@ test.describe('Stock Order Workflow @critical', () => {
 
     test('can approve a submitted order', async ({ page }) => {
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for pending approval orders using tabs
       const pendingTab = page.locator('[role="tab"]:has-text("Pending Approval")');
       if (await pendingTab.isVisible()) {
         await pendingTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(pendingTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Find pending approval order
       const pendingOrderRow = page.locator('tbody tr').first();
       if (await pendingOrderRow.isVisible()) {
         await pendingOrderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Approve the order - button text is "Approve Order"
         const approveButton = page.locator('button:has-text("Approve Order")');
@@ -225,20 +232,23 @@ test.describe('Stock Order Workflow @critical', () => {
 
     test('can mark order as ready for collection', async ({ page }) => {
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for approved orders using tabs
       const approvedTab = page.locator('[role="tab"]:has-text("Approved")');
       if (await approvedTab.isVisible()) {
         await approvedTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(approvedTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Find approved order
       const approvedOrderRow = page.locator('tbody tr').first();
       if (await approvedOrderRow.isVisible()) {
         await approvedOrderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Mark as ready - button text is "Mark Ready for Collection"
         const readyButton = page.locator('button:has-text("Mark Ready for Collection")');
@@ -258,20 +268,23 @@ test.describe('Stock Order Workflow @critical', () => {
 
     test('can complete order collection', async ({ page, request }) => {
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for ready orders using tabs
       const readyTab = page.locator('[role="tab"]:has-text("Ready")');
       if (await readyTab.isVisible()) {
         await readyTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(readyTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Find ready order
       const readyOrderRow = page.locator('tbody tr').first();
       if (await readyOrderRow.isVisible()) {
         await readyOrderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Collect the order - button text is "Mark as Collected"
         const collectButton = page.locator('button:has-text("Mark as Collected")');
@@ -319,7 +332,8 @@ test.describe('Stock Order Workflow @critical', () => {
 
       // Navigate to any page to load the auth state from storage
       await page.goto('/stock');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('body')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Extract the access token from localStorage
       const accessToken = await page.evaluate(() => localStorage.getItem('accessToken'));
@@ -520,7 +534,7 @@ test.describe('Stock Order Workflow @critical', () => {
 
       // Step 12: Navigate to the order detail page
       await page.goto(`/stock/orders/${orderId}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Verify we're on the correct order page (use heading to be specific)
       await expect(page.getByRole('heading', { name: `Order ${orderNumber}` })).toBeVisible({ timeout: TIMEOUTS.medium });
@@ -635,7 +649,8 @@ test.describe('Stock Order Workflow @critical', () => {
 
       // Navigate to any page to load the auth state from storage
       await page.goto('/stock');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('body')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Extract the access token from localStorage
       const accessToken = await page.evaluate(() => localStorage.getItem('accessToken'));
@@ -782,7 +797,7 @@ test.describe('Stock Order Workflow @critical', () => {
 
       // Step 5: Test the UI displays the error correctly
       await page.goto(`/stock/orders/${orderId}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // The Approve button should be visible (order is in PendingApproval)
       const approveButton = page.locator('button:has-text("Approve")');
@@ -826,20 +841,23 @@ test.describe('Stock Order Workflow @critical', () => {
 
     test('can reject a submitted order with reason', async ({ page }) => {
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for pending approval orders using tabs
       const pendingTab = page.locator('[role="tab"]:has-text("Pending Approval")');
       if (await pendingTab.isVisible()) {
         await pendingTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(pendingTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Find pending order
       const pendingOrderRow = page.locator('tbody tr').first();
       if (await pendingOrderRow.isVisible()) {
         await pendingOrderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Reject the order - button text is "Reject Order"
         const rejectButton = page.locator('button:has-text("Reject Order")');
@@ -875,20 +893,23 @@ test.describe('Stock Order Workflow @critical', () => {
 
     test('can view print preview for order', async ({ page }) => {
       await page.goto('/stock/orders');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
       // Filter for approved or ready orders using tabs
       const approvedTab = page.locator('[role="tab"]:has-text("Approved")');
       if (await approvedTab.isVisible()) {
         await approvedTab.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(approvedTab).toHaveAttribute('data-state', 'active', { timeout: TIMEOUTS.short });
       }
 
       // Find an order
       const orderRow = page.locator('tbody tr').first();
       if (await orderRow.isVisible()) {
         await orderRow.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('heading', { name: /order/i })).toBeVisible({ timeout: TIMEOUTS.medium });
 
         // Click print button - button text is "Print Docket"
         const printButton = page.locator('button:has-text("Print Docket")');
@@ -900,7 +921,7 @@ test.describe('Stock Order Workflow @critical', () => {
           ]);
 
           if (newPage) {
-            await newPage.waitForLoadState('networkidle');
+            await newPage.waitForLoadState('domcontentloaded');
             // Print page should have order details
             await expect(newPage.locator('body')).not.toBeEmpty();
             await newPage.close();
@@ -920,7 +941,8 @@ test.describe('Stock Order Filtering and Search @critical', () => {
 
   test('can filter orders by status using tabs', async ({ page }) => {
     await page.goto('/stock/orders');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
     // Click on Draft tab to filter
     const draftTab = page.locator('[role="tab"]:has-text("Draft")');
@@ -929,7 +951,7 @@ test.describe('Stock Order Filtering and Search @critical', () => {
 
       // Wait for tab to become active and data to load
       await expect(draftTab).toHaveAttribute('data-state', 'active', { timeout: 5000 });
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Give the table time to update after filter
       await page.waitForTimeout(500);
@@ -962,19 +984,20 @@ test.describe('Stock Order Filtering and Search @critical', () => {
 
   test('can search orders by reference', async ({ page }) => {
     await page.goto('/stock/orders');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('[role="tablist"]')).toBeVisible({ timeout: TIMEOUTS.medium });
 
     // Get initial row count before search
     const initialRowCount = await page.locator('tbody tr').count();
 
     // Find search input - placeholder is "Search by order # or site..."
     const searchInput = page.locator('input[placeholder="Search by order # or site..."]');
-    await expect(searchInput).toBeVisible();
+    await expect(searchInput).toBeVisible({ timeout: TIMEOUTS.medium });
 
     // Search for orders with "SO-" prefix (standard order number format)
     await searchInput.fill('SO-');
     await page.keyboard.press('Enter');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for search to complete (debounce + API response)
     await page.waitForTimeout(500);
@@ -1006,7 +1029,7 @@ test.describe('Stock Order Filtering and Search @critical', () => {
     // Clear search and verify we get back to unfiltered state
     await searchInput.clear();
     await page.keyboard.press('Enter');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     // After clearing search, we should have same or more rows than filtered results
