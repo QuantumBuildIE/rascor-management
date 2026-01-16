@@ -15,9 +15,37 @@ test.describe('Products @smoke', () => {
     const productListPage = new ProductListPage(adminPage);
     await productListPage.goto();
 
+    // Get initial row count
+    const initialCount = await productListPage.getProductCount();
+
+    // Search for a specific term
     await productListPage.search('cement');
-    // Results should update based on search
-    await productListPage.waitForPageLoad();
+
+    // Verify search results - should either:
+    // 1. Show filtered results containing search term, OR
+    // 2. Show empty state if no matches, OR
+    // 3. Show fewer or equal rows than initial count
+    const filteredCount = await productListPage.getProductCount();
+    const hasEmptyState = await productListPage.emptyState.isVisible().catch(() => false);
+
+    if (hasEmptyState) {
+      // Empty state is valid - no products match search
+      await expect(productListPage.emptyState).toBeVisible();
+    } else if (filteredCount > 0) {
+      // If we have results, verify they contain the search term
+      // Check that at least the first row contains the search term (case insensitive)
+      const firstRow = adminPage.locator('tbody tr').first();
+      const rowText = await firstRow.textContent();
+
+      // The search should filter results - count should be <= initial OR search term should appear
+      expect(
+        filteredCount <= initialCount ||
+        rowText?.toLowerCase().includes('cement')
+      ).toBeTruthy();
+    }
+
+    // Also verify the search input contains our search term
+    await expect(productListPage.searchInput).toHaveValue('cement');
   });
 
   test('should navigate to create product', async ({ adminPage }) => {

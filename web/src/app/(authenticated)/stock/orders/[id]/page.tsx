@@ -63,6 +63,11 @@ export default function StockOrderDetailPage() {
   // Check if user can view site details
   const canViewSites = useHasAnyPermission(["Core.Admin", "Core.ManageSites"]);
 
+  // Permission checks for workflow actions
+  const canCreateOrders = useHasAnyPermission(["StockManagement.CreateOrders", "StockManagement.Admin"]);
+  const canApproveOrders = useHasAnyPermission(["StockManagement.ApproveOrders", "StockManagement.Admin"]);
+  const canReceiveGoods = useHasAnyPermission(["StockManagement.ReceiveGoods", "StockManagement.Admin"]);
+
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = React.useState(false);
@@ -157,61 +162,71 @@ export default function StockOrderDetailPage() {
 
     switch (order.status) {
       case "Draft":
-        actions.push(
-          <Button
-            key="submit"
-            onClick={handleSubmit}
-            disabled={submitOrder.isPending}
-          >
-            {submitOrder.isPending ? "Submitting..." : "Submit for Approval"}
-          </Button>
-        );
-        actions.push(
-          <Button
-            key="edit"
-            variant="outline"
-            asChild
-          >
-            <Link href={`/stock/orders/${order.id}/edit`}>Edit Order</Link>
-          </Button>
-        );
-        actions.push(
-          <Button
-            key="delete"
-            variant="destructive"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            Delete Order
-          </Button>
-        );
+        // Only users who can create orders can submit/edit/delete draft orders
+        if (canCreateOrders) {
+          actions.push(
+            <Button
+              key="submit"
+              onClick={handleSubmit}
+              disabled={submitOrder.isPending}
+            >
+              {submitOrder.isPending ? "Submitting..." : "Submit for Approval"}
+            </Button>
+          );
+          actions.push(
+            <Button
+              key="edit"
+              variant="outline"
+              asChild
+            >
+              <Link href={`/stock/orders/${order.id}/edit`}>Edit Order</Link>
+            </Button>
+          );
+          actions.push(
+            <Button
+              key="delete"
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              Delete Order
+            </Button>
+          );
+        }
         break;
       case "PendingApproval":
-        actions.push(
-          <Button key="approve" onClick={() => setApproveDialogOpen(true)}>
-            Approve Order
-          </Button>
-        );
-        actions.push(
-          <Button
-            key="reject"
-            variant="destructive"
-            onClick={() => setRejectDialogOpen(true)}
-          >
-            Reject Order
-          </Button>
-        );
+        // Only users with approve permission can approve/reject orders
+        if (canApproveOrders) {
+          actions.push(
+            <Button key="approve" onClick={() => setApproveDialogOpen(true)}>
+              Approve Order
+            </Button>
+          );
+          actions.push(
+            <Button
+              key="reject"
+              variant="destructive"
+              onClick={() => setRejectDialogOpen(true)}
+            >
+              Reject Order
+            </Button>
+          );
+        }
         break;
       case "Approved":
       case "AwaitingPick":
-        actions.push(
-          <Button
-            key="ready"
-            onClick={handleReadyForCollection}
-            disabled={readyForCollection.isPending}
-          >
-            {readyForCollection.isPending ? "Processing..." : "Mark Ready for Collection"}
-          </Button>
-        );
+        // Only users with receive goods permission can mark ready/cancel
+        if (canReceiveGoods) {
+          actions.push(
+            <Button
+              key="ready"
+              onClick={handleReadyForCollection}
+              disabled={readyForCollection.isPending}
+            >
+              {readyForCollection.isPending ? "Processing..." : "Mark Ready for Collection"}
+            </Button>
+          );
+        }
+        // Print docket is available to all users who can view the order
         actions.push(
           <Button
             key="print"
@@ -222,23 +237,30 @@ export default function StockOrderDetailPage() {
             Print Docket
           </Button>
         );
-        actions.push(
-          <Button
-            key="cancel"
-            variant="destructive"
-            onClick={handleCancel}
-            disabled={cancelOrder.isPending}
-          >
-            {cancelOrder.isPending ? "Cancelling..." : "Cancel Order"}
-          </Button>
-        );
+        // Cancel requires approve permission (same as backend)
+        if (canApproveOrders) {
+          actions.push(
+            <Button
+              key="cancel"
+              variant="destructive"
+              onClick={handleCancel}
+              disabled={cancelOrder.isPending}
+            >
+              {cancelOrder.isPending ? "Cancelling..." : "Cancel Order"}
+            </Button>
+          );
+        }
         break;
       case "ReadyForCollection":
-        actions.push(
-          <Button key="collect" onClick={() => setCollectDialogOpen(true)}>
-            Mark as Collected
-          </Button>
-        );
+        // Only users with receive goods permission can collect
+        if (canReceiveGoods) {
+          actions.push(
+            <Button key="collect" onClick={() => setCollectDialogOpen(true)}>
+              Mark as Collected
+            </Button>
+          );
+        }
+        // Print docket is available to all users who can view the order
         actions.push(
           <Button
             key="print"
@@ -249,16 +271,19 @@ export default function StockOrderDetailPage() {
             Print Docket
           </Button>
         );
-        actions.push(
-          <Button
-            key="cancel"
-            variant="destructive"
-            onClick={handleCancel}
-            disabled={cancelOrder.isPending}
-          >
-            {cancelOrder.isPending ? "Cancelling..." : "Cancel Order"}
-          </Button>
-        );
+        // Cancel requires approve permission (same as backend)
+        if (canApproveOrders) {
+          actions.push(
+            <Button
+              key="cancel"
+              variant="destructive"
+              onClick={handleCancel}
+              disabled={cancelOrder.isPending}
+            >
+              {cancelOrder.isPending ? "Cancelling..." : "Cancel Order"}
+            </Button>
+          );
+        }
         break;
     }
 

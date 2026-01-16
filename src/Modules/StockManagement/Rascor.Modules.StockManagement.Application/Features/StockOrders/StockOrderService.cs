@@ -330,7 +330,9 @@ public class StockOrderService : IStockOrderService
                 var reserveResult = await ReserveStockAsync(line.ProductId, order.SourceLocationId, line.QuantityRequested);
                 if (!reserveResult.Success)
                 {
-                    return Result.Fail<StockOrderDto>(reserveResult.Message!);
+                    // Error is in Errors list, not Message (Result.Fail puts error in Errors)
+                    var errorMessage = reserveResult.Errors.FirstOrDefault() ?? "Failed to reserve stock";
+                    return Result.Fail<StockOrderDto>(errorMessage);
                 }
             }
 
@@ -451,7 +453,8 @@ public class StockOrderService : IStockOrderService
 
                 if (!issueResult.Success)
                 {
-                    return Result.Fail<StockOrderDto>(issueResult.Message!);
+                    var errorMessage = issueResult.Errors.FirstOrDefault() ?? "Failed to issue stock";
+                    return Result.Fail<StockOrderDto>(errorMessage);
                 }
 
                 line.QuantityIssued = line.QuantityRequested;

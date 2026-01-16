@@ -8,6 +8,7 @@ public record PurchaseOrderLineDto(
     int QuantityOrdered,
     int QuantityReceived,
     decimal UnitPrice,
+    string UnitType,
     decimal LineTotal,
     string LineStatus
 );

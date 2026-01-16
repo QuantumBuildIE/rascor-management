@@ -34,6 +34,11 @@ public class PurchaseOrderLine : TenantEntity
     public decimal UnitPrice { get; set; }
 
     /// <summary>
+    /// Unit of measure (e.g., Each, Box, Metre, Kilogram)
+    /// </summary>
+    public string UnitType { get; set; } = "Each";
+
+    /// <summary>
     /// Status of this line item
     /// </summary>
     public PurchaseOrderLineStatus LineStatus { get; set; } = PurchaseOrderLineStatus.Open;

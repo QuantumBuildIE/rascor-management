@@ -100,8 +100,9 @@ export interface PurchaseOrderLine {
   quantityOrdered: number;
   quantityReceived: number;
   unitPrice: number;
+  unitType: string;
   lineTotal: number;
-  status: string;
+  lineStatus: string;
 }
 
 export interface PurchaseOrder {

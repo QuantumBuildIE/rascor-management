@@ -45,6 +45,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                         l.QuantityOrdered,
                         l.QuantityReceived,
                         l.UnitPrice,
+                        l.UnitType,
                         l.QuantityOrdered * l.UnitPrice,
                         l.LineStatus.ToString()
                     )).ToList()
@@ -86,6 +87,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                         l.QuantityOrdered,
                         l.QuantityReceived,
                         l.UnitPrice,
+                        l.UnitType,
                         l.QuantityOrdered * l.UnitPrice,
                         l.LineStatus.ToString()
                     )).ToList()
@@ -134,6 +136,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                         l.QuantityOrdered,
                         l.QuantityReceived,
                         l.UnitPrice,
+                        l.UnitType,
                         l.QuantityOrdered * l.UnitPrice,
                         l.LineStatus.ToString()
                     )).ToList()
@@ -182,6 +185,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                         l.QuantityOrdered,
                         l.QuantityReceived,
                         l.UnitPrice,
+                        l.UnitType,
                         l.QuantityOrdered * l.UnitPrice,
                         l.LineStatus.ToString()
                     )).ToList()
@@ -209,18 +213,21 @@ public class PurchaseOrderService : IPurchaseOrderService
                 return Result.Fail<PurchaseOrderDto>($"Supplier with ID {dto.SupplierId} not found");
             }
 
-            // Validate all product IDs exist
+            // Validate all product IDs exist and get their UnitTypes
             var productIds = dto.Lines.Select(l => l.ProductId).Distinct().ToList();
-            var existingProductIds = await _context.Products
+            var products = await _context.Products
                 .Where(p => productIds.Contains(p.Id))
-                .Select(p => p.Id)
+                .Select(p => new { p.Id, p.UnitType })
                 .ToListAsync();
 
-            var missingProductIds = productIds.Except(existingProductIds).ToList();
+            var missingProductIds = productIds.Except(products.Select(p => p.Id)).ToList();
             if (missingProductIds.Any())
             {
                 return Result.Fail<PurchaseOrderDto>($"Products not found: {string.Join(", ", missingProductIds)}");
             }
+
+            // Create a lookup for product UnitTypes
+            var productUnitTypes = products.ToDictionary(p => p.Id, p => p.UnitType);
 
             // Generate PO number
             var poNumber = await GeneratePoNumberAsync();
@@ -247,6 +254,11 @@ public class PurchaseOrderService : IPurchaseOrderService
             // Create lines - add them after the parent is tracked so EF properly cascades
             foreach (var lineDto in dto.Lines)
             {
+                // Use provided UnitType or fall back to product's default UnitType
+                var unitType = !string.IsNullOrEmpty(lineDto.UnitType)
+                    ? lineDto.UnitType
+                    : productUnitTypes[lineDto.ProductId];
+
                 var line = new PurchaseOrderLine
                 {
                     Id = Guid.NewGuid(),
@@ -255,6 +267,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                     QuantityOrdered = lineDto.QuantityOrdered,
                     QuantityReceived = 0,
                     UnitPrice = lineDto.UnitPrice,
+                    UnitType = unitType,
                     LineStatus = PurchaseOrderLineStatus.Open
                 };
                 _context.PurchaseOrderLines.Add(line);

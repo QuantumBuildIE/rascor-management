@@ -46,6 +46,7 @@ const purchaseOrderLineSchema = z.object({
   productId: z.string().min(1, "Product is required"),
   productCode: z.string(),
   productName: z.string(),
+  unitType: z.string(),
   quantityOrdered: z.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.number().min(0, "Unit price must be positive"),
   lineTotal: z.number(),
@@ -54,6 +55,7 @@ const purchaseOrderLineSchema = z.object({
 const purchaseOrderFormSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
   supplierName: z.string(),
+  orderDate: z.date(),
   expectedDate: z.date().optional().nullable(),
   notes: z.string().optional(),
   lines: z.array(purchaseOrderLineSchema).min(1, "At least one line item is required"),
@@ -78,6 +80,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
     defaultValues: {
       supplierId: order?.supplierId ?? "",
       supplierName: order?.supplierName ?? "",
+      orderDate: order?.orderDate ? new Date(order.orderDate) : new Date(),
       expectedDate: order?.expectedDate ? new Date(order.expectedDate) : null,
       notes: order?.notes ?? "",
       lines: order?.lines.map((line) => ({
@@ -85,6 +88,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
         productId: line.productId,
         productCode: line.productCode,
         productName: line.productName,
+        unitType: line.unitType,
         quantityOrdered: line.quantityOrdered,
         unitPrice: line.unitPrice,
         lineTotal: line.lineTotal,
@@ -132,6 +136,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
       productId: "",
       productCode: "",
       productName: "",
+      unitType: "Each",
       quantityOrdered: 1,
       unitPrice: 0,
       lineTotal: 0,
@@ -155,6 +160,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
       form.setValue(`lines.${index}.productId`, product.id);
       form.setValue(`lines.${index}.productCode`, product.productCode);
       form.setValue(`lines.${index}.productName`, product.productName);
+      form.setValue(`lines.${index}.unitType`, product.unitType);
       form.setValue(`lines.${index}.unitPrice`, product.baseRate);
       form.setValue(`lines.${index}.lineTotal`, product.baseRate * quantity);
     }
@@ -193,12 +199,14 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
       } else {
         const result = await createPurchaseOrder.mutateAsync({
           supplierId: values.supplierId,
+          orderDate: values.orderDate.toISOString(),
           expectedDate: values.expectedDate?.toISOString(),
           notes: values.notes,
           lines: values.lines.map((line) => ({
             productId: line.productId,
             quantityOrdered: line.quantityOrdered,
             unitPrice: line.unitPrice,
+            unitType: line.unitType,
           })),
         });
         toast.success("Purchase order created successfully");
@@ -220,7 +228,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
             <CardTitle>Order Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="supplierId"
@@ -237,6 +245,48 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
                     </FormControl>
                     <FormDescription>
                       The supplier for this order
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="orderDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Order Date *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            disabled={isEditing}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ?? undefined}
+                          onSelect={field.onChange}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Date of this order
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -335,6 +385,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[300px]">Product</TableHead>
+                      <TableHead className="w-[100px]">UOM</TableHead>
                       <TableHead className="w-[120px] text-right">Quantity</TableHead>
                       <TableHead className="w-[120px] text-right">Unit Price</TableHead>
                       <TableHead className="w-[120px] text-right">Line Total</TableHead>
@@ -366,6 +417,9 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
                               </FormItem>
                             )}
                           />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {watchLines[index]?.unitType || "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           <FormField
@@ -435,7 +489,7 @@ export function PurchaseOrderForm({ order, onSuccess, onCancel }: PurchaseOrderF
                   </TableBody>
                   <TableFooter>
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right font-medium">
+                      <TableCell colSpan={4} className="text-right font-medium">
                         Order Total
                       </TableCell>
                       <TableCell className="text-right font-bold text-lg">

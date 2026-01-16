@@ -283,6 +283,7 @@ export default function PurchaseOrderDetailPage() {
               <TableRow>
                 <TableHead>Product Code</TableHead>
                 <TableHead>Product Name</TableHead>
+                <TableHead>UOM</TableHead>
                 <TableHead className="text-right">Qty Ordered</TableHead>
                 <TableHead className="text-right">Qty Received</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
@@ -295,6 +296,7 @@ export default function PurchaseOrderDetailPage() {
                 <TableRow key={line.id}>
                   <TableCell className="font-medium">{line.productCode}</TableCell>
                   <TableCell>{line.productName}</TableCell>
+                  <TableCell className="text-muted-foreground">{line.unitType}</TableCell>
                   <TableCell className="text-right">{line.quantityOrdered}</TableCell>
                   <TableCell className="text-right">{line.quantityReceived}</TableCell>
                   <TableCell className="text-right">{line.unitPrice.toFixed(2)}</TableCell>
@@ -304,13 +306,13 @@ export default function PurchaseOrderDetailPage() {
                       line.quantityReceived === 0 ? "secondary" :
                       line.quantityReceived >= line.quantityOrdered ? "default" : "outline"
                     }>
-                      {line.status}
+                      {line.lineStatus}
                     </Badge>
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={5} className="text-right font-medium">
+                <TableCell colSpan={6} className="text-right font-medium">
                   Total
                 </TableCell>
                 <TableCell className="text-right font-bold">

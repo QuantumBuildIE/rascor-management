@@ -56,10 +56,12 @@ interface CreatePurchaseOrderLineDto {
   productId: string;
   quantityOrdered: number;
   unitPrice: number;
+  unitType?: string;
 }
 
 interface CreatePurchaseOrderDto {
   supplierId: string;
+  orderDate: string;
   expectedDate?: string;
   notes?: string;
   lines: CreatePurchaseOrderLineDto[];

@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
     goodsReceipts: '/api/goods-receipts',
     stockLevels: '/api/stock-levels',
     stocktakes: '/api/stocktakes',
+    transactions: '/api/stock-transactions',
   },
   proposals: {
     proposals: '/api/proposals',

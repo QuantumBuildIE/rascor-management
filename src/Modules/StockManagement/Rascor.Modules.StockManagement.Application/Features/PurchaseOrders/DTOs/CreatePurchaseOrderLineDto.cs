@@ -3,5 +3,6 @@ namespace Rascor.Modules.StockManagement.Application.Features.PurchaseOrders.DTO
 public record CreatePurchaseOrderLineDto(
     Guid ProductId,
     int QuantityOrdered,
-    decimal UnitPrice
+    decimal UnitPrice,
+    string? UnitType = null
 );
