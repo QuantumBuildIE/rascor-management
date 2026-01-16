@@ -16,6 +16,8 @@ export interface CreateEmployeeDto {
   endDate?: string;
   isActive?: boolean;
   notes?: string;
+  /** Geo tracker device ID for mobile geofence app integration (format: EVT####) */
+  geoTrackerId?: string;
   /** If true, creates a linked User account when Email is provided */
   createUserAccount?: boolean;
   /** Optional role name to assign to the created user */
@@ -36,6 +38,8 @@ export interface UpdateEmployeeDto {
   endDate?: string | null;
   isActive?: boolean;
   notes?: string;
+  /** Geo tracker device ID for mobile geofence app integration (format: EVT####) */
+  geoTrackerId?: string;
 }
 
 export interface GetEmployeesParams {
