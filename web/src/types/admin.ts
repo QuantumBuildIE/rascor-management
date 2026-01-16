@@ -36,6 +36,8 @@ export interface Employee {
   hasUserAccount?: boolean;
   /** The linked User ID if a user account exists */
   linkedUserId?: string;
+  /** GeoTracker device ID for site attendance tracking */
+  geoTrackerId?: string;
 }
 
 export interface CreateEmployeeRequest {
@@ -56,6 +58,8 @@ export interface CreateEmployeeRequest {
   createUserAccount?: boolean;
   /** Optional role name to assign to the created user */
   userRole?: string;
+  /** GeoTracker device ID for site attendance tracking */
+  geoTrackerId?: string;
 }
 
 export interface Company {

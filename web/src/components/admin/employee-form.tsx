@@ -54,6 +54,7 @@ const employeeFormSchema = z.object({
   isActive: z.boolean(),
   createUserAccount: z.boolean(),
   userRole: z.string().optional().nullable(),
+  geoTrackerId: z.string().max(50).optional().nullable(),
 }).refine((data) => {
   if (data.startDate && data.endDate) {
     return new Date(data.endDate) > new Date(data.startDate);
@@ -97,6 +98,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
       isActive: employee?.isActive ?? true,
       createUserAccount: !isEditing, // Only default to true for new employees
       userRole: "SiteManager", // Default role
+      geoTrackerId: employee?.geoTrackerId ?? "",
     },
   });
 
@@ -120,6 +122,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         startDate: values.startDate || undefined,
         endDate: values.endDate || undefined,
         notes: values.notes || undefined,
+        geoTrackerId: values.geoTrackerId || undefined,
       };
 
       if (isEditing) {
@@ -139,6 +142,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             endDate: cleanedValues.endDate || null,
             notes: cleanedValues.notes,
             isActive: cleanedValues.isActive,
+            geoTrackerId: cleanedValues.geoTrackerId,
           },
         });
         toast.success("Employee updated successfully");
@@ -162,6 +166,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
           isActive: cleanedValues.isActive,
           createUserAccount: values.createUserAccount,
           userRole: values.userRole || undefined,
+          geoTrackerId: cleanedValues.geoTrackerId,
         });
 
         if (willCreateUser) {
@@ -201,12 +206,45 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
 
           <FormField
             control={form.control}
+            name="geoTrackerId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Geo Tracker ID</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., EVT0001" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormDescription>
+                  Device ID for GPS attendance tracking
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <FormField
+            control={form.control}
             name="jobTitle"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Job Title</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g., Site Manager" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Department</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Operations" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -244,40 +282,24 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
           />
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="e.g., john.smith@example.com"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Department</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Operations" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="e.g., john.smith@example.com"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* User Account Section - Only show for new employees without existing user account */}
         {!isEditing && (
