@@ -187,6 +187,10 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
             DateTime? lastEventTimestamp = null;
             var uniqueDates = new HashSet<DateOnly>();
 
+            // Track skip reasons for batch logging (reduces log volume)
+            var unmappedEmployees = new Dictionary<string, int>();  // GeoTrackerId -> count
+            var unmappedSites = new Dictionary<string, int>();      // SiteCode -> count
+
             foreach (var mobileEvent in mobileEvents)
             {
                 processed++;
@@ -196,10 +200,8 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                 // Map device_id (UserId field contains EVT####) to Employee
                 if (!employeesByGeoTrackerId.TryGetValue(mobileEvent.UserId, out var employee))
                 {
-                    _logger.LogWarning(
-                        "Skipping event {EventId}: Employee not found for GeoTrackerID '{GeoTrackerId}'",
-                        mobileEvent.Id,
-                        mobileEvent.UserId);
+                    unmappedEmployees.TryGetValue(mobileEvent.UserId, out var empCount);
+                    unmappedEmployees[mobileEvent.UserId] = empCount + 1;
                     skipped++;
                     continue;
                 }
@@ -207,10 +209,8 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                 // Map site_id to Site
                 if (!sitesBySiteCode.TryGetValue(mobileEvent.SiteId, out var site))
                 {
-                    _logger.LogWarning(
-                        "Skipping event {EventId}: Site not found for SiteCode '{SiteCode}'",
-                        mobileEvent.Id,
-                        mobileEvent.SiteId);
+                    unmappedSites.TryGetValue(mobileEvent.SiteId, out var siteCount);
+                    unmappedSites[mobileEvent.SiteId] = siteCount + 1;
                     skipped++;
                     continue;
                 }
@@ -259,6 +259,33 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                     await rascorDb.SaveChangesAsync(cancellationToken);
                     _logger.LogDebug("Saved batch of events. Created so far: {Created}", created);
                 }
+            }
+
+            // Log summary of skipped events (batch logging to reduce log volume)
+            if (unmappedEmployees.Count > 0)
+            {
+                var topUnmappedEmployees = string.Join(", ", unmappedEmployees
+                    .OrderByDescending(x => x.Value)
+                    .Take(10)
+                    .Select(x => $"{x.Key}({x.Value})"));
+                _logger.LogWarning(
+                    "Skipped {TotalCount} events for {DeviceCount} unmapped GeoTrackerIDs. Top: {Devices}",
+                    unmappedEmployees.Values.Sum(),
+                    unmappedEmployees.Count,
+                    topUnmappedEmployees);
+            }
+
+            if (unmappedSites.Count > 0)
+            {
+                var topUnmappedSites = string.Join(", ", unmappedSites
+                    .OrderByDescending(x => x.Value)
+                    .Take(10)
+                    .Select(x => $"{x.Key}({x.Value})"));
+                _logger.LogWarning(
+                    "Skipped {TotalCount} events for {SiteCount} unmapped SiteCodes. Top: {Sites}",
+                    unmappedSites.Values.Sum(),
+                    unmappedSites.Count,
+                    topUnmappedSites);
             }
 
             // Final save
