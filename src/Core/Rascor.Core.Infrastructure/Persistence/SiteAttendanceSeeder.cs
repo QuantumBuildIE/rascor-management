@@ -29,6 +29,31 @@ public static class SiteAttendanceSeeder
             return;
         }
 
+            // GeoTrackerID mappings by email (from external tracker system)
+            // Note: EVT8985 is duplicated for Dylan Byrne and Shane Redmond - assigned to Dylan only
+            var geoTrackerMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "leeberns98@hotmail.com", "EVT7716" },
+                { "jwhyte747@gmail.com", "EVT2898" },
+                { "ethan.vickers@rascor.com", "EVT3953" },
+                { "dylan.byrne12322@gmail.com", "EVT8985" },
+                { "u3094959461@gmail.com", "EVT9999" }, // Shane Redmond - temporary ID (original EVT8985 duplicated with Dylan Byrne)
+                { "eanna9malone@gmail.com", "EVT5592" },
+                { "mark.kelly@rascor.com", "EVT1230" },
+                { "Jnr.Rascor@gmail.com", "EVT00070" },
+                { "antonio.andrade@rascor.com", "EVT4042" },
+                { "sean.alegra@rascor.com", "EVT3795" },
+                { "damian.whelan@rascor.com", "EVT0059" },
+                { "jakub.waszkowski@rascor.com", "EVT0013" },
+                { "eduardo.rodrigues@rascor.com", "EVT0012" },
+                { "grant.edgar@rascor.com", "EVT0011" },
+                { "luke.buls.rascor@gmail.com", "EVT0009" },
+                { "edi.ruggeri@rascor.com", "EVT0007" },
+                { "quantumbuildrascor@gmail.com", "EVT0003" },
+                { "eddieheffernan@gmail.com", "EVT0001" },
+                { "donal@quantumbuild.ai", "EVT0572" }
+            };
+
             var employeesToCreate = new List<Employee>
             {
                 new Employee
@@ -317,6 +342,15 @@ public static class SiteAttendanceSeeder
                     CreatedBy = "system"
                 }
             };
+
+            // Assign GeoTrackerIDs to employees based on email mapping
+            foreach (var employee in employeesToCreate)
+            {
+                if (employee.Email != null && geoTrackerMappings.TryGetValue(employee.Email, out var geoTrackerId))
+                {
+                    employee.SetGeoTrackerID(geoTrackerId);
+                }
+            }
 
         await employees.AddRangeAsync(employeesToCreate);
         await context.SaveChangesAsync();

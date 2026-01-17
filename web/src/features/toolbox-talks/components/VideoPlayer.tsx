@@ -1,12 +1,34 @@
 'use client';
 
 import * as React from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Check, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Check,
+  AlertCircle,
+  Loader2,
+  Subtitles,
+  SubtitlesOff,
+  Download,
+  Languages,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useVideoSubtitles, type AvailableSubtitle } from '@/lib/api/toolbox-talks/use-video-subtitles';
+import { downloadSrtFile } from '@/lib/api/toolbox-talks/subtitle-processing';
 import type { VideoSource } from '@/types/toolbox-talks';
 
 interface VideoPlayerProps {
@@ -15,6 +37,10 @@ interface VideoPlayerProps {
   minimumWatchPercent: number;
   currentWatchPercent: number | null;
   onProgressUpdate: (percent: number) => Promise<void>;
+  /** The toolbox talk ID for fetching subtitles */
+  toolboxTalkId?: string;
+  /** Employee's preferred language code (e.g., 'es', 'pl') */
+  preferredLanguageCode?: string;
   className?: string;
 }
 
@@ -60,12 +86,145 @@ function getVideoEmbedUrl(url: string, source: VideoSource): string | null {
   }
 }
 
+// Subtitle track selector component
+interface SubtitleSelectorProps {
+  subtitles: AvailableSubtitle[];
+  activeSubtitle: AvailableSubtitle | null;
+  captionsEnabled: boolean;
+  onSubtitleChange: (subtitle: AvailableSubtitle | null) => void;
+  onToggleCaptions: () => void;
+  isLoading?: boolean;
+}
+
+function SubtitleSelector({
+  subtitles,
+  activeSubtitle,
+  captionsEnabled,
+  onSubtitleChange,
+  onToggleCaptions,
+  isLoading,
+}: SubtitleSelectorProps) {
+  if (isLoading) {
+    return (
+      <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" disabled>
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </Button>
+    );
+  }
+
+  if (subtitles.length === 0) {
+    return null;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+          {captionsEnabled ? (
+            <Subtitles className="h-5 w-5" />
+          ) : (
+            <SubtitlesOff className="h-5 w-5" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[160px]">
+        <DropdownMenuItem onClick={onToggleCaptions}>
+          <div className="flex items-center gap-2 w-full">
+            {captionsEnabled ? (
+              <SubtitlesOff className="h-4 w-4" />
+            ) : (
+              <Subtitles className="h-4 w-4" />
+            )}
+            <span>{captionsEnabled ? 'Turn off captions' : 'Turn on captions'}</span>
+          </div>
+        </DropdownMenuItem>
+        {subtitles.length > 1 && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              Languages
+            </div>
+            {subtitles.map((subtitle) => (
+              <DropdownMenuItem
+                key={subtitle.languageCode}
+                onClick={() => onSubtitleChange(subtitle)}
+                className="flex items-center justify-between"
+              >
+                <span>{subtitle.languageName}</span>
+                {activeSubtitle?.languageCode === subtitle.languageCode && (
+                  <Check className="h-4 w-4" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// Embedded video subtitle notice
+interface EmbeddedSubtitleNoticeProps {
+  subtitles: AvailableSubtitle[];
+  toolboxTalkId: string;
+}
+
+function EmbeddedSubtitleNotice({ subtitles, toolboxTalkId }: EmbeddedSubtitleNoticeProps) {
+  const [downloading, setDownloading] = React.useState<string | null>(null);
+
+  if (subtitles.length === 0) {
+    return null;
+  }
+
+  const handleDownload = async (languageCode: string) => {
+    try {
+      setDownloading(languageCode);
+      await downloadSrtFile(toolboxTalkId, languageCode);
+    } catch (error) {
+      console.error('Failed to download subtitle:', error);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+      <Languages className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium">Subtitles available</p>
+        <p className="text-muted-foreground text-xs mt-0.5">
+          This embedded video may have its own captions. Translated subtitles are available for download:
+        </p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {subtitles.map((subtitle) => (
+            <button
+              key={subtitle.languageCode}
+              onClick={() => handleDownload(subtitle.languageCode)}
+              disabled={downloading === subtitle.languageCode}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-background border rounded hover:bg-accent transition-colors disabled:opacity-50"
+            >
+              {downloading === subtitle.languageCode ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Download className="h-3 w-3" />
+              )}
+              {subtitle.languageName}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VideoPlayer({
   videoUrl,
   videoSource,
   minimumWatchPercent,
   currentWatchPercent,
   onProgressUpdate,
+  toolboxTalkId,
+  preferredLanguageCode,
   className,
 }: VideoPlayerProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -76,9 +235,48 @@ export function VideoPlayer({
   const [error, setError] = React.useState<string | null>(null);
   const lastReportedPercent = React.useRef(currentWatchPercent || 0);
 
+  // Subtitle state
+  const [captionsEnabled, setCaptionsEnabled] = React.useState(true);
+  const [activeSubtitle, setActiveSubtitle] = React.useState<AvailableSubtitle | null>(null);
+
   const embedUrl = getVideoEmbedUrl(videoUrl, videoSource);
   const isEmbedded = videoSource !== 'DirectUrl';
   const requirementMet = watchPercent >= minimumWatchPercent;
+
+  // Fetch available subtitles
+  const {
+    subtitles,
+    preferredSubtitle,
+    isLoading: subtitlesLoading,
+    hasSubtitles,
+  } = useVideoSubtitles(toolboxTalkId || '', preferredLanguageCode);
+
+  // Set active subtitle to preferred language when loaded
+  React.useEffect(() => {
+    if (preferredSubtitle && !activeSubtitle) {
+      setActiveSubtitle(preferredSubtitle);
+    } else if (subtitles.length > 0 && !activeSubtitle) {
+      // Default to first available (usually English)
+      setActiveSubtitle(subtitles[0]);
+    }
+  }, [preferredSubtitle, subtitles, activeSubtitle]);
+
+  // Update video track when subtitle changes
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video || isEmbedded) return;
+
+    // Get all text tracks
+    const tracks = video.textTracks;
+    for (let i = 0; i < tracks.length; i++) {
+      const track = tracks[i];
+      if (activeSubtitle && track.language === activeSubtitle.languageCode) {
+        track.mode = captionsEnabled ? 'showing' : 'hidden';
+      } else {
+        track.mode = 'hidden';
+      }
+    }
+  }, [activeSubtitle, captionsEnabled, isEmbedded]);
 
   // Handle video progress for direct URLs
   const handleTimeUpdate = React.useCallback(() => {
@@ -100,7 +298,7 @@ export function VideoPlayer({
     // Report every 10% increment
     const shouldReport =
       Math.floor(watchPercent / 10) > Math.floor(lastReportedPercent.current / 10) ||
-      watchPercent >= minimumWatchPercent && lastReportedPercent.current < minimumWatchPercent;
+      (watchPercent >= minimumWatchPercent && lastReportedPercent.current < minimumWatchPercent);
 
     if (shouldReport) {
       setIsUpdating(true);
@@ -166,6 +364,17 @@ export function VideoPlayer({
     }
   };
 
+  const handleToggleCaptions = () => {
+    setCaptionsEnabled(!captionsEnabled);
+  };
+
+  const handleSubtitleChange = (subtitle: AvailableSubtitle | null) => {
+    setActiveSubtitle(subtitle);
+    if (subtitle) {
+      setCaptionsEnabled(true);
+    }
+  };
+
   if (!embedUrl) {
     return (
       <Card className={className}>
@@ -220,7 +429,20 @@ export function VideoPlayer({
               onError={() => setError('Failed to load video')}
               onLoadedData={() => setError(null)}
               controls={false}
-            />
+              crossOrigin="anonymous"
+            >
+              {/* Render subtitle tracks */}
+              {subtitles.map((subtitle, index) => (
+                <track
+                  key={subtitle.languageCode}
+                  kind="subtitles"
+                  src={subtitle.vttUrl}
+                  srcLang={subtitle.languageCode}
+                  label={subtitle.languageName}
+                  default={index === 0 && captionsEnabled}
+                />
+              ))}
+            </video>
           )}
 
           {/* Error overlay */}
@@ -263,18 +485,36 @@ export function VideoPlayer({
                     )}
                   </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/20"
-                  onClick={handleFullscreen}
-                >
-                  <Maximize className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Subtitle selector */}
+                  {toolboxTalkId && (
+                    <SubtitleSelector
+                      subtitles={subtitles}
+                      activeSubtitle={activeSubtitle}
+                      captionsEnabled={captionsEnabled}
+                      onSubtitleChange={handleSubtitleChange}
+                      onToggleCaptions={handleToggleCaptions}
+                      isLoading={subtitlesLoading}
+                    />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20"
+                    onClick={handleFullscreen}
+                  >
+                    <Maximize className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
+
+        {/* Subtitle notice for embedded videos */}
+        {isEmbedded && toolboxTalkId && hasSubtitles && (
+          <EmbeddedSubtitleNotice subtitles={subtitles} toolboxTalkId={toolboxTalkId} />
+        )}
 
         {/* Progress tracking */}
         <div className="space-y-2">
@@ -317,6 +557,17 @@ export function VideoPlayer({
           <p className="text-xs text-muted-foreground text-center">
             Click on the video player to start. Progress will be tracked automatically.
           </p>
+        )}
+
+        {/* Subtitle indicator for direct video */}
+        {!isEmbedded && hasSubtitles && activeSubtitle && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Subtitles className="h-3.5 w-3.5" />
+            <span>
+              Captions: {activeSubtitle.languageName}
+              {!captionsEnabled && ' (off)'}
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>

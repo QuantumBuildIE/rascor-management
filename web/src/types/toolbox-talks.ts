@@ -630,3 +630,85 @@ export interface PaginatedResponse<T> {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
 }
+
+// ============================================
+// Subtitle Processing Types
+// ============================================
+
+export type SubtitleProcessingStatus =
+  | 'Pending'
+  | 'Transcribing'
+  | 'Translating'
+  | 'Uploading'
+  | 'Completed'
+  | 'Failed'
+  | 'Cancelled';
+
+export type SubtitleTranslationStatus =
+  | 'Pending'
+  | 'InProgress'
+  | 'Completed'
+  | 'Failed';
+
+export type SubtitleVideoSourceType =
+  | 'GoogleDrive'
+  | 'AzureBlob'
+  | 'DirectUrl';
+
+export interface LanguageStatus {
+  language: string;
+  languageCode: string;
+  status: SubtitleTranslationStatus;
+  percentage: number;
+  srtUrl?: string;
+  errorMessage?: string;
+}
+
+export interface SubtitleProcessingStatusResponse {
+  jobId: string;
+  toolboxTalkId: string;
+  status: SubtitleProcessingStatus;
+  overallPercentage: number;
+  currentStep: string;
+  errorMessage?: string;
+  startedAt?: string;
+  completedAt?: string;
+  totalSubtitles: number;
+  languages: LanguageStatus[];
+}
+
+export interface StartSubtitleProcessingRequest {
+  videoUrl: string;
+  videoSourceType: SubtitleVideoSourceType;
+  targetLanguages: string[];
+}
+
+export interface StartProcessingResponse {
+  jobId: string;
+  message: string;
+  statusUrl: string;
+}
+
+export interface EmployeeLanguageInfo {
+  language: string;
+  languageCode: string;
+  employeeCount: number;
+}
+
+export interface SupportedLanguageInfo {
+  language: string;
+  languageCode: string;
+}
+
+export interface AvailableLanguagesResponse {
+  employeeLanguages: EmployeeLanguageInfo[];
+  allSupportedLanguages: SupportedLanguageInfo[];
+}
+
+export interface SubtitleProgressUpdate {
+  overallStatus: SubtitleProcessingStatus;
+  overallPercentage: number;
+  currentStep: string;
+  errorMessage?: string;
+  languages: LanguageStatus[];
+}

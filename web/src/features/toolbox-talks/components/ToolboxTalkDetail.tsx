@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/accordion';
 import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
 import { useToolboxTalk, useDeleteToolboxTalk } from '@/lib/api/toolbox-talks';
+import { SubtitleProcessingPanel } from './SubtitleProcessingPanel';
 import type { ToolboxTalk, RecentCompletion } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -277,6 +278,14 @@ export function ToolboxTalkDetail({ talkId, onSchedule }: ToolboxTalkDetailProps
           </CardContent>
         </Card>
       </div>
+
+      {/* Subtitle Processing - only show if talk has a video */}
+      {talk.videoSource !== 'None' && talk.videoUrl && (
+        <SubtitleProcessingPanel
+          toolboxTalkId={talk.id}
+          currentVideoUrl={talk.videoUrl}
+        />
+      )}
 
       {/* Sections Preview */}
       <Card>

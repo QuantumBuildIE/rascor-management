@@ -18,6 +18,7 @@ using Rascor.Core.Infrastructure.Identity;
 using Rascor.Core.Infrastructure.Persistence;
 using Rascor.Modules.StockManagement.Infrastructure.Data;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
 using Rascor.Tests.Common.TestTenant;
 using Rascor.Tests.Integration.Setup.Fakes;
 using Respawn;
@@ -63,6 +64,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     /// Fake email sender for capturing sent emails in tests.
     /// </summary>
     public FakeEmailSender FakeEmailSender { get; } = new();
+
+    /// <summary>
+    /// Fake subtitle services for testing subtitle processing without external APIs.
+    /// </summary>
+    public FakeTranscriptionService FakeTranscriptionService { get; } = new();
+    public FakeTranslationService FakeTranslationService { get; } = new();
+    public FakeSrtStorageProvider FakeSrtStorageProvider { get; } = new();
+    public FakeVideoSourceProvider FakeVideoSourceProvider { get; } = new();
+    public FakeSubtitleProgressReporter FakeSubtitleProgressReporter { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -159,6 +169,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
             // Register fake services for testing
             // services.AddSingleton<IEmailSender>(FakeEmailSender);
+
+            // Register fake subtitle processing services to avoid external API calls
+            services.RemoveAll<ITranscriptionService>();
+            services.RemoveAll<ITranslationService>();
+            services.RemoveAll<ISrtStorageProvider>();
+            services.RemoveAll<IVideoSourceProvider>();
+            services.RemoveAll<ISubtitleProgressReporter>();
+
+            services.AddSingleton<ITranscriptionService>(FakeTranscriptionService);
+            services.AddSingleton<ITranslationService>(FakeTranslationService);
+            services.AddSingleton<ISrtStorageProvider>(FakeSrtStorageProvider);
+            services.AddSingleton<IVideoSourceProvider>(FakeVideoSourceProvider);
+            services.AddSingleton<ISubtitleProgressReporter>(FakeSubtitleProgressReporter);
         });
 
         builder.UseEnvironment("Testing");
@@ -322,7 +345,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                     "Proposals.View",
                     "SiteAttendance.View", "SiteAttendance.MarkAttendance", "SiteAttendance.Admin",
                     "StockManagement.View", "StockManagement.CreateOrders",
-                    "ToolboxTalks.View", "ToolboxTalks.Manage", "ToolboxTalks.Schedule"
+                    "ToolboxTalks.View", "ToolboxTalks.Edit", "ToolboxTalks.Schedule"
                 },
                 (Guid?)TestTenantConstants.Employees.ManagerEmployee // Link to manager employee
             ),

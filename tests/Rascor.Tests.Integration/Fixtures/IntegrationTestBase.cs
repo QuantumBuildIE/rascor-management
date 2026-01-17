@@ -74,6 +74,48 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         return Scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     }
 
+    #region Fake Subtitle Services
+
+    /// <summary>
+    /// Gets the fake transcription service for test configuration.
+    /// </summary>
+    protected FakeTranscriptionService FakeTranscriptionService => Factory.FakeTranscriptionService;
+
+    /// <summary>
+    /// Gets the fake translation service for test configuration.
+    /// </summary>
+    protected FakeTranslationService FakeTranslationService => Factory.FakeTranslationService;
+
+    /// <summary>
+    /// Gets the fake SRT storage provider for test configuration.
+    /// </summary>
+    protected FakeSrtStorageProvider FakeSrtStorageProvider => Factory.FakeSrtStorageProvider;
+
+    /// <summary>
+    /// Gets the fake video source provider for test configuration.
+    /// </summary>
+    protected FakeVideoSourceProvider FakeVideoSourceProvider => Factory.FakeVideoSourceProvider;
+
+    /// <summary>
+    /// Gets the fake subtitle progress reporter for test configuration.
+    /// </summary>
+    protected FakeSubtitleProgressReporter FakeSubtitleProgressReporter => Factory.FakeSubtitleProgressReporter;
+
+    /// <summary>
+    /// Resets all fake subtitle services to their default state.
+    /// Call this in InitializeAsync or at the beginning of tests that need fresh fake services.
+    /// </summary>
+    protected void ResetFakeSubtitleServices()
+    {
+        FakeTranscriptionService.Reset();
+        FakeTranslationService.Reset();
+        FakeSrtStorageProvider.Reset();
+        FakeVideoSourceProvider.Reset();
+        FakeSubtitleProgressReporter.Clear();
+    }
+
+    #endregion
+
     /// <summary>
     /// Resets the database to a clean state and re-seeds test data.
     /// Call this at the start of tests that modify data.

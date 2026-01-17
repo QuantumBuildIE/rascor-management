@@ -1,7 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
 using Rascor.Modules.ToolboxTalks.Application.Services;
+using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Configuration;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Subtitles;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure;
 
@@ -29,6 +33,21 @@ public static class ServiceCollectionExtensions
         // Register export service (stub implementation for Phase 2)
         services.AddScoped<IToolboxTalkExportService, ToolboxTalkExportService>();
 
+        // Register subtitle processing configuration
+        services.Configure<SubtitleProcessingSettings>(
+            configuration.GetSection(SubtitleProcessingSettings.SectionName));
+
+        // Register subtitle processing infrastructure services
+        services.AddHttpClient<ITranscriptionService, ElevenLabsTranscriptionService>();
+        services.AddHttpClient<ITranslationService, ClaudeTranslationService>();
+        services.AddHttpClient<ISrtStorageProvider, GitHubSrtStorageProvider>();
+        services.AddScoped<IVideoSourceProvider, GoogleDriveVideoSourceProvider>();
+        services.AddScoped<ISubtitleProgressReporter, SignalRProgressReporter>();
+
+        // Register subtitle processing orchestrator
+        services.AddScoped<ISubtitleProcessingOrchestrator, SubtitleProcessingOrchestrator>();
+
+        // Note: SignalR hub is registered in Program.cs with app.MapHub<SubtitleProcessingHub>()
         // Note: Hangfire background jobs are registered in Program.cs
 
         return services;

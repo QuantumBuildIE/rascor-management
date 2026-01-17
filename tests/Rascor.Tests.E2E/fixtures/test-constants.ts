@@ -98,6 +98,13 @@ export const API_ENDPOINTS = {
     settings: '/api/site-attendance/settings',
     bankHolidays: '/api/site-attendance/bank-holidays',
   },
+  toolboxTalks: {
+    talks: '/api/toolbox-talks',
+    subtitleProcess: '/toolbox-talks/{id}/subtitles/process',
+    subtitleStatus: '/toolbox-talks/{id}/subtitles/status',
+    subtitleCancel: '/toolbox-talks/{id}/subtitles/cancel',
+    availableLanguages: '/api/subtitles/available-languages',
+  },
   admin: {
     users: '/api/users',
     roles: '/api/roles',

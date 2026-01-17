@@ -21,5 +21,9 @@ public interface IToolboxTalksDbContext
     DbSet<ScheduledTalkCompletion> ScheduledTalkCompletions { get; }
     DbSet<ToolboxTalkSettings> ToolboxTalkSettings { get; }
 
+    // Subtitle processing entities
+    DbSet<SubtitleProcessingJob> SubtitleProcessingJobs { get; }
+    DbSet<SubtitleTranslation> SubtitleTranslations { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

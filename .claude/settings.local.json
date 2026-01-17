@@ -67,7 +67,8 @@
       "Bash(git push:*)",
       "Bash(DEBUG=pw:api npx playwright test:*)",
       "Bash(npx playwright --version)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git config:*)"
     ]
   }
 }

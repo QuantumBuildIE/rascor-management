@@ -3606,6 +3606,179 @@ namespace Rascor.Modules.StockManagement.Infrastructure.Migrations
                     b.ToTable("ScheduledTalkSectionProgress", "toolbox_talks");
                 });
 
+            modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleProcessingJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("EnglishSrtContent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EnglishSrtUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("SourceVideoUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ToolboxTalkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalSubtitles")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("VideoSourceType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_subtitle_processing_jobs_status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_subtitle_processing_jobs_tenant");
+
+                    b.HasIndex("ToolboxTalkId")
+                        .HasDatabaseName("ix_subtitle_processing_jobs_toolbox_talk");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("ix_subtitle_processing_jobs_tenant_status");
+
+                    b.HasIndex("TenantId", "ToolboxTalkId", "IsDeleted")
+                        .HasDatabaseName("ix_subtitle_processing_jobs_tenant_talk_deleted");
+
+                    b.ToTable("SubtitleProcessingJobs", "toolbox_talks");
+                });
+
+            modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleTranslation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("SrtContent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SrtUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<Guid>("SubtitleProcessingJobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SubtitlesProcessed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("TotalSubtitles")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_subtitle_translations_status");
+
+                    b.HasIndex("SubtitleProcessingJobId")
+                        .HasDatabaseName("ix_subtitle_translations_job");
+
+                    b.HasIndex("SubtitleProcessingJobId", "LanguageCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_subtitle_translations_job_language");
+
+                    b.ToTable("SubtitleTranslations", "toolbox_talks");
+                });
+
             modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.ToolboxTalk", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4790,6 +4963,28 @@ namespace Rascor.Modules.StockManagement.Infrastructure.Migrations
                     b.Navigation("Section");
                 });
 
+            modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleProcessingJob", b =>
+                {
+                    b.HasOne("Rascor.Modules.ToolboxTalks.Domain.Entities.ToolboxTalk", "ToolboxTalk")
+                        .WithMany()
+                        .HasForeignKey("ToolboxTalkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ToolboxTalk");
+                });
+
+            modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleTranslation", b =>
+                {
+                    b.HasOne("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleProcessingJob", "ProcessingJob")
+                        .WithMany("Translations")
+                        .HasForeignKey("SubtitleProcessingJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProcessingJob");
+                });
+
             modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.ToolboxTalkQuestion", b =>
                 {
                     b.HasOne("Rascor.Modules.ToolboxTalks.Domain.Entities.ToolboxTalk", "ToolboxTalk")
@@ -4956,6 +5151,11 @@ namespace Rascor.Modules.StockManagement.Infrastructure.Migrations
                     b.Navigation("QuizAttempts");
 
                     b.Navigation("SectionProgress");
+                });
+
+            modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.SubtitleProcessingJob", b =>
+                {
+                    b.Navigation("Translations");
                 });
 
             modelBuilder.Entity("Rascor.Modules.ToolboxTalks.Domain.Entities.ToolboxTalk", b =>

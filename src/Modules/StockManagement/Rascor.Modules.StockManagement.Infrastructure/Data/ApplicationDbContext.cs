@@ -93,6 +93,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkSettings> ToolboxTalkSettings => Set<ToolboxTalkSettings>();
     public DbSet<ToolboxTalkTranslation> ToolboxTalkTranslations => Set<ToolboxTalkTranslation>();
     public DbSet<ToolboxTalkVideoTranslation> ToolboxTalkVideoTranslations => Set<ToolboxTalkVideoTranslation>();
+    public DbSet<SubtitleProcessingJob> SubtitleProcessingJobs => Set<SubtitleProcessingJob>();
+    public DbSet<SubtitleTranslation> SubtitleTranslations => Set<SubtitleTranslation>();
 
     // RAMS DbSets
     public DbSet<RamsDocument> RamsDocuments => Set<RamsDocument>();
@@ -218,6 +220,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkVideoTranslationConfiguration());
+        modelBuilder.ApplyConfiguration(new SubtitleProcessingJobConfiguration());
+        modelBuilder.ApplyConfiguration(new SubtitleTranslationConfiguration());
 
         // Apply RAMS entity configurations
         modelBuilder.ApplyConfiguration(new RamsDocumentConfiguration());
@@ -267,9 +271,9 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         // BaseEntity-based (not tenant-scoped): HazardControlLink
 
         // Note: Toolbox Talks query filters are defined in entity configurations
-        // TenantEntity-based: ToolboxTalk, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation
+        // TenantEntity-based: ToolboxTalk, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, SubtitleProcessingJob
         // BaseEntity-based (not tenant-scoped): ToolboxTalkSection, ToolboxTalkQuestion, ToolboxTalkScheduleAssignment,
-        //   ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings
+        //   ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings, SubtitleTranslation
 
         // Apply query filter for Permission (not tenant-scoped, global)
         modelBuilder.Entity<Permission>().HasQueryFilter(e => !e.IsDeleted);

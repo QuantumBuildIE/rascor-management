@@ -26,6 +26,7 @@ using Rascor.Modules.Rams.Application;
 using Rascor.Modules.Rams.Infrastructure;
 using Rascor.Modules.Rams.Infrastructure.Jobs;
 using Rascor.Modules.Rams.Infrastructure.Persistence.Seed;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -173,6 +174,9 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "database");
 
+// Add SignalR for real-time subtitle processing progress updates
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Apply database migrations on startup
@@ -243,6 +247,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hubs
+app.MapHub<SubtitleProcessingHub>("/hubs/subtitle-processing");
 
 // Map health check endpoint
 app.MapHealthChecks("/health");

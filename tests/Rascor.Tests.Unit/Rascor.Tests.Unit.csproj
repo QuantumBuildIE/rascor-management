@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\src\Modules\Proposals\Rascor.Modules.Proposals.Application\Rascor.Modules.Proposals.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\SiteAttendance\Rascor.Modules.SiteAttendance.Application\Rascor.Modules.SiteAttendance.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Application\Rascor.Modules.ToolboxTalks.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Infrastructure\Rascor.Modules.ToolboxTalks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
