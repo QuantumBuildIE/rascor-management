@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
+using Rascor.Modules.ToolboxTalks.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Tests.Integration.ToolboxTalks;
@@ -571,7 +572,7 @@ public class SubtitleProcessingTests : IntegrationTestBase
     [Fact]
     public async Task CancelProcessing_ActiveJob_ReturnsOkAndCancelsJob()
     {
-        // Arrange - Create a talk and start processing
+        // Arrange - Create a talk
         var createCommand = new
         {
             Title = $"Talk for cancel test {Guid.NewGuid()}",
@@ -588,16 +589,21 @@ public class SubtitleProcessingTests : IntegrationTestBase
         var createdTalk = await createResponse.Content.ReadFromJsonAsync<ToolboxTalkDto>();
         var talkId = createdTalk!.Id;
 
-        var request = new StartProcessingRequest
+        // Create job directly in database with Transcribing status to avoid race condition
+        // (fake services complete instantly, so starting via API would result in Completed status)
+        var dbContext = GetDbContext();
+        var job = new SubtitleProcessingJob
         {
-            VideoUrl = "https://drive.google.com/file/d/test/view",
+            Id = Guid.NewGuid(),
+            TenantId = TestTenantConstants.TenantId,
+            ToolboxTalkId = talkId,
+            Status = SubtitleProcessingStatus.Transcribing,
+            SourceVideoUrl = "https://drive.google.com/file/d/test/view",
             VideoSourceType = SubtitleVideoSourceType.GoogleDrive,
-            TargetLanguages = new List<string> { "Spanish" }
+            StartedAt = DateTime.UtcNow
         };
-
-        var startResponse = await AdminClient.PostAsJsonAsync(
-            $"/api/toolbox-talks/{talkId}/subtitles/process", request);
-        startResponse.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        dbContext.SubtitleProcessingJobs.Add(job);
+        await dbContext.SaveChangesAsync();
 
         // Act - Cancel the processing
         var cancelResponse = await AdminClient.PostAsync(
