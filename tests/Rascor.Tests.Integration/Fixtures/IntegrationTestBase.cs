@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
-using Rascor.Modules.StockManagement.Infrastructure.Data;
+using Rascor.Core.Infrastructure.Data;
 using Rascor.Tests.Common.TestTenant;
 
 namespace Rascor.Tests.Integration.Fixtures;

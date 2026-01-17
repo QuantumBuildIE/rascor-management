@@ -68,7 +68,11 @@
       "Bash(DEBUG=pw:api npx playwright test:*)",
       "Bash(npx playwright --version)",
       "Bash(xargs:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(PGPASSWORD=\"Stock123!\" psql:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(timeout 30 dotnet run:*)"
     ]
   }
 }

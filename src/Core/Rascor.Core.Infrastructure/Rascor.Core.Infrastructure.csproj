@@ -7,9 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Core Application (for interfaces) -->
     <ProjectReference Include="..\Rascor.Core.Application\Rascor.Core.Application.csproj" />
-    <ProjectReference Include="..\..\Modules\StockManagement\Rascor.Modules.StockManagement.Domain\Rascor.Modules.StockManagement.Domain.csproj" />
-    <ProjectReference Include="..\..\Modules\Proposals\Rascor.Modules.Proposals.Domain\Rascor.Modules.Proposals.Domain.csproj" />
+
+    <!-- Module Application projects (for DbContext interfaces and entity types) -->
+    <ProjectReference Include="..\..\Modules\StockManagement\Rascor.Modules.StockManagement.Application\Rascor.Modules.StockManagement.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Proposals\Rascor.Modules.Proposals.Application\Rascor.Modules.Proposals.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Application\Rascor.Modules.ToolboxTalks.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Rams\Rascor.Modules.Rams.Application\Rascor.Modules.Rams.Application.csproj" />
+
+    <!-- Module Infrastructure projects (for entity configurations - configurations loaded via ApplyConfigurationsFromAssembly) -->
+    <ProjectReference Include="..\..\Modules\StockManagement\Rascor.Modules.StockManagement.Infrastructure\Rascor.Modules.StockManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Proposals\Rascor.Modules.Proposals.Infrastructure\Rascor.Modules.Proposals.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Infrastructure\Rascor.Modules.ToolboxTalks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Rams\Rascor.Modules.Rams.Infrastructure\Rascor.Modules.Rams.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

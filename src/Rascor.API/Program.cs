@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Rascor.Core.Application;
 using Rascor.Core.Application.Interfaces;
+using Rascor.Core.Infrastructure.Data;
 using Rascor.Core.Infrastructure.Identity;
 using Rascor.Core.Infrastructure.Persistence;
 using Rascor.Core.Infrastructure.Repositories;
+using Rascor.Core.Infrastructure.Services;
 using Rascor.Modules.StockManagement.Application;
 using Rascor.Modules.StockManagement.Application.Common.Interfaces;
-using Rascor.Modules.StockManagement.Infrastructure.Data;
-using Rascor.Modules.StockManagement.Infrastructure.Services;
 using Rascor.Modules.Proposals.Application;
 using Rascor.Modules.Proposals.Application.Common.Interfaces;
 using Rascor.Modules.SiteAttendance.Infrastructure;
@@ -171,8 +171,14 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Add health checks
-builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "database");
+var healthChecksBuilder = builder.Services.AddHealthChecks();
+
+// Only add database health check if connection string is available (skipped in testing environment)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(connectionString))
+{
+    healthChecksBuilder.AddNpgSql(connectionString, name: "database");
+}
 
 // Add SignalR for real-time subtitle processing progress updates
 builder.Services.AddSignalR();

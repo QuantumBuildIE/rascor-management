@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Rascor.Modules.ToolboxTalks.Application\Rascor.Modules.ToolboxTalks.Application.csproj" />
     <ProjectReference Include="..\Rascor.Modules.ToolboxTalks.Domain\Rascor.Modules.ToolboxTalks.Domain.csproj" />
-    <ProjectReference Include="..\..\..\Core\Rascor.Core.Infrastructure\Rascor.Core.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +18,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
   </ItemGroup>
 

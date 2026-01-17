@@ -8,15 +8,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Rascor.Core.Domain.Entities;
+using Rascor.Core.Infrastructure.Data;
 using Rascor.Core.Infrastructure.Identity;
 using Rascor.Core.Infrastructure.Persistence;
-using Rascor.Modules.StockManagement.Infrastructure.Data;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
 using Rascor.Tests.Common.TestTenant;
@@ -80,6 +81,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // This must be done early to prevent PostgreSQL storage initialization
         GlobalConfiguration.Configuration.UseMemoryStorage();
 
+        // Set the connection string in configuration BEFORE Program.cs runs
+        // This is required because health checks read from configuration during service registration
+        // Capture the container reference to get the connection string at execution time
+        var container = _dbContainer;
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            var connStr = container.GetConnectionString();
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = connStr
+            });
+        });
+
         builder.ConfigureServices(services =>
         {
             // Remove all Hangfire service registrations to prevent PostgreSQL storage errors
@@ -115,14 +129,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             }
 
             // Add DbContext using the test container connection string
+            // Suppress pending model changes warning for testing (schema drift doesn't matter for tests)
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseNpgsql(ConnectionString);
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             });
 
             services.AddDbContext<SiteAttendanceDbContext>(options =>
             {
                 options.UseNpgsql(ConnectionString);
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             });
 
             // Override JWT settings for testing

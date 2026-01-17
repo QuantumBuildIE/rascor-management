@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Rascor.Modules.Rams.Application\Rascor.Modules.Rams.Application.csproj" />
     <ProjectReference Include="..\Rascor.Modules.Rams.Domain\Rascor.Modules.Rams.Domain.csproj" />
-    <ProjectReference Include="..\..\..\Core\Rascor.Core.Infrastructure\Rascor.Core.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +16,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
     <PackageReference Include="QuestPDF" Version="2025.12.0" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />

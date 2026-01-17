@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rascor.Modules.Proposals.Application\Rascor.Modules.Proposals.Application.csproj" />
-    <ProjectReference Include="..\..\..\Core\Rascor.Core.Infrastructure\Rascor.Core.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

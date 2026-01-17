@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Loader2,
   Subtitles,
-  SubtitlesOff,
+  MessageSquareOff,
   Download,
   Languages,
 } from 'lucide-react';
@@ -123,7 +123,7 @@ function SubtitleSelector({
           {captionsEnabled ? (
             <Subtitles className="h-5 w-5" />
           ) : (
-            <SubtitlesOff className="h-5 w-5" />
+            <MessageSquareOff className="h-5 w-5" />
           )}
         </Button>
       </DropdownMenuTrigger>
@@ -131,7 +131,7 @@ function SubtitleSelector({
         <DropdownMenuItem onClick={onToggleCaptions}>
           <div className="flex items-center gap-2 w-full">
             {captionsEnabled ? (
-              <SubtitlesOff className="h-4 w-4" />
+              <MessageSquareOff className="h-4 w-4" />
             ) : (
               <Subtitles className="h-4 w-4" />
             )}
