@@ -14,7 +14,7 @@ public class SubtitleProcessingHubTests : IntegrationTestBase
 
     private HubConnection CreateHubConnection(string accessToken)
     {
-        var hubUrl = Factory.Server.BaseAddress + "hubs/subtitle-processing";
+        var hubUrl = Factory.Server.BaseAddress + "api/hubs/subtitle-processing";
 
         return new HubConnectionBuilder()
             .WithUrl(hubUrl, options =>
