@@ -255,7 +255,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR hubs
-app.MapHub<SubtitleProcessingHub>("/hubs/subtitle-processing");
+app.MapHub<SubtitleProcessingHub>("/api/hubs/subtitle-processing");
 
 // Map health check endpoint
 app.MapHealthChecks("/health");
