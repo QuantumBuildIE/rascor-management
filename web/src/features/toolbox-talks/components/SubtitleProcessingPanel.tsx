@@ -367,7 +367,7 @@ export function SubtitleProcessingPanel({
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
                   Subtitle processing completed successfully.{' '}
-                  {status.totalSubtitles} subtitle file(s) generated.
+                  {status.languages.length} subtitle file(s) generated with {status.totalSubtitles} caption(s) each.
                 </AlertDescription>
               </Alert>
             )}
