@@ -218,9 +218,10 @@ export function SectionEditor({ form, fieldName = 'sections' }: SectionEditorPro
         )}
 
         {/* Validation error for sections array */}
-        {form.formState.errors[fieldName]?.root && (
+        {form.formState.errors[fieldName] && (
           <p className="text-sm text-destructive">
-            {form.formState.errors[fieldName]?.root?.message as string}
+            {(form.formState.errors[fieldName]?.root?.message ||
+              form.formState.errors[fieldName]?.message) as string}
           </p>
         )}
       </CardContent>

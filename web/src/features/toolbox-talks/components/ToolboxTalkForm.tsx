@@ -68,9 +68,22 @@ const toolboxTalkFormSchema = z.object({
   requiresQuiz: z.boolean(),
   passingScore: z.number().min(0).max(100).optional().nullable(),
   isActive: z.boolean(),
-  sections: z.array(sectionSchema).min(1, 'At least one section is required'),
+  sections: z.array(sectionSchema),
   questions: z.array(questionSchema).optional(),
-});
+}).refine(
+  (data) => {
+    // Sections are required only if no video is provided (matches backend validation)
+    const hasVideo = data.videoUrl && data.videoUrl.trim() !== '' && data.videoSource !== 'None';
+    if (!hasVideo && data.sections.length === 0) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'At least one section is required when no video is provided',
+    path: ['sections'],
+  }
+);
 
 type ToolboxTalkFormValues = z.infer<typeof toolboxTalkFormSchema>;
 
