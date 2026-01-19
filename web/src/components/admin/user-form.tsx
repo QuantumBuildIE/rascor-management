@@ -45,7 +45,11 @@ const createUserSchema = z
     email: z.string().min(1, "Email is required").email("Invalid email address"),
     firstName: z.string().min(1, "First name is required").max(100),
     lastName: z.string().min(1, "Last name is required").max(100),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     roleIds: z.array(z.string()).min(1, "At least one role is required"),
     isActive: z.boolean(),
@@ -127,8 +131,24 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         toast.success("User created successfully");
       }
       onSuccess?.();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
+    } catch (error: unknown) {
+      let message = "An error occurred";
+
+      // Extract error message from API response
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { data?: { errors?: string[]; message?: string } } };
+        const apiErrors = axiosError.response?.data?.errors;
+        const apiMessage = axiosError.response?.data?.message;
+
+        if (apiErrors && apiErrors.length > 0) {
+          message = apiErrors.join(". ");
+        } else if (apiMessage) {
+          message = apiMessage;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       toast.error(isEditing ? "Failed to update user" : "Failed to create user", {
         description: message,
       });
@@ -238,7 +258,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Use 8+ characters with uppercase, lowercase, numbers, and symbols
+                        Required: 8+ characters, at least one uppercase letter (A-Z), and one special character (!@#$%^&* etc.)
                       </p>
                     </div>
                   )}

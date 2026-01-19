@@ -442,6 +442,69 @@ public class MyToolboxTalksController : ControllerBase
     }
 
     /// <summary>
+    /// Get summary counts for the current employee's pending and overdue toolbox talks
+    /// </summary>
+    /// <returns>Summary with pending and overdue counts</returns>
+    [HttpGet("summary")]
+    [ProducesResponseType(typeof(MyTrainingSummaryDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSummary()
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return Ok(new MyTrainingSummaryDto { PendingCount = 0, OverdueCount = 0, InProgressCount = 0 });
+            }
+
+            // Get pending talks
+            var pendingQuery = new GetMyToolboxTalksQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                Status = ScheduledTalkStatus.Pending,
+                PageNumber = 1,
+                PageSize = 1
+            };
+            var pendingResult = await _mediator.Send(pendingQuery);
+
+            // Get in-progress talks
+            var inProgressQuery = new GetMyToolboxTalksQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                Status = ScheduledTalkStatus.InProgress,
+                PageNumber = 1,
+                PageSize = 1
+            };
+            var inProgressResult = await _mediator.Send(inProgressQuery);
+
+            // Get overdue talks
+            var overdueQuery = new GetMyToolboxTalksQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                Status = ScheduledTalkStatus.Overdue,
+                PageNumber = 1,
+                PageSize = 1
+            };
+            var overdueResult = await _mediator.Send(overdueQuery);
+
+            return Ok(new MyTrainingSummaryDto
+            {
+                PendingCount = pendingResult.TotalCount,
+                InProgressCount = inProgressResult.TotalCount,
+                OverdueCount = overdueResult.TotalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving toolbox talks summary");
+            return StatusCode(500, new { message = "Error retrieving summary" });
+        }
+    }
+
+    /// <summary>
     /// Get current employee ID from claims
     /// </summary>
     private Guid? GetCurrentEmployeeId()
@@ -504,6 +567,36 @@ public record CompleteToolboxTalkRequest
     /// Name entered by the employee when signing
     /// </summary>
     public string SignedByName { get; init; } = string.Empty;
+}
+
+#endregion
+
+#region Response DTOs
+
+/// <summary>
+/// Summary of pending and overdue toolbox talks for the current employee
+/// </summary>
+public record MyTrainingSummaryDto
+{
+    /// <summary>
+    /// Number of pending (not started) toolbox talks
+    /// </summary>
+    public int PendingCount { get; init; }
+
+    /// <summary>
+    /// Number of in-progress toolbox talks
+    /// </summary>
+    public int InProgressCount { get; init; }
+
+    /// <summary>
+    /// Number of overdue toolbox talks
+    /// </summary>
+    public int OverdueCount { get; init; }
+
+    /// <summary>
+    /// Total number of talks requiring attention (pending + in-progress + overdue)
+    /// </summary>
+    public int TotalCount => PendingCount + InProgressCount + OverdueCount;
 }
 
 #endregion

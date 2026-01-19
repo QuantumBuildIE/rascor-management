@@ -6,6 +6,7 @@ import {
   getMyInProgressToolboxTalks,
   getMyOverdueToolboxTalks,
   getMyCompletedToolboxTalks,
+  getMyTrainingSummary,
   markSectionRead,
   updateVideoProgress,
   submitQuizAnswers,
@@ -69,6 +70,15 @@ export function useMyCompletedToolboxTalks(params?: Omit<GetMyToolboxTalksParams
   return useQuery({
     queryKey: [...MY_TOOLBOX_TALKS_KEY, 'completed', params],
     queryFn: () => getMyCompletedToolboxTalks(params),
+  });
+}
+
+export function useMyTrainingSummary() {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'summary'],
+    queryFn: getMyTrainingSummary,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
   });
 }
 

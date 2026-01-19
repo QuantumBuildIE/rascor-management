@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/types/auth';
 import type {
   MyToolboxTalk,
   MyToolboxTalkListItem,
+  MyTrainingSummary,
   ScheduledTalkSectionProgress,
   ScheduledTalkCompletion,
   QuizResult,
@@ -209,6 +210,15 @@ export async function getMyCompletedToolboxTalks(
   }
 
   return data;
+}
+
+// ============================================
+// Summary (for banner/badge count)
+// ============================================
+
+export async function getMyTrainingSummary(): Promise<MyTrainingSummary> {
+  const response = await apiClient.get<MyTrainingSummary>('/my/toolbox-talks/summary');
+  return response.data;
 }
 
 // ============================================

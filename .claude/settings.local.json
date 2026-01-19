@@ -72,7 +72,8 @@
       "Bash(dotnet clean:*)",
       "Bash(PGPASSWORD=\"Stock123!\" psql:*)",
       "Bash(dotnet ef migrations:*)",
-      "Bash(timeout 30 dotnet run:*)"
+      "Bash(timeout 30 dotnet run:*)",
+      "Bash(git log:*)"
     ]
   }
 }

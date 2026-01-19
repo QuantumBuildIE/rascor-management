@@ -296,6 +296,17 @@ export interface MyToolboxTalkListItem {
 }
 
 // ============================================
+// My Training Summary DTO
+// ============================================
+
+export interface MyTrainingSummary {
+  pendingCount: number;
+  inProgressCount: number;
+  overdueCount: number;
+  totalCount: number;
+}
+
+// ============================================
 // Dashboard DTOs
 // ============================================
 
