@@ -356,7 +356,8 @@ public class ElevenLabsTranscriptionServiceTests
     public async Task TranscribeAsync_SendsCorrectHeaders()
     {
         // Arrange
-        HttpRequestMessage? capturedRequest = null;
+        var capturedRequests = new List<HttpRequestMessage>();
+        var callCount = 0;
 
         _httpMessageHandlerMock
             .Protected()
@@ -364,10 +365,23 @@ public class ElevenLabsTranscriptionServiceTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((req, _) => capturedRequest = req)
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => capturedRequests.Add(req))
+            .ReturnsAsync(() =>
             {
-                Content = new StringContent("""{"words":[]}""")
+                callCount++;
+                if (callCount == 1)
+                {
+                    // Video download
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new ByteArrayContent(new byte[] { 0x00, 0x00, 0x00, 0x18 })
+                    };
+                }
+                // ElevenLabs API
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"words":[]}""")
+                };
             });
 
         var sut = CreateService();
@@ -376,8 +390,87 @@ public class ElevenLabsTranscriptionServiceTests
         await sut.TranscribeAsync("https://example.com/video.mp4");
 
         // Assert
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Headers.Should().Contain(h => h.Key == "xi-api-key");
+        capturedRequests.Should().HaveCount(2);
+        // Second request (ElevenLabs API) should have the API key header
+        capturedRequests[1].Headers.Should().Contain(h => h.Key == "xi-api-key");
+    }
+
+    [Fact]
+    public async Task TranscribeAsync_WithVideoDownloadFailure_ReturnsFailure()
+    {
+        // Arrange
+        SetupVideoDownloadFailure(HttpStatusCode.NotFound);
+
+        var sut = CreateService();
+
+        // Act
+        var result = await sut.TranscribeAsync("https://example.com/video.mp4");
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Failed to download video");
+        result.ErrorMessage.Should().Contain("NotFound");
+    }
+
+    [Fact]
+    public async Task TranscribeAsync_WithVideoDownloadUnauthorized_ReturnsFailure()
+    {
+        // Arrange
+        SetupVideoDownloadFailure(HttpStatusCode.Unauthorized);
+
+        var sut = CreateService();
+
+        // Act
+        var result = await sut.TranscribeAsync("https://example.com/video.mp4");
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Failed to download video");
+        result.ErrorMessage.Should().Contain("Unauthorized");
+    }
+
+    [Fact]
+    public async Task TranscribeAsync_UploadsVideoAsFile()
+    {
+        // Arrange
+        var capturedRequests = new List<HttpRequestMessage>();
+        var callCount = 0;
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => capturedRequests.Add(req))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new ByteArrayContent(new byte[] { 0x00, 0x00, 0x00, 0x18 })
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"words":[{"text":"Hello","type":"word","start":0.0,"end":0.5}]}""")
+                };
+            });
+
+        var sut = CreateService();
+
+        // Act
+        var result = await sut.TranscribeAsync("https://example.com/test-video.mp4");
+
+        // Assert
+        result.Success.Should().BeTrue();
+        capturedRequests.Should().HaveCount(2);
+
+        // Verify the ElevenLabs request uses multipart form data
+        var elevenLabsRequest = capturedRequests[1];
+        elevenLabsRequest.Content.Should().BeOfType<MultipartFormDataContent>();
     }
 
     private ElevenLabsTranscriptionService CreateService()
@@ -385,7 +478,45 @@ public class ElevenLabsTranscriptionServiceTests
         return new ElevenLabsTranscriptionService(_httpClient, _settings, _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Sets up HTTP responses for both video download (first call) and ElevenLabs API (second call).
+    /// The service now downloads the video first, then uploads it to ElevenLabs.
+    /// </summary>
     private void SetupHttpResponse(HttpStatusCode statusCode, string content)
+    {
+        var callCount = 0;
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+
+                if (callCount == 1)
+                {
+                    // First call: Video download - always succeed with fake video bytes
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new ByteArrayContent(new byte[] { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70 }) // Fake MP4 header bytes
+                    };
+                }
+
+                // Second call: ElevenLabs API response
+                return new HttpResponseMessage(statusCode)
+                {
+                    Content = new StringContent(content)
+                };
+            });
+    }
+
+    /// <summary>
+    /// Sets up HTTP response specifically for video download failure (first call fails).
+    /// </summary>
+    private void SetupVideoDownloadFailure(HttpStatusCode statusCode)
     {
         _httpMessageHandlerMock
             .Protected()
@@ -395,7 +526,7 @@ public class ElevenLabsTranscriptionServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage(statusCode)
             {
-                Content = new StringContent(content)
+                Content = new StringContent("Download failed")
             });
     }
 }
