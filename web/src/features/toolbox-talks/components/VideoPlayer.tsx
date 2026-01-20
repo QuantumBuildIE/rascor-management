@@ -47,6 +47,22 @@ interface VideoPlayerProps {
   className?: string;
 }
 
+// Extract Google Drive file ID from URL
+function extractGoogleDriveFileId(url: string): string | null {
+  const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+// Get Google Drive direct download URL for HTML5 video
+function getGoogleDriveDirectUrl(fileId: string): string {
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+// Get Google Drive iframe embed URL
+function getGoogleDrivePreviewUrl(fileId: string): string {
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
 // Extract video ID from various URL formats
 function getVideoEmbedUrl(url: string, source: VideoSource): string | null {
   if (!url) return null;
@@ -75,10 +91,10 @@ function getVideoEmbedUrl(url: string, source: VideoSource): string | null {
       return url;
     }
     case 'GoogleDrive': {
-      // Handle Google Drive URL formats
-      const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (match) {
-        return `https://drive.google.com/file/d/${match[1]}/preview`;
+      // Handle Google Drive URL formats - returns preview URL for iframe
+      const fileId = extractGoogleDriveFileId(url);
+      if (fileId) {
+        return getGoogleDrivePreviewUrl(fileId);
       }
       return url;
     }
@@ -250,8 +266,18 @@ export function VideoPlayer({
   const [captionsEnabled, setCaptionsEnabled] = React.useState(true);
   const [activeSubtitle, setActiveSubtitle] = React.useState<AvailableSubtitle | null>(null);
 
+  // Google Drive HTML5 player state - try direct download URL first, fallback to iframe
+  const [googleDriveHtml5Failed, setGoogleDriveHtml5Failed] = React.useState(false);
+  const [googleDriveHtml5Loading, setGoogleDriveHtml5Loading] = React.useState(videoSource === 'GoogleDrive');
+
   const embedUrl = getVideoEmbedUrl(videoUrl, videoSource);
-  const isEmbedded = videoSource !== 'DirectUrl';
+
+  // For Google Drive, determine if we should use HTML5 video or iframe
+  const googleDriveFileId = videoSource === 'GoogleDrive' ? extractGoogleDriveFileId(videoUrl) : null;
+  const useGoogleDriveHtml5 = videoSource === 'GoogleDrive' && googleDriveFileId && !googleDriveHtml5Failed;
+
+  // isEmbedded now considers Google Drive HTML5 mode
+  const isEmbedded = videoSource !== 'DirectUrl' && !useGoogleDriveHtml5;
   const requirementMet = watchPercent >= minimumWatchPercent;
 
   // Fetch available subtitles
@@ -423,7 +449,63 @@ export function VideoPlayer({
       <CardContent className="space-y-4">
         {/* Video container */}
         <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-          {isEmbedded ? (
+          {/* Google Drive HTML5 player - try direct download URL first */}
+          {useGoogleDriveHtml5 && googleDriveFileId && (
+            <>
+              {googleDriveHtml5Loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
+                  <div className="text-center text-white">
+                    <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
+                    <p className="text-sm">Testing HTML5 video playback...</p>
+                  </div>
+                </div>
+              )}
+              <video
+                ref={videoRef}
+                src={getGoogleDriveDirectUrl(googleDriveFileId)}
+                className="w-full h-full"
+                onTimeUpdate={handleTimeUpdate}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onError={(e) => {
+                  // HTML5 video failed (likely CORS) - fall back to iframe
+                  console.log('Google Drive HTML5 video failed, falling back to iframe:', e);
+                  console.log('Error details:', {
+                    error: (e.target as HTMLVideoElement).error,
+                    src: (e.target as HTMLVideoElement).src
+                  });
+                  setGoogleDriveHtml5Failed(true);
+                  setGoogleDriveHtml5Loading(false);
+                }}
+                onLoadedData={() => {
+                  console.log('Google Drive HTML5 video loaded successfully!');
+                  setGoogleDriveHtml5Loading(false);
+                  setError(null);
+                }}
+                onCanPlay={() => {
+                  console.log('Google Drive HTML5 video can play');
+                  setGoogleDriveHtml5Loading(false);
+                }}
+                controls={false}
+                crossOrigin="anonymous"
+              >
+                {/* Render subtitle tracks - these work with HTML5 video! */}
+                {subtitles.map((subtitle, index) => (
+                  <track
+                    key={subtitle.languageCode}
+                    kind="subtitles"
+                    src={subtitle.vttUrl}
+                    srcLang={subtitle.languageCode}
+                    label={subtitle.languageName}
+                    default={index === 0 && captionsEnabled}
+                  />
+                ))}
+              </video>
+            </>
+          )}
+
+          {/* Iframe embed for YouTube, Vimeo, and Google Drive fallback */}
+          {isEmbedded && (
             <iframe
               src={embedUrl}
               className="w-full h-full"
@@ -435,7 +517,10 @@ export function VideoPlayer({
               // for cross-origin iframes like Google Drive, YouTube, etc.
               // The iframe will still load the page even if Google Drive shows an error.
             />
-          ) : (
+          )}
+
+          {/* Direct URL HTML5 video player */}
+          {videoSource === 'DirectUrl' && (
             <video
               ref={videoRef}
               src={embedUrl}
@@ -472,8 +557,8 @@ export function VideoPlayer({
             </div>
           )}
 
-          {/* Custom controls for direct video (hidden for embedded) */}
-          {!isEmbedded && !error && (
+          {/* Custom controls for direct video and Google Drive HTML5 (hidden for embedded iframe) */}
+          {(!isEmbedded || useGoogleDriveHtml5) && !error && !googleDriveHtml5Loading && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
@@ -527,6 +612,29 @@ export function VideoPlayer({
             </div>
           )}
         </div>
+
+        {/* Debug info for Google Drive HTML5 test - REMOVE AFTER TESTING */}
+        {videoSource === 'GoogleDrive' && (
+          <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs space-y-1">
+            <p className="font-medium text-blue-800">🧪 Google Drive HTML5 Test Mode</p>
+            <p className="text-blue-700">
+              Player mode: {useGoogleDriveHtml5 ? '✅ HTML5 (direct download URL)' : '📺 Iframe (preview URL)'}
+            </p>
+            {googleDriveHtml5Failed && (
+              <p className="text-amber-700">
+                ⚠️ HTML5 failed - fell back to iframe. Check console for error details.
+              </p>
+            )}
+            {useGoogleDriveHtml5 && !googleDriveHtml5Loading && (
+              <p className="text-green-700">
+                🎉 HTML5 video working! Subtitles can overlay, progress tracking enabled.
+              </p>
+            )}
+            <p className="text-blue-600 text-[10px]">
+              File ID: {googleDriveFileId}
+            </p>
+          </div>
+        )}
 
         {/* Subtitle notice for embedded videos */}
         {isEmbedded && subtitleId && hasSubtitles && (
