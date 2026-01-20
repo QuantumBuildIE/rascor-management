@@ -40,7 +40,22 @@ public static class ServiceCollectionExtensions
         // Register subtitle processing infrastructure services
         services.AddHttpClient<ITranscriptionService, ElevenLabsTranscriptionService>();
         services.AddHttpClient<ITranslationService, ClaudeTranslationService>();
-        services.AddHttpClient<ISrtStorageProvider, GitHubSrtStorageProvider>();
+
+        // Register SRT storage provider based on configuration
+        var srtStorageType = configuration
+            .GetSection($"{SubtitleProcessingSettings.SectionName}:SrtStorage:Type")
+            .Value ?? "CloudflareR2";
+
+        if (srtStorageType.Equals("CloudflareR2", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<ISrtStorageProvider, CloudflareR2SrtStorageProvider>();
+        }
+        else
+        {
+            // Fall back to GitHub for backward compatibility
+            services.AddHttpClient<ISrtStorageProvider, GitHubSrtStorageProvider>();
+        }
+
         services.AddScoped<IVideoSourceProvider, GoogleDriveVideoSourceProvider>();
         services.AddScoped<ISubtitleProgressReporter, SignalRProgressReporter>();
 

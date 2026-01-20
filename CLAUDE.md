@@ -1261,5 +1261,68 @@ The RAMS module includes AI-powered control measure suggestions to assist safety
 
 ---
 
-*Last Updated: January 10, 2026 (RAMS AI Suggestions Added)*
+## Subtitle Processing & Cloudflare R2 Storage
+
+### Overview
+Toolbox Talks with videos can have subtitles automatically generated and translated:
+1. Video is transcribed using ElevenLabs API
+2. SRT subtitles are generated from transcription
+3. Subtitles are translated to target languages using Claude API
+4. SRT files are uploaded to Cloudflare R2 storage
+
+### Cloudflare R2 Configuration
+R2 is an S3-compatible object storage service. The system stores subtitle files in R2 for public access.
+
+**Environment Variables for Railway:**
+```
+SubtitleProcessing__SrtStorage__Type=CloudflareR2
+SubtitleProcessing__SrtStorage__CloudflareR2__AccountId=<your-account-id>
+SubtitleProcessing__SrtStorage__CloudflareR2__AccessKeyId=<your-access-key>
+SubtitleProcessing__SrtStorage__CloudflareR2__SecretAccessKey=<your-secret-key>
+SubtitleProcessing__SrtStorage__CloudflareR2__BucketName=rascor-videos
+SubtitleProcessing__SrtStorage__CloudflareR2__PublicUrl=https://pub-cb8b7507e2a34ca2a366caa3bca24d08.r2.dev
+SubtitleProcessing__SrtStorage__CloudflareR2__Path=subs
+```
+
+**To get R2 API credentials:**
+1. Go to Cloudflare Dashboard → R2
+2. Click "Manage R2 API Tokens"
+3. Create a token with "Object Read & Write" permissions for your bucket
+4. Copy the Access Key ID and Secret Access Key
+
+**appsettings.json configuration:**
+```json
+{
+  "SubtitleProcessing": {
+    "SrtStorage": {
+      "Type": "CloudflareR2",
+      "CloudflareR2": {
+        "AccountId": "",
+        "AccessKeyId": "",
+        "SecretAccessKey": "",
+        "BucketName": "rascor-videos",
+        "PublicUrl": "https://pub-cb8b7507e2a34ca2a366caa3bca24d08.r2.dev",
+        "Path": "subs"
+      }
+    }
+  }
+}
+```
+
+### Video Source Types
+The system supports multiple video source types:
+- `GoogleDrive` - Converts Google Drive share URLs to direct download URLs
+- `DirectUrl` - Direct HTTP(S) URLs to video files (including R2 hosted videos)
+- `AzureBlob` - Azure Blob Storage
+
+**R2 Video URLs:** Videos hosted on R2 should use `DirectUrl` source type with the full public URL (e.g., `https://pub-cb8b7507e2a34ca2a366caa3bca24d08.r2.dev/Construction%20Site%20Safety%20Basics.mp4`)
+
+### Storage Providers
+Two SRT storage providers are available:
+- `CloudflareR2` (default) - Uses Cloudflare R2 S3-compatible API
+- `GitHub` - Uses GitHub repository for storage (legacy)
+
+---
+
+*Last Updated: January 20, 2026 (Cloudflare R2 Storage for Subtitles Added)*
 *Architecture: Modular Monolith with Clean Architecture*

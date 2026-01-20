@@ -109,10 +109,10 @@ public class ClaudeSettings
 public class SrtStorageSettings
 {
     /// <summary>
-    /// Storage provider type: "GitHub", "AzureBlob", or "Database"
-    /// Default: GitHub
+    /// Storage provider type: "GitHub", "AzureBlob", "CloudflareR2", or "Database"
+    /// Default: CloudflareR2
     /// </summary>
-    public string Type { get; set; } = "GitHub";
+    public string Type { get; set; } = "CloudflareR2";
 
     /// <summary>
     /// GitHub storage settings
@@ -123,6 +123,11 @@ public class SrtStorageSettings
     /// Azure Blob storage settings
     /// </summary>
     public AzureBlobStorageSettings AzureBlob { get; set; } = new();
+
+    /// <summary>
+    /// Cloudflare R2 storage settings (S3-compatible)
+    /// </summary>
+    public CloudflareR2Settings CloudflareR2 { get; set; } = new();
 }
 
 /// <summary>
@@ -175,6 +180,44 @@ public class AzureBlobStorageSettings
     /// Default: subtitles
     /// </summary>
     public string Container { get; set; } = "subtitles";
+}
+
+/// <summary>
+/// Cloudflare R2 storage settings (S3-compatible API)
+/// </summary>
+public class CloudflareR2Settings
+{
+    /// <summary>
+    /// Cloudflare account ID
+    /// </summary>
+    public string AccountId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// R2 API access key ID
+    /// </summary>
+    public string AccessKeyId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// R2 API secret access key
+    /// </summary>
+    public string SecretAccessKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// R2 bucket name
+    /// Default: rascor-videos
+    /// </summary>
+    public string BucketName { get; set; } = "rascor-videos";
+
+    /// <summary>
+    /// Public URL base for the R2 bucket (e.g., https://pub-xxx.r2.dev)
+    /// </summary>
+    public string PublicUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Path within the bucket for SRT files
+    /// Default: subs
+    /// </summary>
+    public string Path { get; set; } = "subs";
 }
 
 /// <summary>
