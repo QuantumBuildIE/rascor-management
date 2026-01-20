@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { getSubtitleProcessingStatus, getVttFile } from './subtitle-processing';
+import { getMySubtitleStatus, getMyVttFile } from './my-toolbox-talks';
 import type { SubtitleProcessingStatusResponse, LanguageStatus } from '@/types/toolbox-talks';
 
 // ============================================
@@ -94,13 +95,22 @@ function getLanguageName(code: string): string {
  * Hook to get available subtitles for a toolbox talk video
  * Returns subtitles that are completed and ready to use
  * Fetches VTT content with authentication and creates blob URLs for video tracks
+ *
+ * @param toolboxTalkId The toolbox talk ID (for admin context) OR scheduled talk ID (for employee context)
+ * @param preferredLanguageCode Employee's preferred language code
+ * @param useEmployeeEndpoint If true, uses the employee-specific endpoints (for scheduled talk IDs)
  */
 export function useVideoSubtitles(
   toolboxTalkId: string,
-  preferredLanguageCode?: string
+  preferredLanguageCode?: string,
+  useEmployeeEndpoint = false
 ): VideoSubtitlesResult {
   const [subtitlesWithBlobs, setSubtitlesWithBlobs] = useState<AvailableSubtitle[]>([]);
   const [blobsLoading, setBlobsLoading] = useState(false);
+
+  // Select the appropriate API functions based on context
+  const getStatus = useEmployeeEndpoint ? getMySubtitleStatus : getSubtitleProcessingStatus;
+  const getVtt = useEmployeeEndpoint ? getMyVttFile : getVttFile;
 
   // Fetch subtitle processing status to get available languages
   const {
@@ -108,8 +118,10 @@ export function useVideoSubtitles(
     isLoading: statusLoading,
     error: queryError,
   } = useQuery({
-    queryKey: videoSubtitlesKeys.available(toolboxTalkId),
-    queryFn: () => getSubtitleProcessingStatus(toolboxTalkId),
+    queryKey: useEmployeeEndpoint
+      ? ['my-video-subtitles', 'available', toolboxTalkId]
+      : videoSubtitlesKeys.available(toolboxTalkId),
+    queryFn: () => getStatus(toolboxTalkId),
     enabled: !!toolboxTalkId,
     staleTime: 30000, // 30 seconds
   });
@@ -133,7 +145,7 @@ export function useVideoSubtitles(
       for (const info of completedSubtitleInfo) {
         if (cancelled) break;
         try {
-          const vttContent = await getVttFile(toolboxTalkId, info.languageCode);
+          const vttContent = await getVtt(toolboxTalkId, info.languageCode);
           const blob = new Blob([vttContent], { type: 'text/vtt' });
           const blobUrl = URL.createObjectURL(blob);
           results.push({
@@ -164,7 +176,7 @@ export function useVideoSubtitles(
         }
       });
     };
-  }, [toolboxTalkId, JSON.stringify(completedSubtitleInfo)]);
+  }, [toolboxTalkId, JSON.stringify(completedSubtitleInfo), getVtt]);
 
   // Find preferred subtitle
   const preferredSubtitle = preferredLanguageCode
@@ -175,8 +187,8 @@ export function useVideoSubtitles(
 
   // Function to get VTT content
   const getVttContent = useCallback(async (languageCode: string): Promise<string> => {
-    return getVttFile(toolboxTalkId, languageCode);
-  }, [toolboxTalkId]);
+    return getVtt(toolboxTalkId, languageCode);
+  }, [toolboxTalkId, getVtt]);
 
   return {
     subtitles: subtitlesWithBlobs,

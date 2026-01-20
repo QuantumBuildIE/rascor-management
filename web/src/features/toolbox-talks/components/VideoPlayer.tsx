@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useVideoSubtitles, type AvailableSubtitle } from '@/lib/api/toolbox-talks/use-video-subtitles';
 import { downloadSrtFile } from '@/lib/api/toolbox-talks/subtitle-processing';
+import { downloadMySrtFile } from '@/lib/api/toolbox-talks/my-toolbox-talks';
 import type { VideoSource } from '@/types/toolbox-talks';
 
 interface VideoPlayerProps {
@@ -37,8 +38,10 @@ interface VideoPlayerProps {
   minimumWatchPercent: number;
   currentWatchPercent: number | null;
   onProgressUpdate: (percent: number) => Promise<void>;
-  /** The toolbox talk ID for fetching subtitles */
+  /** The toolbox talk ID for fetching subtitles (admin context) */
   toolboxTalkId?: string;
+  /** The scheduled talk ID for fetching subtitles (employee context) */
+  scheduledTalkId?: string;
   /** Employee's preferred language code (e.g., 'es', 'pl') */
   preferredLanguageCode?: string;
   className?: string;
@@ -167,9 +170,11 @@ function SubtitleSelector({
 interface EmbeddedSubtitleNoticeProps {
   subtitles: AvailableSubtitle[];
   toolboxTalkId: string;
+  /** If provided, uses employee-specific download endpoint */
+  scheduledTalkId?: string;
 }
 
-function EmbeddedSubtitleNotice({ subtitles, toolboxTalkId }: EmbeddedSubtitleNoticeProps) {
+function EmbeddedSubtitleNotice({ subtitles, toolboxTalkId, scheduledTalkId }: EmbeddedSubtitleNoticeProps) {
   const [downloading, setDownloading] = React.useState<string | null>(null);
 
   if (subtitles.length === 0) {
@@ -179,7 +184,12 @@ function EmbeddedSubtitleNotice({ subtitles, toolboxTalkId }: EmbeddedSubtitleNo
   const handleDownload = async (languageCode: string) => {
     try {
       setDownloading(languageCode);
-      await downloadSrtFile(toolboxTalkId, languageCode);
+      // Use employee-specific endpoint if scheduledTalkId is provided
+      if (scheduledTalkId) {
+        await downloadMySrtFile(scheduledTalkId, languageCode);
+      } else {
+        await downloadSrtFile(toolboxTalkId, languageCode);
+      }
     } catch (error) {
       console.error('Failed to download subtitle:', error);
     } finally {
@@ -224,6 +234,7 @@ export function VideoPlayer({
   currentWatchPercent,
   onProgressUpdate,
   toolboxTalkId,
+  scheduledTalkId,
   preferredLanguageCode,
   className,
 }: VideoPlayerProps) {
@@ -244,12 +255,16 @@ export function VideoPlayer({
   const requirementMet = watchPercent >= minimumWatchPercent;
 
   // Fetch available subtitles
+  // If scheduledTalkId is provided, use employee-specific endpoints
+  // Otherwise, use admin endpoints with toolboxTalkId
+  const useEmployeeEndpoint = !!scheduledTalkId;
+  const subtitleId = scheduledTalkId || toolboxTalkId || '';
   const {
     subtitles,
     preferredSubtitle,
     isLoading: subtitlesLoading,
     hasSubtitles,
-  } = useVideoSubtitles(toolboxTalkId || '', preferredLanguageCode);
+  } = useVideoSubtitles(subtitleId, preferredLanguageCode, useEmployeeEndpoint);
 
   // Set active subtitle to preferred language when loaded
   React.useEffect(() => {
@@ -416,7 +431,9 @@ export function VideoPlayer({
               allowFullScreen
               title="Training Video"
               onLoad={() => setError(null)}
-              onError={() => setError('Failed to load video')}
+              // Note: onError for iframes doesn't reliably detect content loading issues
+              // for cross-origin iframes like Google Drive, YouTube, etc.
+              // The iframe will still load the page even if Google Drive shows an error.
             />
           ) : (
             <video
@@ -487,7 +504,7 @@ export function VideoPlayer({
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Subtitle selector */}
-                  {toolboxTalkId && (
+                  {subtitleId && (
                     <SubtitleSelector
                       subtitles={subtitles}
                       activeSubtitle={activeSubtitle}
@@ -512,8 +529,8 @@ export function VideoPlayer({
         </div>
 
         {/* Subtitle notice for embedded videos */}
-        {isEmbedded && toolboxTalkId && hasSubtitles && (
-          <EmbeddedSubtitleNotice subtitles={subtitles} toolboxTalkId={toolboxTalkId} />
+        {isEmbedded && subtitleId && hasSubtitles && (
+          <EmbeddedSubtitleNotice subtitles={subtitles} toolboxTalkId={subtitleId} scheduledTalkId={scheduledTalkId} />
         )}
 
         {/* Progress tracking */}

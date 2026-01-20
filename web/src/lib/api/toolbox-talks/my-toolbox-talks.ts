@@ -277,3 +277,87 @@ export async function completeToolboxTalk(
   );
   return response.data;
 }
+
+// ============================================
+// Subtitles (Employee-specific endpoints)
+// ============================================
+
+import type { SubtitleProcessingStatusResponse } from '@/types/toolbox-talks';
+
+/**
+ * Get subtitle processing status for an assigned toolbox talk
+ * Uses the employee-specific endpoint that verifies assignment
+ * @param scheduledTalkId The scheduled talk ID (not the toolbox talk ID)
+ */
+export async function getMySubtitleStatus(
+  scheduledTalkId: string
+): Promise<SubtitleProcessingStatusResponse | null> {
+  try {
+    const response = await apiClient.get<SubtitleProcessingStatusResponse>(
+      `/my/toolbox-talks/${scheduledTalkId}/subtitles/status`
+    );
+    return response.data;
+  } catch (error) {
+    // Return null if no subtitles available (404)
+    if ((error as { response?: { status?: number } })?.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get WebVTT subtitle file for an assigned toolbox talk
+ * Uses the employee-specific endpoint that verifies assignment
+ * @param scheduledTalkId The scheduled talk ID (not the toolbox talk ID)
+ * @param languageCode ISO 639-1 language code
+ */
+export async function getMyVttFile(
+  scheduledTalkId: string,
+  languageCode: string
+): Promise<string> {
+  const response = await apiClient.get<string>(
+    `/my/toolbox-talks/${scheduledTalkId}/subtitles/${languageCode}`,
+    { params: { format: 'vtt' } }
+  );
+  return response.data;
+}
+
+/**
+ * Get SRT subtitle file for an assigned toolbox talk
+ * Uses the employee-specific endpoint that verifies assignment
+ * @param scheduledTalkId The scheduled talk ID (not the toolbox talk ID)
+ * @param languageCode ISO 639-1 language code
+ */
+export async function getMySrtFile(
+  scheduledTalkId: string,
+  languageCode: string
+): Promise<string> {
+  const response = await apiClient.get<string>(
+    `/my/toolbox-talks/${scheduledTalkId}/subtitles/${languageCode}`,
+    { params: { format: 'srt' } }
+  );
+  return response.data;
+}
+
+/**
+ * Download SRT file for an assigned toolbox talk
+ * Triggers file download via blob
+ */
+export async function downloadMySrtFile(
+  scheduledTalkId: string,
+  languageCode: string
+): Promise<void> {
+  const content = await getMySrtFile(scheduledTalkId, languageCode);
+
+  // Create a blob and download it
+  const blob = new Blob([content], { type: 'application/x-subrip' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `subtitles_${languageCode}.srt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

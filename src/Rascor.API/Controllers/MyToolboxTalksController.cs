@@ -8,8 +8,10 @@ using Rascor.Modules.ToolboxTalks.Application.Commands.MarkSectionRead;
 using Rascor.Modules.ToolboxTalks.Application.Commands.SubmitQuizAnswers;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.DTOs.Subtitles;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalks;
+using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.API.Controllers;
@@ -25,15 +27,18 @@ public class MyToolboxTalksController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ISubtitleProcessingOrchestrator _subtitleOrchestrator;
     private readonly ILogger<MyToolboxTalksController> _logger;
 
     public MyToolboxTalksController(
         IMediator mediator,
         ICurrentUserService currentUserService,
+        ISubtitleProcessingOrchestrator subtitleOrchestrator,
         ILogger<MyToolboxTalksController> logger)
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
+        _subtitleOrchestrator = subtitleOrchestrator;
         _logger = logger;
     }
 
@@ -502,6 +507,148 @@ public class MyToolboxTalksController : ControllerBase
             _logger.LogError(ex, "Error retrieving toolbox talks summary");
             return StatusCode(500, new { message = "Error retrieving summary" });
         }
+    }
+
+    /// <summary>
+    /// Get subtitle processing status for an assigned toolbox talk
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <returns>Subtitle processing status</returns>
+    [HttpGet("{id:guid}/subtitles/status")]
+    [ProducesResponseType(typeof(SubtitleProcessingStatusDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubtitleStatus(Guid id)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            // First verify the employee is assigned to this talk
+            var query = new GetMyToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                ScheduledTalkId = id
+            };
+
+            var talk = await _mediator.Send(query);
+            if (talk == null)
+            {
+                return NotFound(new { message = "Toolbox talk not found or not assigned to you" });
+            }
+
+            // Get subtitle status using the actual toolbox talk ID
+            var status = await _subtitleOrchestrator.GetStatusAsync(talk.ToolboxTalkId);
+            if (status == null)
+            {
+                return NotFound(new { message = "No subtitles available for this toolbox talk" });
+            }
+
+            return Ok(status);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting subtitle status for talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error getting subtitle status" });
+        }
+    }
+
+    /// <summary>
+    /// Get subtitle file for an assigned toolbox talk
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <param name="languageCode">ISO 639-1 language code (e.g., 'en', 'es', 'pl')</param>
+    /// <param name="format">Format: 'srt' (default) or 'vtt' (WebVTT for browser video players)</param>
+    /// <returns>Subtitle file content</returns>
+    [HttpGet("{id:guid}/subtitles/{languageCode}")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubtitleFile(
+        Guid id,
+        string languageCode,
+        [FromQuery] string format = "srt")
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            // First verify the employee is assigned to this talk
+            var query = new GetMyToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                ScheduledTalkId = id
+            };
+
+            var talk = await _mediator.Send(query);
+            if (talk == null)
+            {
+                return NotFound(new { message = "Toolbox talk not found or not assigned to you" });
+            }
+
+            // Get subtitle content using the actual toolbox talk ID
+            var srtContent = await _subtitleOrchestrator.GetSrtContentAsync(talk.ToolboxTalkId, languageCode);
+            if (srtContent == null)
+            {
+                return NotFound(new { message = $"No subtitle found for language code '{languageCode}'" });
+            }
+
+            string content;
+            string contentType;
+
+            if (format.Equals("vtt", StringComparison.OrdinalIgnoreCase))
+            {
+                content = ConvertSrtToVtt(srtContent);
+                contentType = "text/vtt; charset=utf-8";
+            }
+            else
+            {
+                content = srtContent;
+                contentType = "application/x-subrip; charset=utf-8";
+            }
+
+            Response.ContentType = contentType;
+            return Ok(content);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting subtitle file for talk {ScheduledTalkId}, language {Language}", id, languageCode);
+            return StatusCode(500, new { message = "Error getting subtitle file" });
+        }
+    }
+
+    /// <summary>
+    /// Converts SRT subtitle format to WebVTT format for browser video players
+    /// </summary>
+    private static string ConvertSrtToVtt(string srtContent)
+    {
+        var lines = srtContent.Split('\n');
+        var vttLines = new List<string> { "WEBVTT", "" };
+
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.TrimEnd('\r');
+
+            // Convert timestamp format: 00:00:00,000 --> 00:00:00.000
+            if (trimmedLine.Contains(" --> "))
+            {
+                vttLines.Add(trimmedLine.Replace(',', '.'));
+            }
+            else
+            {
+                vttLines.Add(trimmedLine);
+            }
+        }
+
+        return string.Join("\n", vttLines);
     }
 
     /// <summary>
