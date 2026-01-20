@@ -38,8 +38,16 @@ public static class ServiceCollectionExtensions
             configuration.GetSection(SubtitleProcessingSettings.SectionName));
 
         // Register subtitle processing infrastructure services
-        services.AddHttpClient<ITranscriptionService, ElevenLabsTranscriptionService>();
-        services.AddHttpClient<ITranslationService, ClaudeTranslationService>();
+        // ElevenLabs transcription can take a long time for large videos (download + transcription)
+        services.AddHttpClient<ITranscriptionService, ElevenLabsTranscriptionService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(10); // 10 minutes for video transcription
+        });
+        // Claude translation is usually fast but can take time for long subtitle files
+        services.AddHttpClient<ITranslationService, ClaudeTranslationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5); // 5 minutes for translation
+        });
 
         // Register SRT storage provider based on configuration
         var srtStorageType = configuration
@@ -53,7 +61,10 @@ public static class ServiceCollectionExtensions
         else
         {
             // Fall back to GitHub for backward compatibility
-            services.AddHttpClient<ISrtStorageProvider, GitHubSrtStorageProvider>();
+            services.AddHttpClient<ISrtStorageProvider, GitHubSrtStorageProvider>(client =>
+            {
+                client.Timeout = TimeSpan.FromMinutes(2); // 2 minutes for file uploads
+            });
         }
 
         services.AddScoped<IVideoSourceProvider, GoogleDriveVideoSourceProvider>();
