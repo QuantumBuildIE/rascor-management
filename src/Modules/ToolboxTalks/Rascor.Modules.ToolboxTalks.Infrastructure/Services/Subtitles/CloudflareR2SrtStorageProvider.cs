@@ -69,7 +69,12 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
                 BucketName = r2Settings.BucketName,
                 Key = key,
                 InputStream = stream,
-                ContentType = "application/x-subrip"
+                ContentType = "application/x-subrip",
+
+                // Disable features not supported by Cloudflare R2
+                // R2 doesn't support STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER
+                DisablePayloadSigning = true,
+                UseChunkEncoding = false
             };
 
             await _s3Client.PutObjectAsync(request, cancellationToken);
