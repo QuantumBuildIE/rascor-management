@@ -98,12 +98,12 @@ const FREQUENCY_OPTIONS: { value: ToolboxTalkFrequency; label: string }[] = [
   { value: 'Annually', label: 'Annually' },
 ];
 
-const VIDEO_SOURCE_OPTIONS: { value: VideoSource; label: string }[] = [
+const VIDEO_SOURCE_OPTIONS: { value: VideoSource; label: string; description?: string }[] = [
   { value: 'None', label: 'No Video' },
-  { value: 'YouTube', label: 'YouTube' },
-  { value: 'Vimeo', label: 'Vimeo' },
-  { value: 'GoogleDrive', label: 'Google Drive' },
-  { value: 'DirectUrl', label: 'Direct URL' },
+  { value: 'DirectUrl', label: 'Direct URL (Recommended)', description: 'Full subtitle overlay & progress tracking' },
+  { value: 'YouTube', label: 'YouTube', description: 'Embedded player (limited features)' },
+  { value: 'Vimeo', label: 'Vimeo', description: 'Embedded player (limited features)' },
+  { value: 'GoogleDrive', label: 'Google Drive', description: 'Embedded player (limited features)' },
 ];
 
 interface ToolboxTalkFormProps {
@@ -350,11 +350,19 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                       <SelectContent>
                         {VIDEO_SOURCE_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            <div className="flex flex-col items-start">
+                              <span>{option.label}</span>
+                              {option.description && (
+                                <span className="text-xs text-muted-foreground">{option.description}</span>
+                              )}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Direct URL (Cloudflare R2, S3, etc.) enables subtitle overlay and accurate progress tracking.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -394,16 +402,28 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                       <FormLabel>Video URL</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="https://..."
+                          placeholder={
+                            watchVideoSource === 'DirectUrl'
+                              ? 'https://pub-xxx.r2.dev/videos/training.mp4'
+                              : 'https://...'
+                          }
                           {...field}
                           value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormDescription>
-                        {watchVideoSource === 'YouTube' && 'Enter YouTube video URL'}
-                        {watchVideoSource === 'Vimeo' && 'Enter Vimeo video URL'}
-                        {watchVideoSource === 'GoogleDrive' && 'Enter Google Drive video URL'}
-                        {watchVideoSource === 'DirectUrl' && 'Enter direct video file URL'}
+                        {watchVideoSource === 'YouTube' && (
+                          <>Enter YouTube video URL. <span className="text-amber-600">Note: Subtitles will not overlay; progress tracking is limited.</span></>
+                        )}
+                        {watchVideoSource === 'Vimeo' && (
+                          <>Enter Vimeo video URL. <span className="text-amber-600">Note: Subtitles will not overlay; progress tracking is limited.</span></>
+                        )}
+                        {watchVideoSource === 'GoogleDrive' && (
+                          <>Enter Google Drive video URL. <span className="text-amber-600">Note: Subtitles will not overlay; progress tracking is limited due to CORS restrictions.</span></>
+                        )}
+                        {watchVideoSource === 'DirectUrl' && (
+                          <>Enter direct video file URL (e.g., Cloudflare R2, S3, or any publicly accessible video URL). <span className="text-green-600">Supports subtitle overlay and accurate progress tracking.</span></>
+                        )}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
