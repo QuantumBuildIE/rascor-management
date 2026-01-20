@@ -318,7 +318,13 @@ export async function getMyVttFile(
 ): Promise<string> {
   const response = await apiClient.get<string>(
     `/my/toolbox-talks/${scheduledTalkId}/subtitles/${languageCode}`,
-    { params: { format: 'vtt' } }
+    {
+      params: { format: 'vtt' },
+      headers: {
+        Accept: 'text/vtt, text/plain, */*',
+      },
+      responseType: 'text',
+    }
   );
   return response.data;
 }
@@ -335,7 +341,13 @@ export async function getMySrtFile(
 ): Promise<string> {
   const response = await apiClient.get<string>(
     `/my/toolbox-talks/${scheduledTalkId}/subtitles/${languageCode}`,
-    { params: { format: 'srt' } }
+    {
+      params: { format: 'srt' },
+      headers: {
+        Accept: 'application/x-subrip, text/plain, */*',
+      },
+      responseType: 'text',
+    }
   );
   return response.data;
 }

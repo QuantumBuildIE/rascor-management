@@ -195,7 +195,8 @@ public class SubtitleProcessingController : ControllerBase
     /// <returns>Subtitle file content in requested format</returns>
     [HttpGet("{languageCode}")]
     [Authorize(Policy = "ToolboxTalks.View")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/vtt")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "application/x-subrip")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSubtitleFile(
         Guid toolboxTalkId,
@@ -238,8 +239,8 @@ public class SubtitleProcessingController : ControllerBase
                     fileName);
             }
 
-            Response.ContentType = contentType;
-            return Ok(content);
+            // Return Content directly instead of Ok() to bypass JSON content negotiation
+            return Content(content, contentType);
         }
         catch (Exception ex)
         {

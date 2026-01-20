@@ -565,7 +565,8 @@ public class MyToolboxTalksController : ControllerBase
     /// <param name="format">Format: 'srt' (default) or 'vtt' (WebVTT for browser video players)</param>
     /// <returns>Subtitle file content</returns>
     [HttpGet("{id:guid}/subtitles/{languageCode}")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/vtt")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "application/x-subrip")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSubtitleFile(
         Guid id,
@@ -615,8 +616,8 @@ public class MyToolboxTalksController : ControllerBase
                 contentType = "application/x-subrip; charset=utf-8";
             }
 
-            Response.ContentType = contentType;
-            return Ok(content);
+            // Return Content directly instead of Ok() to bypass JSON content negotiation
+            return Content(content, contentType);
         }
         catch (Exception ex)
         {
