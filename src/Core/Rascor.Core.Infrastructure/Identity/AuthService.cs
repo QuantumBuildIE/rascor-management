@@ -33,7 +33,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        // Use Users queryable to ensure all custom properties (including EmployeeId) are loaded
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.NormalizedEmail == request.Email.ToUpperInvariant());
         if (user == null)
         {
             return AuthResponse.Failure("Invalid email or password.");
@@ -95,7 +97,9 @@ public class AuthService : IAuthService
             return AuthResponse.Failure("Invalid access token.");
         }
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        // Use Users queryable to ensure all custom properties (including EmployeeId) are loaded
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             return AuthResponse.Failure("Invalid or expired refresh token.");
@@ -161,6 +165,12 @@ public class AuthService : IAuthService
             new("tenant_id", user.TenantId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        // Add employee_id claim if user is linked to an employee
+        if (user.EmployeeId.HasValue)
+        {
+            claims.Add(new Claim("employee_id", user.EmployeeId.Value.ToString()));
+        }
 
         // Add role claims
         foreach (var role in roles)
