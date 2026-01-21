@@ -27,6 +27,12 @@ public record MyToolboxTalkDto
     public string StatusDisplay { get; init; } = string.Empty;
     public string LanguageCode { get; init; } = "en";
 
+    /// <summary>
+    /// The employee's preferred language for subtitle selection (e.g., "es", "pl", "ro")
+    /// This is separate from LanguageCode which is used for content translation
+    /// </summary>
+    public string EmployeePreferredLanguage { get; init; } = "en";
+
     // Progress tracking
     public int TotalSections { get; init; }
     public int CompletedSections { get; init; }

@@ -472,7 +472,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
                 currentWatchPercent={talk.videoWatchPercent}
                 onProgressUpdate={handleVideoProgress}
                 scheduledTalkId={scheduledTalkId}
-                preferredLanguageCode={talk.languageCode}
+                preferredLanguageCode={talk.employeePreferredLanguage}
               />
               <div className="flex justify-end">
                 <Button

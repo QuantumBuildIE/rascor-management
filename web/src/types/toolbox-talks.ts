@@ -262,6 +262,8 @@ export interface MyToolboxTalk {
   status: ScheduledTalkStatus;
   statusDisplay: string;
   languageCode: string;
+  /** Employee's preferred language for subtitle selection (e.g., "es", "pl", "ro") */
+  employeePreferredLanguage: string;
   totalSections: number;
   completedSections: number;
   progressPercent: number;
