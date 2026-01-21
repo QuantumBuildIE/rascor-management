@@ -280,15 +280,38 @@ export function VideoPlayer({
     hasSubtitles,
   } = useVideoSubtitles(subtitleId, preferredLanguageCode, useEmployeeEndpoint);
 
+  // Track if the user has manually changed the subtitle selection
+  const [userSelectedSubtitle, setUserSelectedSubtitle] = React.useState(false);
+
   // Set active subtitle to preferred language when loaded
+  // Priority: preferred language > English > first available
   React.useEffect(() => {
-    if (preferredSubtitle && !activeSubtitle) {
+    // Don't auto-change if user has manually selected a subtitle
+    if (userSelectedSubtitle) return;
+
+    // Wait for subtitles to be loaded
+    if (subtitles.length === 0) return;
+
+    // If preferred subtitle is available, use it
+    if (preferredSubtitle) {
       setActiveSubtitle(preferredSubtitle);
-    } else if (subtitles.length > 0 && !activeSubtitle) {
-      // Default to first available (usually English)
+      return;
+    }
+
+    // If we have a preferred language code but the subtitle isn't available yet,
+    // wait a bit longer (the VTT blob might still be loading)
+    if (preferredLanguageCode && !subtitlesLoading) {
+      // Preferred language subtitle isn't available, fall back to English or first available
+      const englishSubtitle = subtitles.find(s => s.languageCode.toLowerCase() === 'en');
+      setActiveSubtitle(englishSubtitle || subtitles[0]);
+      return;
+    }
+
+    // No preferred language set, default to first available (usually English)
+    if (!preferredLanguageCode && !activeSubtitle) {
       setActiveSubtitle(subtitles[0]);
     }
-  }, [preferredSubtitle, subtitles, activeSubtitle]);
+  }, [preferredSubtitle, subtitles, activeSubtitle, preferredLanguageCode, userSelectedSubtitle, subtitlesLoading]);
 
   // Update video track when subtitle changes
   React.useEffect(() => {
@@ -399,6 +422,7 @@ export function VideoPlayer({
 
   const handleSubtitleChange = (subtitle: AvailableSubtitle | null) => {
     setActiveSubtitle(subtitle);
+    setUserSelectedSubtitle(true); // Mark that user manually selected a subtitle
     if (subtitle) {
       setCaptionsEnabled(true);
     }
