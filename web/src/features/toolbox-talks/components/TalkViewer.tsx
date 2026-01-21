@@ -190,6 +190,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
   // Local state
   const [currentStep, setCurrentStep] = React.useState<ViewerStep>('sections');
   const [currentSectionIndex, setCurrentSectionIndex] = React.useState(0);
+  const [initialStepSet, setInitialStepSet] = React.useState(false);
 
   // Determine available steps based on talk configuration
   const getAvailableSteps = React.useCallback((talk: MyToolboxTalk | undefined) => {
@@ -219,9 +220,13 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
     return steps;
   }, []);
 
-  // Set initial step based on progress
+  // Set initial step based on progress (only on first load, not on data updates)
   React.useEffect(() => {
-    if (!talk) return;
+    if (!talk || initialStepSet) return;
+
+    // Mark that we've set the initial step - this prevents auto-redirecting
+    // when video progress updates cause a data refetch
+    setInitialStepSet(true);
 
     // If already completed, show completion
     if (talk.status === 'Completed' && talk.completedAt) {
@@ -247,7 +252,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
     } else {
       setCurrentStep('signature');
     }
-  }, [talk]);
+  }, [talk, initialStepSet]);
 
   // Handlers
   const handleMarkSectionRead = async (sectionId: string, timeSpentSeconds?: number) => {
@@ -476,10 +481,23 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
               />
               <div className="flex justify-end">
                 <Button
-                  onClick={() => setCurrentStep('sections')}
+                  onClick={() => {
+                    // Navigate to next step: sections if available, otherwise quiz, otherwise signature
+                    if (talk.sections.length > 0) {
+                      setCurrentStep('sections');
+                    } else if (talk.requiresQuiz && talk.questions.length > 0) {
+                      setCurrentStep('quiz');
+                    } else {
+                      setCurrentStep('signature');
+                    }
+                  }}
                   disabled={!canProceedFromVideo}
                 >
-                  Continue to Sections
+                  {talk.sections.length > 0
+                    ? 'Continue to Sections'
+                    : talk.requiresQuiz && talk.questions.length > 0
+                    ? 'Continue to Quiz'
+                    : 'Continue to Sign'}
                 </Button>
               </div>
             </div>
