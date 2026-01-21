@@ -29,7 +29,7 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
 
         var config = new AmazonS3Config
         {
-            ServiceURL = $"https://{r2Settings.AccountId}.r2.cloudflarestorage.com",
+            ServiceURL = r2Settings.ServiceUrl,
             ForcePathStyle = true
         };
 

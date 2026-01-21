@@ -188,9 +188,17 @@ public class AzureBlobStorageSettings
 public class CloudflareR2Settings
 {
     /// <summary>
-    /// Cloudflare account ID
+    /// Cloudflare account ID (optional, kept for reference/logging)
     /// </summary>
     public string AccountId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The S3-compatible service URL for Cloudflare R2.
+    /// Different jurisdictions have different endpoints:
+    /// - Default: https://{accountId}.r2.cloudflarestorage.com
+    /// - EU: https://{accountId}.eu.r2.cloudflarestorage.com
+    /// </summary>
+    public string ServiceUrl { get; set; } = string.Empty;
 
     /// <summary>
     /// R2 API access key ID

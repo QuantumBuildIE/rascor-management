@@ -1277,12 +1277,17 @@ R2 is an S3-compatible object storage service. The system stores subtitle files 
 ```
 SubtitleProcessing__SrtStorage__Type=CloudflareR2
 SubtitleProcessing__SrtStorage__CloudflareR2__AccountId=<your-account-id>
+SubtitleProcessing__SrtStorage__CloudflareR2__ServiceUrl=https://<your-account-id>.r2.cloudflarestorage.com
 SubtitleProcessing__SrtStorage__CloudflareR2__AccessKeyId=<your-access-key>
 SubtitleProcessing__SrtStorage__CloudflareR2__SecretAccessKey=<your-secret-key>
 SubtitleProcessing__SrtStorage__CloudflareR2__BucketName=rascor-videos
 SubtitleProcessing__SrtStorage__CloudflareR2__PublicUrl=https://pub-cb8b7507e2a34ca2a366caa3bca24d08.r2.dev
 SubtitleProcessing__SrtStorage__CloudflareR2__Path=subs
 ```
+
+**R2 Service URL by Jurisdiction:**
+- Default: `https://{accountId}.r2.cloudflarestorage.com`
+- EU: `https://{accountId}.eu.r2.cloudflarestorage.com`
 
 **To get R2 API credentials:**
 1. Go to Cloudflare Dashboard → R2
@@ -1298,6 +1303,7 @@ SubtitleProcessing__SrtStorage__CloudflareR2__Path=subs
       "Type": "CloudflareR2",
       "CloudflareR2": {
         "AccountId": "",
+        "ServiceUrl": "https://<account-id>.r2.cloudflarestorage.com",
         "AccessKeyId": "",
         "SecretAccessKey": "",
         "BucketName": "rascor-videos",
