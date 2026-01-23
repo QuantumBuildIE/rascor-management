@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, KeyRound, ClipboardList } from "lucide-react";
+import { LogOut, User, KeyRound, ClipboardList, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 export function TopNav() {
@@ -93,6 +93,12 @@ export function TopNav() {
                     {pendingTrainingCount}
                   </Badge>
                 )}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/mobile-app">
+                <Smartphone className="mr-2 h-4 w-4" />
+                <span>Get the Mobile App</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
