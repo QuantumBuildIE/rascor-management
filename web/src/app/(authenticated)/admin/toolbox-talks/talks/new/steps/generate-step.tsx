@@ -89,7 +89,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       }
 
       const connection = new HubConnectionBuilder()
-        .withUrl(`${apiUrl}/api/hubs/content-generation`, {
+        .withUrl(`${apiUrl}/hubs/content-generation`, {
           accessTokenFactory: () => token,
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
@@ -298,7 +298,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         }
 
         currentConnection = new HubConnectionBuilder()
-          .withUrl(`${apiUrl}/api/hubs/content-generation`, {
+          .withUrl(`${apiUrl}/hubs/content-generation`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
