@@ -58,6 +58,12 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             RequiresQuiz = talk.RequiresQuiz,
             PassingScore = talk.PassingScore,
             IsActive = talk.IsActive,
+            Status = talk.Status,
+            StatusDisplay = GetStatusDisplay(talk.Status),
+            PdfUrl = talk.PdfUrl,
+            PdfFileName = talk.PdfFileName,
+            GeneratedFromVideo = talk.GeneratedFromVideo,
+            GeneratedFromPdf = talk.GeneratedFromPdf,
             Sections = talk.Sections.Select(s => new ToolboxTalkSectionDto
             {
                 Id = s.Id,
@@ -112,6 +118,15 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
         VideoSource.Vimeo => "Vimeo",
         VideoSource.DirectUrl => "Direct URL",
         _ => source.ToString()
+    };
+
+    private static string GetStatusDisplay(ToolboxTalkStatus status) => status switch
+    {
+        ToolboxTalkStatus.Draft => "Draft",
+        ToolboxTalkStatus.Processing => "Processing",
+        ToolboxTalkStatus.ReadyForReview => "Ready for Review",
+        ToolboxTalkStatus.Published => "Published",
+        _ => status.ToString()
     };
 
     private static string GetQuestionTypeDisplay(QuestionType type) => type switch

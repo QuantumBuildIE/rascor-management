@@ -61,6 +61,10 @@ public class GetToolboxTalksQueryHandler : IRequestHandler<GetToolboxTalksQuery,
                 IsActive = t.IsActive,
                 HasVideo = !string.IsNullOrEmpty(t.VideoUrl),
                 RequiresQuiz = t.RequiresQuiz,
+                Status = t.Status,
+                StatusDisplay = GetStatusDisplay(t.Status),
+                GeneratedFromVideo = t.GeneratedFromVideo,
+                GeneratedFromPdf = t.GeneratedFromPdf,
                 SectionCount = t.Sections.Count,
                 QuestionCount = t.Questions.Count,
                 CreatedAt = t.CreatedAt
@@ -127,5 +131,14 @@ public class GetToolboxTalksQueryHandler : IRequestHandler<GetToolboxTalksQuery,
         ToolboxTalkFrequency.Monthly => "Monthly",
         ToolboxTalkFrequency.Annually => "Annually",
         _ => frequency.ToString()
+    };
+
+    private static string GetStatusDisplay(ToolboxTalkStatus status) => status switch
+    {
+        ToolboxTalkStatus.Draft => "Draft",
+        ToolboxTalkStatus.Processing => "Processing",
+        ToolboxTalkStatus.ReadyForReview => "Ready for Review",
+        ToolboxTalkStatus.Published => "Published",
+        _ => status.ToString()
     };
 }
