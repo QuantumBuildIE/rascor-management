@@ -5,6 +5,7 @@ obj/
 *.suo
 .vs/
 *.db
+appsettings.json
 appsettings.Development.json
 
 # Node.js
