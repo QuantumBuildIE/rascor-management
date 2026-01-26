@@ -3,6 +3,7 @@ import {
   getScheduledTalks,
   getScheduledTalk,
   sendReminder,
+  cancelScheduledTalk,
 } from './scheduled-talks';
 import { TOOLBOX_TALKS_KEY } from './use-toolbox-talks';
 import type { GetScheduledTalksParams } from '@/types/toolbox-talks';
@@ -41,6 +42,17 @@ export function useSendReminder() {
 
   return useMutation({
     mutationFn: (id: string) => sendReminder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SCHEDULED_TALKS_KEY });
+    },
+  });
+}
+
+export function useCancelScheduledTalk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => cancelScheduledTalk(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SCHEDULED_TALKS_KEY });
     },

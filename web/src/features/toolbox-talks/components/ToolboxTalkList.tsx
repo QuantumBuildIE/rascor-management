@@ -119,8 +119,16 @@ export function ToolboxTalkList({ onSchedule, basePath = '/admin/toolbox-talks' 
       toast.success('Toolbox talk deleted successfully');
       setDeleteDialogOpen(false);
       setTalkToDelete(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete toolbox talk';
+    } catch (error: unknown) {
+      let message = 'Failed to delete toolbox talk';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        if (axiosError.response?.data?.message) {
+          message = axiosError.response.data.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
       toast.error('Error', { description: message });
     }
   };

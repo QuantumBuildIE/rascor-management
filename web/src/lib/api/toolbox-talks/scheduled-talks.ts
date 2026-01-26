@@ -68,3 +68,7 @@ export async function getScheduledTalk(id: string): Promise<ScheduledTalk> {
 export async function sendReminder(id: string): Promise<void> {
   await apiClient.post(`/toolbox-talks/assigned/${id}/reminder`);
 }
+
+export async function cancelScheduledTalk(id: string): Promise<void> {
+  await apiClient.delete(`/toolbox-talks/assigned/${id}`);
+}

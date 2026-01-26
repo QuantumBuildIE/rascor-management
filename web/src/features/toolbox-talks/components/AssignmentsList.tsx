@@ -13,6 +13,7 @@ import {
   AlertTriangleIcon,
   PlayCircleIcon,
   SearchIcon,
+  XCircleIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DataTable, type Column } from '@/components/shared/data-table';
-import { useScheduledTalks, useSendReminder } from '@/lib/api/toolbox-talks';
+import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
+import { useScheduledTalks, useSendReminder, useCancelScheduledTalk } from '@/lib/api/toolbox-talks';
 import { useToolboxTalks } from '@/lib/api/toolbox-talks';
 import { useAllEmployees } from '@/lib/api/admin/use-employees';
 import type { ScheduledTalkListItem, ScheduledTalkStatus } from '@/types/toolbox-talks';
@@ -122,6 +124,11 @@ export function AssignmentsList({
   const { data: employees } = useAllEmployees();
 
   const reminderMutation = useSendReminder();
+  const cancelMutation = useCancelScheduledTalk();
+
+  // State for cancel dialog
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [assignmentToCancel, setAssignmentToCancel] = useState<ScheduledTalkListItem | null>(null);
 
   // Update URL params
   const updateParams = useCallback(
@@ -152,6 +159,31 @@ export function AssignmentsList({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to send reminder';
+      toast.error('Error', { description: message });
+    }
+  };
+
+  // Handle cancel assignment
+  const handleCancel = async () => {
+    if (!assignmentToCancel) return;
+
+    try {
+      await cancelMutation.mutateAsync(assignmentToCancel.id);
+      toast.success('Assignment cancelled', {
+        description: `Assignment for ${assignmentToCancel.employeeName} has been cancelled`,
+      });
+      setCancelDialogOpen(false);
+      setAssignmentToCancel(null);
+    } catch (error: unknown) {
+      let message = 'Failed to cancel assignment';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        if (axiosError.response?.data?.message) {
+          message = axiosError.response.data.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
       toast.error('Error', { description: message });
     }
   };
@@ -276,19 +308,31 @@ export function AssignmentsList({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => router.push(`/toolbox-talks/assignments/${item.id}`)}
+              onClick={() => router.push(`/toolbox-talks/my/${item.id}`)}
             >
               <EyeIcon className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
             {(item.status === 'Pending' || item.status === 'InProgress' || item.status === 'Overdue') && (
-              <DropdownMenuItem
-                onClick={() => handleSendReminder(item)}
-                disabled={reminderMutation.isPending}
-              >
-                <BellIcon className="mr-2 h-4 w-4" />
-                Send Reminder
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleSendReminder(item)}
+                  disabled={reminderMutation.isPending}
+                >
+                  <BellIcon className="mr-2 h-4 w-4" />
+                  Send Reminder
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => {
+                    setAssignmentToCancel(item);
+                    setCancelDialogOpen(true);
+                  }}
+                >
+                  <XCircleIcon className="mr-2 h-4 w-4" />
+                  Cancel Assignment
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -395,6 +439,16 @@ export function AssignmentsList({
         onPageSizeChange={(newSize) =>
           updateParams({ assignSize: String(newSize), assignPage: '1' })
         }
+      />
+
+      {/* Cancel confirmation dialog */}
+      <DeleteConfirmationDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        title="Cancel Assignment"
+        description={`Are you sure you want to cancel the assignment for ${assignmentToCancel?.employeeName}? This will mark the assignment as cancelled.`}
+        onConfirm={handleCancel}
+        isLoading={cancelMutation.isPending}
       />
     </div>
   );

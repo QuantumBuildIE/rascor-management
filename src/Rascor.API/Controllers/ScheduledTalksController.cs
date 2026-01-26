@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
+using Rascor.Modules.ToolboxTalks.Application.Commands.CancelScheduledTalk;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetScheduledTalks;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
@@ -285,6 +286,44 @@ public class ScheduledTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving completed scheduled talks");
             return StatusCode(500, Result.Fail("Error retrieving completed scheduled talks"));
+        }
+    }
+
+    /// <summary>
+    /// Cancel a scheduled talk assignment
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <returns>Success status</returns>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "ToolboxTalks.Schedule")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        try
+        {
+            var command = new CancelScheduledTalkCommand
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            await _mediator.Send(command);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling scheduled talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error cancelling assignment" });
         }
     }
 }
