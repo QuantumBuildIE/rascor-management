@@ -48,6 +48,8 @@ import type {
 } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircleIcon } from 'lucide-react';
 
 // ============================================
 // Schema
@@ -111,6 +113,9 @@ export function ScheduleDialog({
 
   // Use toolboxTalkId prop or preselectedTalk id
   const preselectedTalkId = toolboxTalkId ?? preselectedTalk?.id;
+
+  // Check if preselected talk is inactive (defensive check)
+  const isPreselectedTalkInactive = preselectedTalk && !preselectedTalk.isActive;
 
   // Fetch talks for selection
   const { data: talksData } = useToolboxTalks({ isActive: true, pageSize: 100 });
@@ -233,6 +238,16 @@ export function ScheduleDialog({
   const formContent = (
     <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Warning if preselected talk is inactive */}
+            {isPreselectedTalkInactive && (
+              <Alert variant="destructive">
+                <AlertCircleIcon className="h-4 w-4" />
+                <AlertDescription>
+                  This toolbox talk is inactive and cannot be scheduled. Please activate it first or select a different talk.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Talk selector (disabled if preselected or editing) */}
             <FormField
               control={form.control}
@@ -503,7 +518,7 @@ export function ScheduleDialog({
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting || isPreselectedTalkInactive}>
                     {isSubmitting ? (
                       <>
                         <LoadingSpinner className="mr-2 h-4 w-4" />
@@ -525,7 +540,7 @@ export function ScheduleDialog({
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting || isPreselectedTalkInactive}>
                     {isSubmitting ? (
                       <>
                         <LoadingSpinner className="mr-2 h-4 w-4" />

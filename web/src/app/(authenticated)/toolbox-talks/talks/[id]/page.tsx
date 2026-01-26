@@ -30,7 +30,7 @@ export default function ToolboxTalkDetailPage() {
         <span className="text-muted-foreground">Back to Talks</span>
       </div>
 
-      <ToolboxTalkDetail talkId={talkId} onSchedule={handleSchedule} />
+      <ToolboxTalkDetail talkId={talkId} onSchedule={handleSchedule} basePath="/toolbox-talks/talks" />
 
       <ScheduleDialog
         open={scheduleDialogOpen}

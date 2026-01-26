@@ -37,9 +37,11 @@ import { cn } from '@/lib/utils';
 interface ToolboxTalkDetailProps {
   talkId: string;
   onSchedule?: (talk: ToolboxTalk) => void;
+  /** Base path for navigation (default: /admin/toolbox-talks/talks) */
+  basePath?: string;
 }
 
-export function ToolboxTalkDetail({ talkId, onSchedule }: ToolboxTalkDetailProps) {
+export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolbox-talks/talks' }: ToolboxTalkDetailProps) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -52,7 +54,7 @@ export function ToolboxTalkDetail({ talkId, onSchedule }: ToolboxTalkDetailProps
     try {
       await deleteMutation.mutateAsync(talk.id);
       toast.success('Toolbox talk deleted successfully');
-      router.push('/toolbox-talks');
+      router.push(basePath);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete toolbox talk';
       toast.error('Error', { description: message });
@@ -113,11 +115,16 @@ export function ToolboxTalkDetail({ talkId, onSchedule }: ToolboxTalkDetailProps
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => router.push(`/toolbox-talks/${talk.id}/edit`)}>
+          <Button variant="outline" onClick={() => router.push(`${basePath}/${talk.id}/edit`)}>
             <PencilIcon className="mr-2 h-4 w-4" />
             Edit
           </Button>
-          <Button variant="outline" onClick={() => onSchedule?.(talk)}>
+          <Button
+            variant="outline"
+            onClick={() => onSchedule?.(talk)}
+            disabled={!talk.isActive}
+            title={!talk.isActive ? 'Only active talks can be scheduled' : undefined}
+          >
             <CalendarClockIcon className="mr-2 h-4 w-4" />
             Schedule
           </Button>

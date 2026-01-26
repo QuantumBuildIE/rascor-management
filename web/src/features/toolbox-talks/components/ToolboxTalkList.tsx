@@ -241,9 +241,16 @@ export function ToolboxTalkList({ onSchedule, basePath = '/admin/toolbox-talks' 
               <PencilIcon className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSchedule?.(item)}>
+            <DropdownMenuItem
+              onClick={() => onSchedule?.(item)}
+              disabled={!item.isActive}
+              title={!item.isActive ? 'Only active talks can be scheduled' : undefined}
+            >
               <CalendarClockIcon className="mr-2 h-4 w-4" />
               Schedule
+              {!item.isActive && (
+                <span className="ml-1 text-xs text-muted-foreground">(inactive)</span>
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
