@@ -1,4 +1,5 @@
 using Rascor.Core.Domain.Common;
+using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Domain.Entities;
 
@@ -32,6 +33,17 @@ public class ToolboxTalkSection : BaseEntity
     /// Whether the employee must acknowledge reading this section before proceeding
     /// </summary>
     public bool RequiresAcknowledgment { get; set; } = true;
+
+    /// <summary>
+    /// Source of this section content (Manual, Video, Pdf)
+    /// </summary>
+    public ContentSource Source { get; set; } = ContentSource.Manual;
+
+    /// <summary>
+    /// Video timestamp range this section corresponds to (e.g., "2:30-4:15")
+    /// Only applicable when Source is Video
+    /// </summary>
+    public string? VideoTimestamp { get; set; }
 
     // Navigation properties
 

@@ -20,6 +20,12 @@ public record ToolboxTalkDto
     public bool RequiresQuiz { get; init; }
     public int? PassingScore { get; init; }
     public bool IsActive { get; init; }
+    public ToolboxTalkStatus Status { get; init; }
+    public string StatusDisplay { get; init; } = string.Empty;
+    public string? PdfUrl { get; init; }
+    public string? PdfFileName { get; init; }
+    public bool GeneratedFromVideo { get; init; }
+    public bool GeneratedFromPdf { get; init; }
 
     // Child collections
     public List<ToolboxTalkSectionDto> Sections { get; init; } = new();

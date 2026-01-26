@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
+using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure.Persistence.Configurations;
 
@@ -34,6 +35,15 @@ public class ToolboxTalkSectionConfiguration : IEntityTypeConfiguration<ToolboxT
         builder.Property(s => s.RequiresAcknowledgment)
             .IsRequired()
             .HasDefaultValue(true);
+
+        builder.Property(s => s.Source)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(ContentSource.Manual);
+
+        builder.Property(s => s.VideoTimestamp)
+            .HasMaxLength(50);
 
         // Audit fields
         builder.Property(s => s.CreatedAt)

@@ -3916,12 +3916,28 @@ namespace Rascor.Core.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("ExtractedPdfText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExtractedVideoTranscript")
+                        .HasColumnType("text");
+
                     b.Property<string>("Frequency")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Once");
+
+                    b.Property<bool>("GeneratedFromPdf")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("GeneratedFromVideo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -3943,10 +3959,28 @@ namespace Rascor.Core.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(80);
 
+                    b.Property<string>("PdfFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("PdfTextExtractedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PdfUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<bool>("RequiresQuiz")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Draft");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -3969,6 +4003,9 @@ namespace Rascor.Core.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("None");
+
+                    b.Property<DateTime?>("VideoTranscriptExtractedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("VideoUrl")
                         .HasMaxLength(500)
@@ -4012,6 +4049,11 @@ namespace Rascor.Core.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsFromVideoFinalPortion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Options")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -4036,6 +4078,13 @@ namespace Rascor.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("MultipleChoice");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Manual");
+
                     b.Property<Guid>("ToolboxTalkId")
                         .HasColumnType("uuid");
 
@@ -4045,6 +4094,10 @@ namespace Rascor.Core.Infrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("VideoTimestamp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -4227,6 +4280,13 @@ namespace Rascor.Core.Infrastructure.Migrations
                     b.Property<int>("SectionNumber")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Manual");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -4241,6 +4301,10 @@ namespace Rascor.Core.Infrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("VideoTimestamp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 

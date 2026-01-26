@@ -1,3 +1,5 @@
+using Rascor.Modules.ToolboxTalks.Domain.Enums;
+
 namespace Rascor.Modules.ToolboxTalks.Application.DTOs;
 
 /// <summary>
@@ -11,4 +13,7 @@ public record ToolboxTalkSectionDto
     public string Title { get; init; } = string.Empty;
     public string Content { get; init; } = string.Empty;
     public bool RequiresAcknowledgment { get; init; }
+    public ContentSource Source { get; init; }
+    public string SourceDisplay { get; init; } = string.Empty;
+    public string? VideoTimestamp { get; init; }
 }

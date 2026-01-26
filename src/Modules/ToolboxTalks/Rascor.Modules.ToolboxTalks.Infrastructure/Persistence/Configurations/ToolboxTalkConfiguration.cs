@@ -59,6 +59,38 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(true);
 
+        builder.Property(t => t.Status)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(ToolboxTalkStatus.Draft);
+
+        builder.Property(t => t.PdfUrl)
+            .HasMaxLength(1000);
+
+        builder.Property(t => t.PdfFileName)
+            .HasMaxLength(255);
+
+        builder.Property(t => t.GeneratedFromVideo)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.GeneratedFromPdf)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        // Extracted PDF text for AI processing - no max length for large documents
+        builder.Property(t => t.ExtractedPdfText)
+            .HasColumnType("text");
+
+        builder.Property(t => t.PdfTextExtractedAt);
+
+        // Extracted video transcript for AI processing - no max length for long videos
+        builder.Property(t => t.ExtractedVideoTranscript)
+            .HasColumnType("text");
+
+        builder.Property(t => t.VideoTranscriptExtractedAt);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 

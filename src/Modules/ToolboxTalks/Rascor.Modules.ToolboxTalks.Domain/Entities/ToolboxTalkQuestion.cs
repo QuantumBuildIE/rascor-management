@@ -49,6 +49,23 @@ public class ToolboxTalkQuestion : BaseEntity
     /// </summary>
     public int Points { get; set; } = 1;
 
+    /// <summary>
+    /// Source of this question content (Manual, Video, Pdf)
+    /// </summary>
+    public ContentSource Source { get; set; } = ContentSource.Manual;
+
+    /// <summary>
+    /// Whether this question is generated from the final portion of the video
+    /// Questions from the final portion ensure users watched until the end
+    /// </summary>
+    public bool IsFromVideoFinalPortion { get; set; } = false;
+
+    /// <summary>
+    /// Video timestamp range this question corresponds to (e.g., "2:30-4:15")
+    /// Only applicable when Source is Video
+    /// </summary>
+    public string? VideoTimestamp { get; set; }
+
     // Navigation properties
 
     /// <summary>

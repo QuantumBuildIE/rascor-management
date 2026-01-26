@@ -61,6 +61,54 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Current status in the content creation workflow
+    /// </summary>
+    public ToolboxTalkStatus Status { get; set; } = ToolboxTalkStatus.Draft;
+
+    /// <summary>
+    /// URL to the PDF document (if any)
+    /// </summary>
+    public string? PdfUrl { get; set; }
+
+    /// <summary>
+    /// Original filename of the uploaded PDF
+    /// </summary>
+    public string? PdfFileName { get; set; }
+
+    /// <summary>
+    /// Indicates if sections/questions were AI-generated from video content
+    /// </summary>
+    public bool GeneratedFromVideo { get; set; } = false;
+
+    /// <summary>
+    /// Indicates if sections/questions were AI-generated from PDF content
+    /// </summary>
+    public bool GeneratedFromPdf { get; set; } = false;
+
+    /// <summary>
+    /// Extracted text content from the PDF document.
+    /// Used as input for AI generation of sections and quiz questions.
+    /// </summary>
+    public string? ExtractedPdfText { get; set; }
+
+    /// <summary>
+    /// When the PDF text was extracted. Used to determine if re-extraction is needed.
+    /// </summary>
+    public DateTime? PdfTextExtractedAt { get; set; }
+
+    /// <summary>
+    /// Extracted transcript text from the video (from SRT subtitles).
+    /// Used as input for AI generation of sections and quiz questions.
+    /// Includes timestamps for identifying content from different portions of the video.
+    /// </summary>
+    public string? ExtractedVideoTranscript { get; set; }
+
+    /// <summary>
+    /// When the video transcript was extracted. Used to determine if re-extraction is needed.
+    /// </summary>
+    public DateTime? VideoTranscriptExtractedAt { get; set; }
+
     // Navigation properties
 
     /// <summary>

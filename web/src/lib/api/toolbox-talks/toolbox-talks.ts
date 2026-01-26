@@ -73,7 +73,9 @@ export async function getToolboxTalk(id: string): Promise<ToolboxTalk> {
 }
 
 export async function createToolboxTalk(data: CreateToolboxTalkRequest): Promise<ToolboxTalk> {
+  console.log('🌐 API: createToolboxTalk called with:', data);
   const response = await apiClient.post<ToolboxTalk>('/toolbox-talks', data);
+  console.log('🌐 API: createToolboxTalk response:', response.data);
   return response.data;
 }
 
@@ -143,4 +145,134 @@ export async function updateToolboxTalkSettings(
     data
   );
   return response.data.data;
+}
+
+// ============================================
+// File Upload & Content Generation
+// ============================================
+
+export interface VideoUploadResponse {
+  videoUrl: string;
+  fileName: string;
+  fileSize: number;
+  source: string;
+}
+
+export interface PdfUploadResponse {
+  pdfUrl: string;
+  fileName: string;
+  fileSize: number;
+}
+
+export interface SetVideoUrlResponse {
+  videoUrl: string;
+  source: string;
+}
+
+export interface GenerateContentRequest {
+  includeVideo: boolean;
+  includePdf: boolean;
+  minimumSections?: number;
+  minimumQuestions?: number;
+  passThreshold?: number;
+  replaceExisting?: boolean;
+  connectionId: string;
+}
+
+export interface GenerateContentResponse {
+  jobId: string;
+  message: string;
+  toolboxTalkId: string;
+}
+
+export async function uploadToolboxTalkVideo(
+  id: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<VideoUploadResponse> {
+  console.log('🌐 API: uploadToolboxTalkVideo called with id:', id);
+  console.log('🌐 API: uploadToolboxTalkVideo file:', file.name, file.size);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<VideoUploadResponse>(
+    `/toolbox-talks/${id}/video`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
+        }
+      },
+    }
+  );
+
+  console.log('🌐 API: uploadToolboxTalkVideo response:', response.data);
+  return response.data;
+}
+
+export async function setToolboxTalkVideoUrl(
+  id: string,
+  url: string
+): Promise<SetVideoUrlResponse> {
+  const response = await apiClient.put<SetVideoUrlResponse>(
+    `/toolbox-talks/${id}/video-url`,
+    { url }
+  );
+  return response.data;
+}
+
+export async function uploadToolboxTalkPdf(
+  id: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<PdfUploadResponse> {
+  console.log('🌐 API: uploadToolboxTalkPdf called with id:', id);
+  console.log('🌐 API: uploadToolboxTalkPdf file:', file.name, file.size);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<PdfUploadResponse>(
+    `/toolbox-talks/${id}/pdf`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
+        }
+      },
+    }
+  );
+
+  console.log('🌐 API: uploadToolboxTalkPdf response:', response.data);
+  return response.data;
+}
+
+export async function deleteToolboxTalkVideo(id: string): Promise<void> {
+  await apiClient.delete(`/toolbox-talks/${id}/video`);
+}
+
+export async function deleteToolboxTalkPdf(id: string): Promise<void> {
+  await apiClient.delete(`/toolbox-talks/${id}/pdf`);
+}
+
+export async function generateToolboxTalkContent(
+  id: string,
+  options: GenerateContentRequest
+): Promise<GenerateContentResponse> {
+  const response = await apiClient.post<GenerateContentResponse>(
+    `/toolbox-talks/${id}/generate`,
+    options
+  );
+  return response.data;
 }

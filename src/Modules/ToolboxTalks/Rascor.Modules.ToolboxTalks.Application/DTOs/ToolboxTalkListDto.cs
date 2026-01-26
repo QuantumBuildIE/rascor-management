@@ -15,6 +15,10 @@ public record ToolboxTalkListDto
     public bool IsActive { get; init; }
     public bool HasVideo { get; init; }
     public bool RequiresQuiz { get; init; }
+    public ToolboxTalkStatus Status { get; init; }
+    public string StatusDisplay { get; init; } = string.Empty;
+    public bool GeneratedFromVideo { get; init; }
+    public bool GeneratedFromPdf { get; init; }
 
     // Counts
     public int SectionCount { get; init; }

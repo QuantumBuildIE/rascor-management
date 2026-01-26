@@ -46,6 +46,19 @@ public class ToolboxTalkQuestionConfiguration : IEntityTypeConfiguration<Toolbox
             .IsRequired()
             .HasDefaultValue(1);
 
+        builder.Property(q => q.Source)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(ContentSource.Manual);
+
+        builder.Property(q => q.IsFromVideoFinalPortion)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(q => q.VideoTimestamp)
+            .HasMaxLength(50);
+
         // Audit fields
         builder.Property(q => q.CreatedAt)
             .IsRequired();

@@ -25,4 +25,8 @@ public record ToolboxTalkQuestionDto
     public string? CorrectAnswer { get; init; }
 
     public int Points { get; init; }
+    public ContentSource Source { get; init; }
+    public string SourceDisplay { get; init; } = string.Empty;
+    public bool IsFromVideoFinalPortion { get; init; }
+    public string? VideoTimestamp { get; init; }
 }

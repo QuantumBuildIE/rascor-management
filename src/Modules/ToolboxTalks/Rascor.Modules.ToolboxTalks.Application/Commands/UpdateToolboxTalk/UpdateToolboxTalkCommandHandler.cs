@@ -1,6 +1,8 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
@@ -11,18 +13,23 @@ namespace Rascor.Modules.ToolboxTalks.Application.Commands.UpdateToolboxTalk;
 public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalkCommand, ToolboxTalkDto>
 {
     private readonly IToolboxTalksDbContext _dbContext;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ILogger<UpdateToolboxTalkCommandHandler> _logger;
 
-    public UpdateToolboxTalkCommandHandler(IToolboxTalksDbContext dbContext)
+    public UpdateToolboxTalkCommandHandler(
+        IToolboxTalksDbContext dbContext,
+        ICurrentUserService currentUser,
+        ILogger<UpdateToolboxTalkCommandHandler> logger)
     {
         _dbContext = dbContext;
+        _currentUser = currentUser;
+        _logger = logger;
     }
 
     public async Task<ToolboxTalkDto> Handle(UpdateToolboxTalkCommand request, CancellationToken cancellationToken)
     {
-        // Find the toolbox talk with sections and questions
+        // Find the toolbox talk (without sections and questions - we'll query those separately)
         var toolboxTalk = await _dbContext.ToolboxTalks
-            .Include(t => t.Sections)
-            .Include(t => t.Questions)
             .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
 
         if (toolboxTalk == null)
@@ -61,61 +68,99 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         toolboxTalk.RequiresQuiz = request.RequiresQuiz;
         toolboxTalk.PassingScore = request.RequiresQuiz ? request.PassingScore : null;
         toolboxTalk.IsActive = request.IsActive;
+        toolboxTalk.UpdatedAt = DateTime.UtcNow;
+        toolboxTalk.UpdatedBy = _currentUser.UserId;
 
-        // Handle sections update
-        UpdateSections(toolboxTalk, request.Sections);
+        // Handle sections update - query from DbContext directly to avoid concurrency issues
+        await UpdateSectionsAsync(toolboxTalk, request.Sections, cancellationToken);
 
-        // Handle questions update
-        UpdateQuestions(toolboxTalk, request.Questions);
+        // Handle questions update - query from DbContext directly to avoid concurrency issues
+        await UpdateQuestionsAsync(toolboxTalk, request.Questions, cancellationToken);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // Reload to ensure clean state
-        await _dbContext.ToolboxTalks
-            .Entry(toolboxTalk)
-            .Collection(t => t.Sections)
-            .LoadAsync(cancellationToken);
-        await _dbContext.ToolboxTalks
-            .Entry(toolboxTalk)
-            .Collection(t => t.Questions)
-            .LoadAsync(cancellationToken);
+        // Reload sections and questions for the response
+        var sections = await _dbContext.ToolboxTalkSections
+            .Where(s => s.ToolboxTalkId == toolboxTalk.Id && !s.IsDeleted)
+            .OrderBy(s => s.SectionNumber)
+            .ToListAsync(cancellationToken);
 
-        return MapToDto(toolboxTalk);
+        var questions = await _dbContext.ToolboxTalkQuestions
+            .Where(q => q.ToolboxTalkId == toolboxTalk.Id && !q.IsDeleted)
+            .OrderBy(q => q.QuestionNumber)
+            .ToListAsync(cancellationToken);
+
+        return MapToDto(toolboxTalk, sections, questions);
     }
 
-    private void UpdateSections(ToolboxTalk toolboxTalk, List<UpdateToolboxTalkSectionDto> sectionDtos)
+    private async Task UpdateSectionsAsync(ToolboxTalk toolboxTalk, List<UpdateToolboxTalkSectionDto> sectionDtos, CancellationToken cancellationToken)
     {
-        var existingSections = toolboxTalk.Sections.Where(s => !s.IsDeleted).ToList();
-        var incomingSectionIds = sectionDtos.Where(s => s.Id.HasValue).Select(s => s.Id!.Value).ToHashSet();
+        // Get existing non-deleted sections directly from DbContext
+        var existingSections = await _dbContext.ToolboxTalkSections
+            .Where(s => s.ToolboxTalkId == toolboxTalk.Id && !s.IsDeleted)
+            .ToListAsync(cancellationToken);
 
-        // Soft delete sections not in the request
+        var existingSectionIds = existingSections.Select(s => s.Id).ToHashSet();
+        var incomingSectionIds = sectionDtos
+            .Where(s => s.Id.HasValue)
+            .Select(s => s.Id!.Value)
+            .ToHashSet();
+
+        // Soft-delete sections that are in DB but not in request
         foreach (var section in existingSections)
         {
             if (!incomingSectionIds.Contains(section.Id))
             {
                 section.IsDeleted = true;
+                section.UpdatedAt = DateTime.UtcNow;
+                section.UpdatedBy = _currentUser.UserId;
             }
         }
 
-        // Update existing and add new sections
+        // Process incoming sections
         foreach (var sectionDto in sectionDtos)
         {
             if (sectionDto.Id.HasValue)
             {
-                // Update existing section
+                // Try to find existing section
                 var existingSection = existingSections.FirstOrDefault(s => s.Id == sectionDto.Id.Value);
+
                 if (existingSection != null)
                 {
+                    // Update existing section
                     existingSection.SectionNumber = sectionDto.SectionNumber;
                     existingSection.Title = sectionDto.Title;
                     existingSection.Content = sectionDto.Content;
                     existingSection.RequiresAcknowledgment = sectionDto.RequiresAcknowledgment;
+                    existingSection.Source = sectionDto.Source;
+                    existingSection.VideoTimestamp = sectionDto.VideoTimestamp;
                     existingSection.IsDeleted = false; // In case it was marked for deletion
+                    existingSection.UpdatedAt = DateTime.UtcNow;
+                    existingSection.UpdatedBy = _currentUser.UserId;
+                }
+                else
+                {
+                    // ID was provided but doesn't exist in DB - create as new
+                    _logger.LogWarning("Section ID {SectionId} not found, creating as new", sectionDto.Id.Value);
+                    var newSection = new ToolboxTalkSection
+                    {
+                        Id = Guid.NewGuid(),
+                        ToolboxTalkId = toolboxTalk.Id,
+                        SectionNumber = sectionDto.SectionNumber,
+                        Title = sectionDto.Title,
+                        Content = sectionDto.Content,
+                        RequiresAcknowledgment = sectionDto.RequiresAcknowledgment,
+                        Source = sectionDto.Source,
+                        VideoTimestamp = sectionDto.VideoTimestamp,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = _currentUser.UserId
+                    };
+                    _dbContext.ToolboxTalkSections.Add(newSection);
                 }
             }
             else
             {
-                // Create new section
+                // No ID - create new section
                 var newSection = new ToolboxTalkSection
                 {
                     Id = Guid.NewGuid(),
@@ -123,48 +168,91 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     SectionNumber = sectionDto.SectionNumber,
                     Title = sectionDto.Title,
                     Content = sectionDto.Content,
-                    RequiresAcknowledgment = sectionDto.RequiresAcknowledgment
+                    RequiresAcknowledgment = sectionDto.RequiresAcknowledgment,
+                    Source = sectionDto.Source,
+                    VideoTimestamp = sectionDto.VideoTimestamp,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = _currentUser.UserId
                 };
-                toolboxTalk.Sections.Add(newSection);
+                _dbContext.ToolboxTalkSections.Add(newSection);
             }
         }
     }
 
-    private void UpdateQuestions(ToolboxTalk toolboxTalk, List<UpdateToolboxTalkQuestionDto> questionDtos)
+    private async Task UpdateQuestionsAsync(ToolboxTalk toolboxTalk, List<UpdateToolboxTalkQuestionDto> questionDtos, CancellationToken cancellationToken)
     {
-        var existingQuestions = toolboxTalk.Questions.Where(q => !q.IsDeleted).ToList();
-        var incomingQuestionIds = questionDtos.Where(q => q.Id.HasValue).Select(q => q.Id!.Value).ToHashSet();
+        // Get existing non-deleted questions directly from DbContext
+        var existingQuestions = await _dbContext.ToolboxTalkQuestions
+            .Where(q => q.ToolboxTalkId == toolboxTalk.Id && !q.IsDeleted)
+            .ToListAsync(cancellationToken);
 
-        // Soft delete questions not in the request
+        var existingQuestionIds = existingQuestions.Select(q => q.Id).ToHashSet();
+        var incomingQuestionIds = questionDtos
+            .Where(q => q.Id.HasValue)
+            .Select(q => q.Id!.Value)
+            .ToHashSet();
+
+        // Soft-delete questions that are in DB but not in request
         foreach (var question in existingQuestions)
         {
             if (!incomingQuestionIds.Contains(question.Id))
             {
                 question.IsDeleted = true;
+                question.UpdatedAt = DateTime.UtcNow;
+                question.UpdatedBy = _currentUser.UserId;
             }
         }
 
-        // Update existing and add new questions
+        // Process incoming questions
         foreach (var questionDto in questionDtos)
         {
             if (questionDto.Id.HasValue)
             {
-                // Update existing question
+                // Try to find existing question
                 var existingQuestion = existingQuestions.FirstOrDefault(q => q.Id == questionDto.Id.Value);
+
                 if (existingQuestion != null)
                 {
+                    // Update existing question
                     existingQuestion.QuestionNumber = questionDto.QuestionNumber;
                     existingQuestion.QuestionText = questionDto.QuestionText;
                     existingQuestion.QuestionType = questionDto.QuestionType;
                     existingQuestion.Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null;
                     existingQuestion.CorrectAnswer = questionDto.CorrectAnswer;
                     existingQuestion.Points = questionDto.Points;
+                    existingQuestion.Source = questionDto.Source;
+                    existingQuestion.VideoTimestamp = questionDto.VideoTimestamp;
+                    existingQuestion.IsFromVideoFinalPortion = questionDto.IsFromVideoFinalPortion;
                     existingQuestion.IsDeleted = false; // In case it was marked for deletion
+                    existingQuestion.UpdatedAt = DateTime.UtcNow;
+                    existingQuestion.UpdatedBy = _currentUser.UserId;
+                }
+                else
+                {
+                    // ID was provided but doesn't exist in DB - create as new
+                    _logger.LogWarning("Question ID {QuestionId} not found, creating as new", questionDto.Id.Value);
+                    var newQuestion = new ToolboxTalkQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        ToolboxTalkId = toolboxTalk.Id,
+                        QuestionNumber = questionDto.QuestionNumber,
+                        QuestionText = questionDto.QuestionText,
+                        QuestionType = questionDto.QuestionType,
+                        Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null,
+                        CorrectAnswer = questionDto.CorrectAnswer,
+                        Points = questionDto.Points,
+                        Source = questionDto.Source,
+                        VideoTimestamp = questionDto.VideoTimestamp,
+                        IsFromVideoFinalPortion = questionDto.IsFromVideoFinalPortion,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = _currentUser.UserId
+                    };
+                    _dbContext.ToolboxTalkQuestions.Add(newQuestion);
                 }
             }
             else
             {
-                // Create new question
+                // No ID - create new question
                 var newQuestion = new ToolboxTalkQuestion
                 {
                     Id = Guid.NewGuid(),
@@ -174,14 +262,19 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     QuestionType = questionDto.QuestionType,
                     Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null,
                     CorrectAnswer = questionDto.CorrectAnswer,
-                    Points = questionDto.Points
+                    Points = questionDto.Points,
+                    Source = questionDto.Source,
+                    VideoTimestamp = questionDto.VideoTimestamp,
+                    IsFromVideoFinalPortion = questionDto.IsFromVideoFinalPortion,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = _currentUser.UserId
                 };
-                toolboxTalk.Questions.Add(newQuestion);
+                _dbContext.ToolboxTalkQuestions.Add(newQuestion);
             }
         }
     }
 
-    private static ToolboxTalkDto MapToDto(ToolboxTalk entity)
+    private static ToolboxTalkDto MapToDto(ToolboxTalk entity, List<ToolboxTalkSection> sections, List<ToolboxTalkQuestion> questions)
     {
         return new ToolboxTalkDto
         {
@@ -200,8 +293,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             IsActive = entity.IsActive,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
-            Sections = entity.Sections
-                .Where(s => !s.IsDeleted)
+            Sections = sections
                 .Select(s => new ToolboxTalkSectionDto
                 {
                     Id = s.Id,
@@ -209,10 +301,12 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     SectionNumber = s.SectionNumber,
                     Title = s.Title,
                     Content = s.Content,
-                    RequiresAcknowledgment = s.RequiresAcknowledgment
-                }).OrderBy(s => s.SectionNumber).ToList(),
-            Questions = entity.Questions
-                .Where(q => !q.IsDeleted)
+                    RequiresAcknowledgment = s.RequiresAcknowledgment,
+                    Source = s.Source,
+                    SourceDisplay = GetContentSourceDisplay(s.Source),
+                    VideoTimestamp = s.VideoTimestamp
+                }).ToList(),
+            Questions = questions
                 .Select(q => new ToolboxTalkQuestionDto
                 {
                     Id = q.Id,
@@ -223,8 +317,12 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     QuestionTypeDisplay = GetQuestionTypeDisplay(q.QuestionType),
                     Options = !string.IsNullOrEmpty(q.Options) ? JsonSerializer.Deserialize<List<string>>(q.Options) : null,
                     CorrectAnswer = q.CorrectAnswer,
-                    Points = q.Points
-                }).OrderBy(q => q.QuestionNumber).ToList()
+                    Points = q.Points,
+                    Source = q.Source,
+                    SourceDisplay = GetContentSourceDisplay(q.Source),
+                    VideoTimestamp = q.VideoTimestamp,
+                    IsFromVideoFinalPortion = q.IsFromVideoFinalPortion
+                }).ToList()
         };
     }
 
@@ -253,5 +351,14 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         QuestionType.TrueFalse => "True/False",
         QuestionType.ShortAnswer => "Short Answer",
         _ => type.ToString()
+    };
+
+    private static string GetContentSourceDisplay(ContentSource source) => source switch
+    {
+        ContentSource.Manual => "Manual",
+        ContentSource.Video => "Video",
+        ContentSource.Pdf => "PDF",
+        ContentSource.Both => "Video & PDF",
+        _ => source.ToString()
     };
 }

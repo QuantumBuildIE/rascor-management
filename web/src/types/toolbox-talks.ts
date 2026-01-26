@@ -12,6 +12,12 @@ export type ToolboxTalkScheduleStatus = 'Draft' | 'Active' | 'Completed' | 'Canc
 
 export type ScheduledTalkStatus = 'Pending' | 'InProgress' | 'Completed' | 'Overdue' | 'Cancelled';
 
+/** Status of a toolbox talk in the content creation workflow */
+export type ToolboxTalkStatus = 'Draft' | 'Processing' | 'ReadyForReview' | 'Published';
+
+/** Source of content for toolbox talk sections and questions */
+export type ContentSource = 'Manual' | 'Video' | 'Pdf' | 'Both';
+
 // ============================================
 // Toolbox Talk DTOs
 // ============================================
@@ -23,6 +29,8 @@ export interface ToolboxTalkSection {
   title: string;
   content: string;
   requiresAcknowledgment: boolean;
+  source?: ContentSource;
+  videoTimestamp?: string | null;
 }
 
 export interface ToolboxTalkQuestion {
@@ -35,6 +43,8 @@ export interface ToolboxTalkQuestion {
   options: string[] | null;
   correctAnswer: string | null;
   points: number;
+  source?: ContentSource;
+  videoTimestamp?: string | null;
 }
 
 export interface ToolboxTalkCompletionStats {
@@ -60,6 +70,12 @@ export interface ToolboxTalk {
   requiresQuiz: boolean;
   passingScore: number | null;
   isActive: boolean;
+  status: ToolboxTalkStatus;
+  statusDisplay: string;
+  pdfUrl: string | null;
+  pdfFileName: string | null;
+  generatedFromVideo: boolean;
+  generatedFromPdf: boolean;
   sections: ToolboxTalkSection[];
   questions: ToolboxTalkQuestion[];
   completionStats: ToolboxTalkCompletionStats | null;
@@ -75,9 +91,12 @@ export interface ToolboxTalkListItem {
   frequencyDisplay: string;
   isActive: boolean;
   hasVideo: boolean;
+  hasPdf: boolean;
   requiresQuiz: boolean;
   sectionCount: number;
   questionCount: number;
+  status: ToolboxTalkStatus;
+  statusDisplay: string;
   completionStats: ToolboxTalkCompletionStats | null;
   createdAt: string;
 }

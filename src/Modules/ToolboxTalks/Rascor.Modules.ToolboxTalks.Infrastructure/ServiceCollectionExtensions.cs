@@ -1,10 +1,15 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Pdf;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Storage;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
 using Rascor.Modules.ToolboxTalks.Application.Services;
+using Rascor.Modules.ToolboxTalks.Application.Services.Storage;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Configuration;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Pdf;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Storage;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Subtitles;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure;
@@ -36,6 +41,18 @@ public static class ServiceCollectionExtensions
         // Register subtitle processing configuration
         services.Configure<SubtitleProcessingSettings>(
             configuration.GetSection(SubtitleProcessingSettings.SectionName));
+
+        // Register R2 storage configuration and services
+        services.Configure<R2StorageSettings>(
+            configuration.GetSection(R2StorageSettings.SectionName));
+        services.AddScoped<ISlugGeneratorService, SlugGeneratorService>();
+        services.AddScoped<IR2StorageService, R2StorageService>();
+
+        // Register PDF extraction service (for AI content generation from uploaded PDFs)
+        services.AddHttpClient<IPdfExtractionService, PdfExtractionService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30); // 30 seconds for PDF download
+        });
 
         // Register subtitle processing infrastructure services
         // ElevenLabs transcription can take a long time for large videos (download + transcription)
@@ -73,8 +90,33 @@ public static class ServiceCollectionExtensions
         // Register subtitle processing orchestrator
         services.AddScoped<ISubtitleProcessingOrchestrator, SubtitleProcessingOrchestrator>();
 
-        // Note: SignalR hub is registered in Program.cs with app.MapHub<SubtitleProcessingHub>()
-        // Note: Hangfire background jobs are registered in Program.cs
+        // Register transcript service for AI content generation (retrieves and parses SRT files)
+        services.AddScoped<ITranscriptService, TranscriptService>();
+
+        // Register content extraction orchestrator for AI content generation
+        // Combines video transcript and PDF text extraction into a single service
+        services.AddScoped<IContentExtractionService, ContentExtractionService>();
+
+        // Register AI section generation service for generating sections from content
+        services.AddHttpClient<IAiSectionGenerationService, AiSectionGenerationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(3); // 3 minutes for section generation
+        });
+
+        // Register AI quiz generation service for generating quiz questions from content
+        services.AddHttpClient<IAiQuizGenerationService, AiQuizGenerationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(3); // 3 minutes for quiz generation
+        });
+
+        // Register the full content generation orchestrator service
+        // This service coordinates extraction, section generation, and quiz generation
+        services.AddScoped<IContentGenerationService, ContentGenerationService>();
+
+        // Note: SignalR hubs are registered in Program.cs with app.MapHub<>()
+        //   - SubtitleProcessingHub: /api/hubs/subtitle-processing
+        //   - ContentGenerationHub: /api/hubs/content-generation
+        // Note: Hangfire background jobs (ContentGenerationJob, etc.) are registered in Program.cs
 
         return services;
     }

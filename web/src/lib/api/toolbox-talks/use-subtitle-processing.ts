@@ -142,8 +142,11 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
 
   // Set up SignalR connection
   useEffect(() => {
+    // Track if effect is still active (handles React Strict Mode double-mount)
+    let isActive = true;
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_BASE_URL}/hubs/subtitle-processing`, {
+      .withUrl(`${API_BASE_URL}/api/hubs/subtitle-processing`, {
         accessTokenFactory: () => {
           return getStoredToken('accessToken') || '';
         },
@@ -156,6 +159,7 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
 
     // Handle progress updates
     connection.on('ProgressUpdate', (update: SubtitleProgressUpdate) => {
+      if (!isActive) return;
       // Update the query cache with the new status
       queryClient.setQueryData<SubtitleProcessingStatusResponse | null>(
         subtitleProcessingKeys.status(toolboxTalkId),
@@ -184,6 +188,11 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
     const startConnection = async () => {
       try {
         await connection.start();
+        // Check if still active after async operation
+        if (!isActive) {
+          connection.stop();
+          return;
+        }
         setIsConnected(true);
         setConnectionError(null);
 
@@ -192,6 +201,12 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
           await connection.invoke('SubscribeToJob', status.jobId);
         }
       } catch (err) {
+        // Ignore errors if component unmounted during connection
+        if (!isActive) return;
+        // Ignore abort errors from Strict Mode cleanup
+        if (err instanceof Error && err.message.includes('stopped during negotiation')) {
+          return;
+        }
         console.error('SignalR connection failed:', err);
         setConnectionError(
           err instanceof Error ? err.message : 'Connection failed'
@@ -201,6 +216,7 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
     };
 
     connection.onreconnected(async () => {
+      if (!isActive) return;
       setIsConnected(true);
       setConnectionError(null);
       // Re-subscribe after reconnection
@@ -214,16 +230,19 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
     });
 
     connection.onreconnecting(() => {
+      if (!isActive) return;
       setIsConnected(false);
     });
 
     connection.onclose(() => {
+      if (!isActive) return;
       setIsConnected(false);
     });
 
     startConnection();
 
     return () => {
+      isActive = false;
       connection.stop();
     };
   }, [toolboxTalkId, queryClient]);

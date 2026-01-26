@@ -116,6 +116,7 @@ builder.Services.AddScoped<ProcessToolboxTalkSchedulesJob>();
 builder.Services.AddScoped<SendToolboxTalkRemindersJob>();
 builder.Services.AddScoped<UpdateOverdueToolboxTalksJob>();
 builder.Services.AddScoped<RamsDailyDigestJob>();
+builder.Services.AddScoped<ContentGenerationJob>();
 
 // Add Hangfire with PostgreSQL storage
 builder.Services.AddHangfire(config => config
@@ -125,12 +126,16 @@ builder.Services.AddHangfire(config => config
     .UsePostgreSqlStorage(options => options
         .UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))));
 
-builder.Services.AddHangfireServer();
+builder.Services.AddHangfireServer(options =>
+{
+    options.Queues = new[] { "default", "content-generation" };
+});
 
-// Add controllers with JSON options for enum string conversion
+// Add controllers with JSON options for enum string conversion and camelCase naming
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
@@ -256,6 +261,7 @@ app.MapControllers();
 
 // Map SignalR hubs
 app.MapHub<SubtitleProcessingHub>("/api/hubs/subtitle-processing");
+app.MapHub<ContentGenerationHub>("/api/hubs/content-generation");
 
 // Map health check endpoint
 app.MapHealthChecks("/health");

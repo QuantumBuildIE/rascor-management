@@ -1,3 +1,4 @@
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,8 @@ using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalks;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSettings;
 using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
+using System.ComponentModel.DataAnnotations;
 
 namespace Rascor.API.Controllers;
 
@@ -29,6 +32,7 @@ public class ToolboxTalksController : ControllerBase
     private readonly ICurrentUserService _currentUserService;
     private readonly IToolboxTalkReportsService _reportsService;
     private readonly IToolboxTalkExportService _exportService;
+    private readonly IContentExtractionService _contentExtractionService;
     private readonly ILogger<ToolboxTalksController> _logger;
 
     public ToolboxTalksController(
@@ -36,12 +40,14 @@ public class ToolboxTalksController : ControllerBase
         ICurrentUserService currentUserService,
         IToolboxTalkReportsService reportsService,
         IToolboxTalkExportService exportService,
+        IContentExtractionService contentExtractionService,
         ILogger<ToolboxTalksController> logger)
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
         _reportsService = reportsService;
         _exportService = exportService;
+        _contentExtractionService = contentExtractionService;
         _logger = logger;
     }
 
@@ -307,6 +313,136 @@ public class ToolboxTalksController : ControllerBase
         }
     }
 
+    #region Content Extraction
+
+    /// <summary>
+    /// Extracts content from video transcript and/or PDF document for AI generation preview.
+    /// This endpoint is for testing and previewing what content will be used for AI generation.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="request">Content extraction options</param>
+    /// <returns>Extraction result with combined content and metadata</returns>
+    [HttpPost("{id:guid}/extract-content")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(typeof(ContentExtractionResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExtractContent(
+        Guid id,
+        [FromBody] ExtractContentRequest request)
+    {
+        try
+        {
+            var result = await _contentExtractionService.ExtractContentAsync(
+                id,
+                request.IncludeVideo,
+                request.IncludePdf,
+                _currentUserService.TenantId);
+
+            if (!result.Success && result.Errors.Any())
+            {
+                // If the toolbox talk wasn't found, return 404
+                if (result.Errors.Any(e => e.Contains("not found")))
+                {
+                    return NotFound(new { message = result.Errors.First(), errors = result.Errors, warnings = result.Warnings });
+                }
+
+                return BadRequest(new { message = "Content extraction failed", errors = result.Errors, warnings = result.Warnings });
+            }
+
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting content for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, Result.Fail("Error extracting content"));
+        }
+    }
+
+    #endregion
+
+    #region Content Generation
+
+    /// <summary>
+    /// Starts AI content generation for a toolbox talk.
+    /// This queues a background job that extracts content from video/PDF and generates
+    /// sections and quiz questions using AI. Progress updates are sent via SignalR.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="request">Content generation options</param>
+    /// <returns>Job information including the Hangfire job ID</returns>
+    [HttpPost("{id:guid}/generate")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(typeof(GenerateContentResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GenerateContentResponse>> GenerateContent(
+        Guid id,
+        [FromBody] GenerateContentRequest request)
+    {
+        try
+        {
+            // First, verify the toolbox talk exists by trying to get it
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox Talk not found" });
+            }
+
+            // Validate we have content to generate from
+            if (request.IncludeVideo && string.IsNullOrEmpty(toolboxTalk.VideoUrl))
+            {
+                return BadRequest(new { error = "Video generation requested but no video URL is set" });
+            }
+
+            if (request.IncludePdf && string.IsNullOrEmpty(toolboxTalk.PdfUrl))
+            {
+                return BadRequest(new { error = "PDF generation requested but no PDF is uploaded" });
+            }
+
+            if (!request.IncludeVideo && !request.IncludePdf)
+            {
+                return BadRequest(new { error = "Must include at least one content source (video or PDF)" });
+            }
+
+            // Create generation options
+            var options = new ContentGenerationOptions(
+                IncludeVideo: request.IncludeVideo,
+                IncludePdf: request.IncludePdf,
+                MinimumSections: request.MinimumSections ?? 7,
+                MinimumQuestions: request.MinimumQuestions ?? 5,
+                PassThreshold: request.PassThreshold ?? 80,
+                ReplaceExisting: request.ReplaceExisting ?? true);
+
+            // Queue the background job with tenant context
+            var tenantId = _currentUserService.TenantId;
+            var jobId = BackgroundJob.Enqueue<ContentGenerationJob>(
+                job => job.ExecuteAsync(id, options, request.ConnectionId, tenantId, CancellationToken.None));
+
+            _logger.LogInformation(
+                "Queued content generation job {JobId} for toolbox talk {ToolboxTalkId}",
+                jobId, id);
+
+            return Accepted(new GenerateContentResponse(
+                JobId: jobId,
+                Message: "Content generation started. Connect to the SignalR hub for real-time progress updates.",
+                ToolboxTalkId: id));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting content generation for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error starting content generation" });
+        }
+    }
+
+    #endregion
+
     #region Reports
 
     /// <summary>
@@ -536,3 +672,77 @@ public record UpdateToolboxTalkSettingsDto
     public bool RequireSignature { get; init; } = true;
     public bool AutoAssignNewEmployees { get; init; } = true;
 }
+
+/// <summary>
+/// Request DTO for content extraction endpoint
+/// </summary>
+public record ExtractContentRequest
+{
+    /// <summary>
+    /// Whether to extract and include video transcript content
+    /// </summary>
+    [Required]
+    public bool IncludeVideo { get; init; }
+
+    /// <summary>
+    /// Whether to extract and include PDF document content
+    /// </summary>
+    [Required]
+    public bool IncludePdf { get; init; }
+}
+
+/// <summary>
+/// Request DTO for content generation endpoint
+/// </summary>
+public record GenerateContentRequest
+{
+    /// <summary>
+    /// Whether to extract and use video transcript content
+    /// </summary>
+    [Required]
+    public bool IncludeVideo { get; init; }
+
+    /// <summary>
+    /// Whether to extract and use PDF document content
+    /// </summary>
+    [Required]
+    public bool IncludePdf { get; init; }
+
+    /// <summary>
+    /// Minimum number of sections to generate (default: 7)
+    /// </summary>
+    public int? MinimumSections { get; init; }
+
+    /// <summary>
+    /// Minimum number of quiz questions to generate (default: 5)
+    /// </summary>
+    public int? MinimumQuestions { get; init; }
+
+    /// <summary>
+    /// Quiz pass threshold percentage (default: 80)
+    /// </summary>
+    public int? PassThreshold { get; init; }
+
+    /// <summary>
+    /// Whether to replace existing sections and questions (default: true).
+    /// If false, new content will be appended to existing.
+    /// </summary>
+    public bool? ReplaceExisting { get; init; }
+
+    /// <summary>
+    /// Optional SignalR connection ID for receiving real-time progress updates.
+    /// Clients should connect to the ContentGenerationHub before calling this endpoint.
+    /// </summary>
+    public string? ConnectionId { get; init; }
+}
+
+/// <summary>
+/// Response DTO for content generation endpoint
+/// </summary>
+/// <param name="JobId">The Hangfire background job ID</param>
+/// <param name="Message">Status message</param>
+/// <param name="ToolboxTalkId">The toolbox talk ID being processed</param>
+public record GenerateContentResponse(
+    string JobId,
+    string Message,
+    Guid ToolboxTalkId);
