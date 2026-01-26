@@ -1,6 +1,7 @@
 # .NET
 bin/
 obj/
+publish/
 *.user
 *.suo
 .vs/
@@ -27,3 +28,5 @@ Thumbs.db
 **/.ds
 
 nul
+
+
