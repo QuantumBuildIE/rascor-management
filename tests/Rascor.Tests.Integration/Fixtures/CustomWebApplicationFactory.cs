@@ -90,7 +90,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             var connStr = container.GetConnectionString();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = connStr
+                ["ConnectionStrings:DefaultConnection"] = connStr,
+                // Add JWT settings to configuration so they're available during service registration
+                ["JwtSettings:Secret"] = "TestSecretKeyThatIsAtLeast32CharactersLong!ForIntegrationTests!",
+                ["JwtSettings:Issuer"] = "RascorManagementSystem",
+                ["JwtSettings:Audience"] = "RascorManagementSystemUsers",
+                ["JwtSettings:ExpiryMinutes"] = "60",
+                ["JwtSettings:RefreshTokenExpiryDays"] = "7"
             });
         });
 
