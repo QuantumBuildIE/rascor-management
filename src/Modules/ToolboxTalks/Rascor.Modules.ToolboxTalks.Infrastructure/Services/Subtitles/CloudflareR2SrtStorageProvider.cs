@@ -27,6 +27,13 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
 
         var r2Settings = _settings.SrtStorage.CloudflareR2;
 
+        _logger.LogInformation(
+            "[R2 SRT Provider] Initializing with ServiceUrl: {ServiceUrl}, Bucket: {Bucket}, HasAccessKey: {HasKey}, HasSecretKey: {HasSecret}",
+            string.IsNullOrEmpty(r2Settings.ServiceUrl) ? "NULL" : r2Settings.ServiceUrl,
+            r2Settings.BucketName ?? "NULL",
+            !string.IsNullOrEmpty(r2Settings.AccessKeyId),
+            !string.IsNullOrEmpty(r2Settings.SecretAccessKey));
+
         var config = new AmazonS3Config
         {
             ServiceURL = r2Settings.ServiceUrl,
@@ -47,9 +54,22 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
         string fileName,
         CancellationToken cancellationToken = default)
     {
+        var r2Settings = _settings.SrtStorage.CloudflareR2;
+
+        _logger.LogInformation(
+            "[R2 SRT Upload] Config check - ServiceUrl: {ServiceUrl}, Bucket: {Bucket}, HasAccessKey: {HasKey}, HasSecretKey: {HasSecret}, Path: {Path}",
+            string.IsNullOrEmpty(r2Settings.ServiceUrl) ? "NULL" : r2Settings.ServiceUrl,
+            r2Settings.BucketName ?? "NULL",
+            !string.IsNullOrEmpty(r2Settings.AccessKeyId),
+            !string.IsNullOrEmpty(r2Settings.SecretAccessKey),
+            r2Settings.Path ?? "NULL");
+
+        _logger.LogInformation(
+            "[R2 SRT Upload] Starting upload for FileName: {FileName}",
+            fileName);
+
         try
         {
-            var r2Settings = _settings.SrtStorage.CloudflareR2;
 
             // Ensure .srt extension
             if (!fileName.EndsWith(".srt", StringComparison.OrdinalIgnoreCase))
@@ -88,7 +108,9 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to upload SRT to Cloudflare R2: {FileName}", fileName);
+            _logger.LogError(ex,
+                "[R2 SRT Upload] Exception during upload. FileName: {FileName}, Bucket: {Bucket}, ServiceUrl: {ServiceUrl}",
+                fileName, r2Settings.BucketName, r2Settings.ServiceUrl);
             return SrtUploadResult.FailureResult($"Upload failed: {ex.Message}");
         }
     }

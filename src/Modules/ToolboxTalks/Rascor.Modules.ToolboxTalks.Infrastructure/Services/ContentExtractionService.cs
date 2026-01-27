@@ -426,6 +426,10 @@ public class ContentExtractionService : IContentExtractionService
             var videoSlug = GenerateVideoSlug(toolboxTalk.Title);
             var englishFileName = $"{videoSlug}_en.srt";
 
+            _logger.LogInformation(
+                "[Auto-Transcription] Attempting SRT upload to R2. FileName: {FileName}, TenantId: {TenantId}",
+                englishFileName, tenantId);
+
             string? srtUrl = null;
             try
             {
@@ -443,15 +447,16 @@ public class ContentExtractionService : IContentExtractionService
                 }
                 else
                 {
-                    _logger.LogWarning(
-                        "[Auto-Transcription] Failed to upload SRT to R2. Error: {Error}. Transcript is still available.",
-                        uploadResult.ErrorMessage);
+                    _logger.LogError(
+                        "[Auto-Transcription] Failed to upload SRT to R2. FileName: {FileName}, Error: {Error}",
+                        englishFileName, uploadResult.ErrorMessage);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex,
-                    "[Auto-Transcription] Exception uploading SRT to R2. Transcript is still available in-memory.");
+                _logger.LogError(ex,
+                    "[Auto-Transcription] Exception uploading SRT to R2. FileName: {FileName}",
+                    englishFileName);
             }
 
             // Step 5: Create SubtitleProcessingJob record
