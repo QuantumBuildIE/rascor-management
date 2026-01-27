@@ -163,6 +163,7 @@ public class FakeSrtStorageProvider : ISrtStorageProvider
     public Task<SrtUploadResult> UploadSrtAsync(
         string srtContent,
         string fileName,
+        Guid tenantId,
         CancellationToken cancellationToken = default)
     {
         if (_shouldFail)
@@ -170,8 +171,10 @@ public class FakeSrtStorageProvider : ISrtStorageProvider
             return Task.FromResult(SrtUploadResult.FailureResult(_failureMessage));
         }
 
-        _storedFiles[fileName] = srtContent;
-        var url = $"https://fake-storage.test/{fileName}";
+        // Store with tenant-prefixed key to match real behavior
+        var key = $"{tenantId}/{fileName}";
+        _storedFiles[key] = srtContent;
+        var url = $"https://fake-storage.test/{tenantId}/{fileName}";
         return Task.FromResult(SrtUploadResult.SuccessResult(url));
     }
 

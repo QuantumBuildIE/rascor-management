@@ -29,18 +29,21 @@ public class GitHubSrtStorageProvider : ISrtStorageProvider
 
     /// <summary>
     /// Uploads an SRT file to the configured GitHub repository.
+    /// Files are stored under {tenantId}/{path}/{fileName} for tenant isolation.
     /// </summary>
     public async Task<SrtUploadResult> UploadSrtAsync(
         string srtContent,
         string fileName,
+        Guid tenantId,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var github = _settings.SrtStorage.GitHub;
+            // Build path with tenant isolation: {tenantId}/{path}/{fileName}
             var path = string.IsNullOrEmpty(github.Path)
-                ? fileName
-                : $"{github.Path}/{fileName}";
+                ? $"{tenantId}/{fileName}"
+                : $"{tenantId}/{github.Path}/{fileName}";
 
             var apiUrl = $"https://api.github.com/repos/{github.Owner}/{github.Repo}/contents/{path}";
 

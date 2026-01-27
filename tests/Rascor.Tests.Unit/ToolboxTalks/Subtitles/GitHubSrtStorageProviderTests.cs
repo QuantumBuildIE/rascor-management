@@ -18,6 +18,7 @@ public class GitHubSrtStorageProviderTests
     private readonly HttpClient _httpClient;
     private readonly Mock<ILogger<GitHubSrtStorageProvider>> _loggerMock;
     private readonly IOptions<SubtitleProcessingSettings> _settings;
+    private readonly Guid _testTenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     public GitHubSrtStorageProviderTests()
     {
@@ -59,11 +60,11 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt");
+        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt", _testTenantId);
 
         // Assert
         result.Success.Should().BeTrue();
-        result.Url.Should().Be("https://raw.githubusercontent.com/test-owner/test-repo/main/subs/test_en.srt");
+        result.Url.Should().Be($"https://raw.githubusercontent.com/test-owner/test-repo/main/{_testTenantId}/subs/test_en.srt");
     }
 
     [Fact]
@@ -80,7 +81,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt");
+        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt", _testTenantId);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -101,7 +102,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt");
+        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt", _testTenantId);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -120,7 +121,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt");
+        var result = await sut.UploadSrtAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "test_en.srt", _testTenantId);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -157,15 +158,15 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        await sut.UploadSrtAsync("content", "my_video_en.srt");
+        await sut.UploadSrtAsync("content", "my_video_en.srt", _testTenantId);
 
         // Assert
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.RequestUri!.ToString().Should().Contain("subs/my_video_en.srt");
+        capturedRequest!.RequestUri!.ToString().Should().Contain($"{_testTenantId}/subs/my_video_en.srt");
     }
 
     [Fact]
-    public async Task UploadSrtAsync_WithEmptyPath_UsesFileNameOnly()
+    public async Task UploadSrtAsync_WithEmptyPath_UsesTenantIdAndFileName()
     {
         // Arrange
         var settings = new SubtitleProcessingSettings
@@ -204,10 +205,10 @@ public class GitHubSrtStorageProviderTests
         var sut = new GitHubSrtStorageProvider(_httpClient, Options.Create(settings), _loggerMock.Object);
 
         // Act
-        var result = await sut.UploadSrtAsync("content", "test.srt");
+        var result = await sut.UploadSrtAsync("content", "test.srt", _testTenantId);
 
-        // Assert
-        result.Url.Should().Be("https://raw.githubusercontent.com/test-owner/test-repo/main/test.srt");
+        // Assert - with tenant isolation, path is {tenantId}/{fileName}
+        result.Url.Should().Be($"https://raw.githubusercontent.com/test-owner/test-repo/main/{_testTenantId}/test.srt");
     }
 
     [Fact]
@@ -228,7 +229,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        await sut.UploadSrtAsync("content", "test.srt");
+        await sut.UploadSrtAsync("content", "test.srt", _testTenantId);
 
         // Assert
         capturedRequest.Should().NotBeNull();
@@ -274,7 +275,7 @@ public class GitHubSrtStorageProviderTests
         var srtContent = "1\n00:00:00,000 --> 00:00:02,000\nHello World";
 
         // Act
-        await sut.UploadSrtAsync(srtContent, "test.srt");
+        await sut.UploadSrtAsync(srtContent, "test.srt", _testTenantId);
 
         // Assert
         capturedBody.Should().NotBeNull();
@@ -322,7 +323,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        await sut.UploadSrtAsync("content", "test.srt");
+        await sut.UploadSrtAsync("content", "test.srt", _testTenantId);
 
         // Assert
         capturedBody.Should().Contain("existing-sha-123");
@@ -343,7 +344,7 @@ public class GitHubSrtStorageProviderTests
         var sut = CreateService();
 
         // Act
-        var result = await sut.UploadSrtAsync("content", "test.srt");
+        var result = await sut.UploadSrtAsync("content", "test.srt", _testTenantId);
 
         // Assert
         result.Success.Should().BeFalse();

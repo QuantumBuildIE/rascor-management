@@ -206,7 +206,7 @@ public class SubtitleProcessingOrchestrator : ISubtitleProcessingOrchestrator
             var englishFileName = $"{videoSlug}_en.srt";
 
             var englishUpload = await _srtStorageProvider.UploadSrtAsync(
-                englishSrt, englishFileName, cancellationToken);
+                englishSrt, englishFileName, job.TenantId, cancellationToken);
 
             var englishTranslation = job.Translations.First(t => t.Language == "English");
             englishTranslation.SrtContent = englishSrt;
@@ -326,7 +326,7 @@ public class SubtitleProcessingOrchestrator : ISubtitleProcessingOrchestrator
             // Upload translated SRT
             var fileName = $"{videoSlug}_{translation.LanguageCode}.srt";
             var uploadResult = await _srtStorageProvider.UploadSrtAsync(
-                translatedSrt.ToString(), fileName, cancellationToken);
+                translatedSrt.ToString(), fileName, job.TenantId, cancellationToken);
 
             translation.SrtContent = translatedSrt.ToString();
             translation.SrtUrl = uploadResult.Success ? uploadResult.Url : null;

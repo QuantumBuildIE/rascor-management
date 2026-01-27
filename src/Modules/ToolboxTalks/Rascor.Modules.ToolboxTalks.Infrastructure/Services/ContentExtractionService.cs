@@ -436,6 +436,7 @@ public class ContentExtractionService : IContentExtractionService
                 var uploadResult = await _srtStorageProvider.UploadSrtAsync(
                     srtContent,
                     englishFileName,
+                    tenantId,
                     cancellationToken);
 
                 if (uploadResult.Success)
@@ -624,6 +625,7 @@ public class ContentExtractionService : IContentExtractionService
     {
         try
         {
+            // Query all non-null/empty PreferredLanguage values for this tenant
             var employeeLanguages = await _coreDbContext.Employees
                 .Where(e => e.TenantId == tenantId
                     && !e.IsDeleted
@@ -632,7 +634,20 @@ public class ContentExtractionService : IContentExtractionService
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            if (employeeLanguages.Count == 0)
+            _logger.LogInformation(
+                "[Auto-Transcription] Raw language query returned {Count} results for tenant {TenantId}: [{Languages}]",
+                employeeLanguages.Count, tenantId, string.Join(", ", employeeLanguages));
+
+            // Filter out null/whitespace values that might have slipped through
+            var validLanguages = employeeLanguages
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToList();
+
+            _logger.LogInformation(
+                "[Auto-Transcription] After whitespace filter: {Count} valid languages: [{Languages}]",
+                validLanguages.Count, string.Join(", ", validLanguages));
+
+            if (validLanguages.Count == 0)
             {
                 _logger.LogInformation(
                     "[Auto-Transcription] No employee language preferences found for tenant {TenantId}. Using English only.",
@@ -642,16 +657,16 @@ public class ContentExtractionService : IContentExtractionService
 
             // Normalize languages - convert codes to names where applicable
             var normalizedLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var lang in employeeLanguages)
+            foreach (var lang in validLanguages)
             {
-                if (string.IsNullOrWhiteSpace(lang))
-                    continue;
-
                 // If it's a language code (2-3 chars), convert to name
-                if (lang.Length <= 3)
+                if (lang!.Length <= 3)
                 {
                     var name = _languageCodeService.GetLanguageName(lang);
                     normalizedLanguages.Add(name);
+                    _logger.LogDebug(
+                        "[Auto-Transcription] Converted language code '{Code}' to name '{Name}'",
+                        lang, name);
                 }
                 else
                 {
@@ -662,9 +677,20 @@ public class ContentExtractionService : IContentExtractionService
             // Always include English
             normalizedLanguages.Add("English");
 
+            // Identify non-English languages for translation
+            var nonEnglishLanguages = normalizedLanguages
+                .Where(l => !l.Equals("English", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
             _logger.LogInformation(
-                "[Auto-Transcription] Found {Count} target languages from employees for tenant {TenantId}: {Languages}",
-                normalizedLanguages.Count, tenantId, string.Join(", ", normalizedLanguages));
+                "[Auto-Transcription] Found {Total} target languages ({NonEnglishCount} non-English) from employees for tenant {TenantId}: [{Languages}]",
+                normalizedLanguages.Count, nonEnglishLanguages.Count, tenantId, string.Join(", ", normalizedLanguages));
+
+            if (nonEnglishLanguages.Count == 0)
+            {
+                _logger.LogInformation(
+                    "[Auto-Transcription] All employee languages resolved to English. Only English subtitles will be generated.");
+            }
 
             return normalizedLanguages.ToList();
         }

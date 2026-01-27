@@ -48,25 +48,28 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
 
     /// <summary>
     /// Uploads an SRT file to the configured Cloudflare R2 bucket.
+    /// Files are stored under {tenantId}/{path}/{fileName} for tenant isolation.
     /// </summary>
     public async Task<SrtUploadResult> UploadSrtAsync(
         string srtContent,
         string fileName,
+        Guid tenantId,
         CancellationToken cancellationToken = default)
     {
         var r2Settings = _settings.SrtStorage.CloudflareR2;
 
         _logger.LogInformation(
-            "[R2 SRT Upload] Config check - ServiceUrl: {ServiceUrl}, Bucket: {Bucket}, HasAccessKey: {HasKey}, HasSecretKey: {HasSecret}, Path: {Path}",
+            "[R2 SRT Upload] Config check - ServiceUrl: {ServiceUrl}, Bucket: {Bucket}, HasAccessKey: {HasKey}, HasSecretKey: {HasSecret}, Path: {Path}, TenantId: {TenantId}",
             string.IsNullOrEmpty(r2Settings.ServiceUrl) ? "NULL" : r2Settings.ServiceUrl,
             r2Settings.BucketName ?? "NULL",
             !string.IsNullOrEmpty(r2Settings.AccessKeyId),
             !string.IsNullOrEmpty(r2Settings.SecretAccessKey),
-            r2Settings.Path ?? "NULL");
+            r2Settings.Path ?? "NULL",
+            tenantId);
 
         _logger.LogInformation(
-            "[R2 SRT Upload] Starting upload for FileName: {FileName}",
-            fileName);
+            "[R2 SRT Upload] Starting upload for FileName: {FileName}, TenantId: {TenantId}",
+            fileName, tenantId);
 
         try
         {
@@ -75,10 +78,10 @@ public class CloudflareR2SrtStorageProvider : ISrtStorageProvider, IDisposable
             if (!fileName.EndsWith(".srt", StringComparison.OrdinalIgnoreCase))
                 fileName += ".srt";
 
-            // Build the key (path within bucket)
+            // Build the key (path within bucket) with tenant isolation: {tenantId}/{path}/{fileName}
             var key = string.IsNullOrEmpty(r2Settings.Path)
-                ? fileName
-                : $"{r2Settings.Path.TrimEnd('/')}/{fileName}";
+                ? $"{tenantId}/{fileName}"
+                : $"{tenantId}/{r2Settings.Path.TrimEnd('/')}/{fileName}";
 
             _logger.LogInformation("Uploading SRT to Cloudflare R2: {Key}", key);
 

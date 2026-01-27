@@ -11,11 +11,13 @@ public interface ISrtStorageProvider
     /// </summary>
     /// <param name="srtContent">SRT formatted content to upload</param>
     /// <param name="fileName">File name (e.g., "talk-123-en.srt")</param>
+    /// <param name="tenantId">Tenant ID for multi-tenant isolation</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Upload result with URL to the stored file</returns>
     Task<SrtUploadResult> UploadSrtAsync(
         string srtContent,
         string fileName,
+        Guid tenantId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
