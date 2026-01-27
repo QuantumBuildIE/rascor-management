@@ -626,7 +626,11 @@ public class ContentExtractionService : IContentExtractionService
         try
         {
             // Query all non-null/empty PreferredLanguage values for this tenant
+            // NOTE: We use IgnoreQueryFilters() because this method runs in a background job context
+            // where ICurrentUserService.TenantId may not be set correctly for the global tenant filter.
+            // Since we explicitly filter by tenantId and IsDeleted, this is safe.
             var employeeLanguages = await _coreDbContext.Employees
+                .IgnoreQueryFilters()
                 .Where(e => e.TenantId == tenantId
                     && !e.IsDeleted
                     && !string.IsNullOrEmpty(e.PreferredLanguage))
