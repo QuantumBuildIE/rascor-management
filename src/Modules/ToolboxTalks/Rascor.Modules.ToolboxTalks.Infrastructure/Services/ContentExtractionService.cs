@@ -1,4 +1,5 @@
 using System.Text;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,35 +22,44 @@ namespace Rascor.Modules.ToolboxTalks.Infrastructure.Services;
 public class ContentExtractionService : IContentExtractionService
 {
     private readonly IToolboxTalksDbContext _dbContext;
+    private readonly ICoreDbContext _coreDbContext;
     private readonly IPdfExtractionService _pdfExtraction;
     private readonly ITranscriptService _transcriptService;
     private readonly ITranscriptionService _transcriptionService;
     private readonly ISrtGeneratorService _srtGeneratorService;
     private readonly ISrtStorageProvider _srtStorageProvider;
     private readonly IVideoSourceProvider _videoSourceProvider;
+    private readonly ILanguageCodeService _languageCodeService;
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly SubtitleProcessingSettings _settings;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<ContentExtractionService> _logger;
 
     public ContentExtractionService(
         IToolboxTalksDbContext dbContext,
+        ICoreDbContext coreDbContext,
         IPdfExtractionService pdfExtraction,
         ITranscriptService transcriptService,
         ITranscriptionService transcriptionService,
         ISrtGeneratorService srtGeneratorService,
         ISrtStorageProvider srtStorageProvider,
         IVideoSourceProvider videoSourceProvider,
+        ILanguageCodeService languageCodeService,
+        IBackgroundJobClient backgroundJobClient,
         IOptions<SubtitleProcessingSettings> settings,
         ICurrentUserService currentUser,
         ILogger<ContentExtractionService> logger)
     {
         _dbContext = dbContext;
+        _coreDbContext = coreDbContext;
         _pdfExtraction = pdfExtraction;
         _transcriptService = transcriptService;
         _transcriptionService = transcriptionService;
         _srtGeneratorService = srtGeneratorService;
         _srtStorageProvider = srtStorageProvider;
         _videoSourceProvider = videoSourceProvider;
+        _languageCodeService = languageCodeService;
+        _backgroundJobClient = backgroundJobClient;
         _settings = settings.Value;
         _currentUser = currentUser;
         _logger = logger;
@@ -475,17 +485,69 @@ public class ContentExtractionService : IContentExtractionService
 
             _dbContext.SubtitleProcessingJobs.Add(subtitleJob);
 
-            // Step 6: Update toolbox talk with transcript data
+            // Step 6: Get target languages from employees and add translation records
+            var targetLanguages = await GetTargetLanguagesFromEmployeesAsync(tenantId, cancellationToken);
+            var hasTranslationsToProcess = false;
+
+            foreach (var language in targetLanguages)
+            {
+                // Skip English as it's already done
+                if (language.Equals("English", StringComparison.OrdinalIgnoreCase) ||
+                    language.Equals("en", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var languageCode = _languageCodeService.GetLanguageCode(language);
+                var languageName = language.Length <= 3
+                    ? _languageCodeService.GetLanguageName(language)
+                    : language;
+
+                subtitleJob.Translations.Add(new SubtitleTranslation
+                {
+                    Id = Guid.NewGuid(),
+                    Language = languageName,
+                    LanguageCode = languageCode,
+                    Status = SubtitleTranslationStatus.Pending,
+                    TotalSubtitles = subtitleCount,
+                    SubtitlesProcessed = 0
+                });
+
+                hasTranslationsToProcess = true;
+
+                _logger.LogInformation(
+                    "[Auto-Transcription] Queued translation to {Language} ({LanguageCode}) for toolbox talk {Id}",
+                    languageName, languageCode, toolboxTalk.Id);
+            }
+
+            // Update job status to indicate translations are pending
+            if (hasTranslationsToProcess)
+            {
+                subtitleJob.Status = SubtitleProcessingStatus.Translating;
+            }
+
+            // Step 7: Update toolbox talk with transcript data
             toolboxTalk.VideoTranscriptExtractedAt = DateTime.UtcNow;
             toolboxTalk.ExtractedVideoTranscript = srtContent;
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
+            // Step 8: Queue background job to process translations
+            if (hasTranslationsToProcess)
+            {
+                _backgroundJobClient.Enqueue<ISubtitleProcessingOrchestrator>(
+                    orchestrator => orchestrator.ProcessRetryAsync(subtitleJob.Id, CancellationToken.None));
+
+                _logger.LogInformation(
+                    "[Auto-Transcription] Queued translation job for {Count} languages for toolbox talk {Id}",
+                    targetLanguages.Count - 1, toolboxTalk.Id); // -1 to exclude English
+            }
+
             _logger.LogInformation(
                 "[Auto-Transcription] Auto-transcription complete for toolbox talk {Id}. SRT length: {Length} chars",
                 toolboxTalk.Id, srtContent.Length);
 
-            // Step 7: Parse the SRT to get structured transcript data
+            // Step 9: Parse the SRT to get structured transcript data
             var parsedTranscript = _transcriptService.ParseSrtContent(srtContent, null);
 
             if (!parsedTranscript.Success)
@@ -545,6 +607,69 @@ public class ContentExtractionService : IContentExtractionService
         slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s]", "");
         slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "_");
         return slug.Trim('_');
+    }
+
+    /// <summary>
+    /// Gets target languages for translation from employees' preferred languages.
+    /// Returns unique non-English languages from all employees in the tenant.
+    /// </summary>
+    private async Task<List<string>> GetTargetLanguagesFromEmployeesAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var employeeLanguages = await _coreDbContext.Employees
+                .Where(e => e.TenantId == tenantId
+                    && !e.IsDeleted
+                    && !string.IsNullOrEmpty(e.PreferredLanguage))
+                .Select(e => e.PreferredLanguage)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            if (employeeLanguages.Count == 0)
+            {
+                _logger.LogInformation(
+                    "[Auto-Transcription] No employee language preferences found for tenant {TenantId}. Using English only.",
+                    tenantId);
+                return new List<string> { "English" };
+            }
+
+            // Normalize languages - convert codes to names where applicable
+            var normalizedLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var lang in employeeLanguages)
+            {
+                if (string.IsNullOrWhiteSpace(lang))
+                    continue;
+
+                // If it's a language code (2-3 chars), convert to name
+                if (lang.Length <= 3)
+                {
+                    var name = _languageCodeService.GetLanguageName(lang);
+                    normalizedLanguages.Add(name);
+                }
+                else
+                {
+                    normalizedLanguages.Add(lang);
+                }
+            }
+
+            // Always include English
+            normalizedLanguages.Add("English");
+
+            _logger.LogInformation(
+                "[Auto-Transcription] Found {Count} target languages from employees for tenant {TenantId}: {Languages}",
+                normalizedLanguages.Count, tenantId, string.Join(", ", normalizedLanguages));
+
+            return normalizedLanguages.ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "[Auto-Transcription] Failed to get employee languages for tenant {TenantId}. Using English only.",
+                tenantId);
+            return new List<string> { "English" };
+        }
     }
 
     /// <summary>
