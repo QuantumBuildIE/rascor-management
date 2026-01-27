@@ -13,6 +13,7 @@ public class SitePhotoAttendance : TenantEntity
     public DateOnly EventDate { get; private set; }
     public string? WeatherConditions { get; private set; }
     public string? ImageUrl { get; private set; }
+    public string? SignatureUrl { get; private set; }
     public decimal? DistanceToSite { get; private set; }
     public decimal? Latitude { get; private set; }
     public decimal? Longitude { get; private set; }
@@ -54,6 +55,11 @@ public class SitePhotoAttendance : TenantEntity
     public void UpdateImage(string imageUrl)
     {
         ImageUrl = imageUrl;
+    }
+
+    public void UpdateSignature(string signatureUrl)
+    {
+        SignatureUrl = signatureUrl;
     }
 
     public void SetDistanceToSite(decimal distance)

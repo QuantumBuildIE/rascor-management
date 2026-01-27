@@ -21,6 +21,9 @@ public class SitePhotoAttendanceConfiguration : IEntityTypeConfiguration<SitePho
         builder.Property(e => e.ImageUrl)
             .HasMaxLength(500);
 
+        builder.Property(e => e.SignatureUrl)
+            .HasMaxLength(500);
+
         builder.Property(e => e.Notes)
             .HasMaxLength(1000);
 

@@ -10,6 +10,7 @@ const attendanceNavItems = [
   { href: "/site-attendance", label: "Dashboard", exact: true },
   { href: "/site-attendance/events", label: "Events" },
   { href: "/site-attendance/summaries", label: "Summaries" },
+  { href: "/site-attendance/spa", label: "Photo Attendance" },
   { href: "/site-attendance/bank-holidays", label: "Bank Holidays" },
   { href: "/site-attendance/settings", label: "Settings" },
 ];

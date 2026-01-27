@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
+using Rascor.Modules.SiteAttendance.Application.Abstractions.Storage;
 using Rascor.Modules.SiteAttendance.Application.Commands.CreateSitePhotoAttendance;
 using Rascor.Modules.SiteAttendance.Application.Commands.UpdateSitePhotoAttendance;
 using Rascor.Modules.SiteAttendance.Application.DTOs;
@@ -18,11 +19,19 @@ public class SitePhotoAttendanceController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ISpaStorageService _spaStorageService;
+    private readonly ILogger<SitePhotoAttendanceController> _logger;
 
-    public SitePhotoAttendanceController(IMediator mediator, ICurrentUserService currentUserService)
+    public SitePhotoAttendanceController(
+        IMediator mediator,
+        ICurrentUserService currentUserService,
+        ISpaStorageService spaStorageService,
+        ILogger<SitePhotoAttendanceController> logger)
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
+        _spaStorageService = spaStorageService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -61,38 +70,103 @@ public class SitePhotoAttendanceController : ControllerBase
     public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
+            return BadRequest(new { error = "No file uploaded" });
 
         // Validate file type
         var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
         if (!allowedTypes.Contains(file.ContentType.ToLower()))
-            return BadRequest("Invalid file type. Only JPEG, PNG, and WebP images are allowed.");
+            return BadRequest(new { error = "Invalid file type. Only JPEG, PNG, and WebP images are allowed." });
 
         // Validate file size (max 10MB)
         if (file.Length > 10 * 1024 * 1024)
-            return BadRequest("File size exceeds 10MB limit.");
+            return BadRequest(new { error = "File size exceeds 10MB limit." });
 
-        // For now, we'll store the image in a local folder
-        // In production, this should be uploaded to Azure Blob Storage or similar
-        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "spa");
-        Directory.CreateDirectory(uploadsFolder);
-
-        var fileExtension = Path.GetExtension(file.FileName);
-        var fileName = $"{id}{fileExtension}";
-        var filePath = Path.Combine(uploadsFolder, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        // Verify SPA record exists and belongs to tenant
+        var existingQuery = new GetSitePhotoAttendanceByIdQuery
         {
-            await file.CopyToAsync(stream);
+            Id = id,
+            TenantId = _currentUserService.TenantId
+        };
+        var existingSpa = await _mediator.Send(existingQuery);
+        if (existingSpa == null)
+            return NotFound(new { error = "Site Photo Attendance record not found" });
+
+        // Upload to R2 storage
+        using var stream = file.OpenReadStream();
+        var uploadResult = await _spaStorageService.UploadImageAsync(
+            _currentUserService.TenantId,
+            id,
+            stream,
+            file.ContentType);
+
+        if (!uploadResult.Success)
+        {
+            _logger.LogError("Failed to upload SPA image for {SpaId}: {Error}", id, uploadResult.ErrorMessage);
+            return BadRequest(new { error = uploadResult.ErrorMessage });
         }
 
         // Update the SPA record with the image URL
-        var imageUrl = $"/uploads/spa/{fileName}";
         var command = new UpdateSitePhotoAttendanceCommand
         {
             Id = id,
             TenantId = _currentUserService.TenantId,
-            ImageUrl = imageUrl
+            ImageUrl = uploadResult.PublicUrl
+        };
+
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Upload signature for a Site Photo Attendance record
+    /// </summary>
+    [HttpPost("{id:guid}/signature")]
+    [Authorize(Policy = "SiteAttendance.MarkAttendance")]
+    [ProducesResponseType(typeof(SitePhotoAttendanceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadSignature(Guid id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { error = "No file uploaded" });
+
+        // Validate file type (signatures are PNG from canvas)
+        if (file.ContentType.ToLower() != "image/png")
+            return BadRequest(new { error = "Invalid file type. Signature must be a PNG image." });
+
+        // Validate file size (max 1MB for signatures)
+        if (file.Length > 1 * 1024 * 1024)
+            return BadRequest(new { error = "Signature file size exceeds 1MB limit." });
+
+        // Verify SPA record exists and belongs to tenant
+        var existingQuery = new GetSitePhotoAttendanceByIdQuery
+        {
+            Id = id,
+            TenantId = _currentUserService.TenantId
+        };
+        var existingSpa = await _mediator.Send(existingQuery);
+        if (existingSpa == null)
+            return NotFound(new { error = "Site Photo Attendance record not found" });
+
+        // Upload to R2 storage
+        using var stream = file.OpenReadStream();
+        var uploadResult = await _spaStorageService.UploadSignatureAsync(
+            _currentUserService.TenantId,
+            id,
+            stream);
+
+        if (!uploadResult.Success)
+        {
+            _logger.LogError("Failed to upload SPA signature for {SpaId}: {Error}", id, uploadResult.ErrorMessage);
+            return BadRequest(new { error = uploadResult.ErrorMessage });
+        }
+
+        // Update the SPA record with the signature URL
+        var command = new UpdateSitePhotoAttendanceCommand
+        {
+            Id = id,
+            TenantId = _currentUserService.TenantId,
+            SignatureUrl = uploadResult.PublicUrl
         };
 
         var result = await _mediator.Send(command);
@@ -114,6 +188,7 @@ public class SitePhotoAttendanceController : ControllerBase
             TenantId = _currentUserService.TenantId,
             WeatherConditions = request.WeatherConditions,
             ImageUrl = request.ImageUrl,
+            SignatureUrl = request.SignatureUrl,
             Notes = request.Notes
         };
 

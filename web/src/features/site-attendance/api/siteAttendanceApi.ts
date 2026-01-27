@@ -232,3 +232,137 @@ export async function createBankHoliday(data: { date: string; name?: string }): 
 export async function deleteBankHoliday(id: string): Promise<void> {
   await apiClient.delete(`/site-attendance/bank-holidays/${id}`);
 }
+
+// Site Photo Attendance (SPA) Types
+export interface SitePhotoAttendance {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  siteId: string;
+  siteName: string;
+  eventDate: string;
+  imageUrl?: string;
+  signatureUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  distanceToSite?: number;
+  weatherConditions?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateSpaRequest {
+  employeeId: string;
+  siteId: string;
+  eventDate: string;
+  latitude?: number;
+  longitude?: number;
+  weatherConditions?: string;
+  notes?: string;
+}
+
+export interface UpdateSpaRequest {
+  weatherConditions?: string;
+  notes?: string;
+}
+
+export interface GetSpaParams {
+  employeeId?: string;
+  siteId?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+// SPA API Functions
+export async function createSpa(data: CreateSpaRequest): Promise<SitePhotoAttendance> {
+  const response = await apiClient.post<SitePhotoAttendance>('/site-attendance/spa', data);
+  return response.data;
+}
+
+export async function getSpaRecords(params?: GetSpaParams): Promise<PaginatedResponse<SitePhotoAttendance>> {
+  const queryString = buildQueryString(params || {});
+  const response = await apiClient.get<PaginatedResponse<SitePhotoAttendance>>(
+    `/site-attendance/spa${queryString}`
+  );
+
+  const data = response.data;
+  if (!data) {
+    return {
+      items: [],
+      pageNumber: params?.page || 1,
+      pageSize: params?.pageSize || 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    };
+  }
+
+  return data;
+}
+
+export async function getSpaRecord(id: string): Promise<SitePhotoAttendance> {
+  const response = await apiClient.get<SitePhotoAttendance>(`/site-attendance/spa/${id}`);
+  return response.data;
+}
+
+export async function updateSpa(id: string, data: UpdateSpaRequest): Promise<SitePhotoAttendance> {
+  const response = await apiClient.put<SitePhotoAttendance>(`/site-attendance/spa/${id}`, data);
+  return response.data;
+}
+
+export async function uploadSpaImage(
+  id: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<SitePhotoAttendance> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<SitePhotoAttendance>(
+    `/site-attendance/spa/${id}/image`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
+        }
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function uploadSpaSignature(
+  id: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<SitePhotoAttendance> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<SitePhotoAttendance>(
+    `/site-attendance/spa/${id}/signature`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
+        }
+      },
+    }
+  );
+
+  return response.data;
+}

@@ -10,6 +10,7 @@ public record SitePhotoAttendanceDto
     public DateOnly EventDate { get; init; }
     public string? WeatherConditions { get; init; }
     public string? ImageUrl { get; init; }
+    public string? SignatureUrl { get; init; }
     public decimal? DistanceToSite { get; init; }
     public string? Notes { get; init; }
     public DateTime CreatedAt { get; init; }

@@ -38,6 +38,11 @@ public class UpdateSitePhotoAttendanceHandler : IRequestHandler<UpdateSitePhotoA
             spa.UpdateImage(request.ImageUrl);
         }
 
+        if (!string.IsNullOrEmpty(request.SignatureUrl))
+        {
+            spa.UpdateSignature(request.SignatureUrl);
+        }
+
         spa.UpdateWeatherConditions(request.WeatherConditions);
         spa.UpdateNotes(request.Notes);
 

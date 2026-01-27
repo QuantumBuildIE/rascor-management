@@ -2,12 +2,15 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Modules.SiteAttendance.Application.Abstractions.Storage;
 using Rascor.Modules.SiteAttendance.Application.Mappings;
 using Rascor.Modules.SiteAttendance.Application.Services;
 using Rascor.Modules.SiteAttendance.Domain.Interfaces;
+using Rascor.Modules.SiteAttendance.Infrastructure.Configuration;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
 using Rascor.Modules.SiteAttendance.Infrastructure.Repositories;
 using Rascor.Modules.SiteAttendance.Infrastructure.Services;
+using Rascor.Modules.SiteAttendance.Infrastructure.Services.Storage;
 using Rascor.Modules.SiteAttendance.Infrastructure.Sync;
 
 namespace Rascor.Modules.SiteAttendance.Infrastructure;
@@ -55,6 +58,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGeofenceService, GeofenceService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAttendanceAnalyticsService, AttendanceAnalyticsService>();
+
+        // Register SPA storage configuration and services
+        // Try SpaStorage section first, fall back to R2Storage if not configured
+        var spaStorageSection = configuration.GetSection(SpaStorageSettings.SectionName);
+        if (!spaStorageSection.Exists() || string.IsNullOrEmpty(spaStorageSection["Endpoint"]))
+        {
+            spaStorageSection = configuration.GetSection(SpaStorageSettings.FallbackSectionName);
+        }
+        services.Configure<SpaStorageSettings>(spaStorageSection);
+        services.AddScoped<ISpaStorageService, SpaStorageService>();
 
         // Register geofence sync settings and services
         services.Configure<GeofenceSyncSettings>(

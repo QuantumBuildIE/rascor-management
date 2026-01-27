@@ -24,6 +24,11 @@ public class UpdateSitePhotoAttendanceValidator : AbstractValidator<UpdateSitePh
             .When(x => !string.IsNullOrEmpty(x.ImageUrl))
             .WithMessage("ImageUrl must not exceed 2048 characters.");
 
+        RuleFor(x => x.SignatureUrl)
+            .MaximumLength(2048)
+            .When(x => !string.IsNullOrEmpty(x.SignatureUrl))
+            .WithMessage("SignatureUrl must not exceed 2048 characters.");
+
         RuleFor(x => x.Notes)
             .MaximumLength(1000)
             .When(x => !string.IsNullOrEmpty(x.Notes))
