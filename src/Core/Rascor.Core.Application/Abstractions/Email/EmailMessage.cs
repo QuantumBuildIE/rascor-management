@@ -1,4 +1,4 @@
-namespace Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+namespace Rascor.Core.Application.Abstractions.Email;
 
 /// <summary>
 /// Represents an email message to be sent

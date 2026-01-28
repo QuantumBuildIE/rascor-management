@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rascor.Core.Domain.Entities;
-using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Modules.SiteAttendance.Application.Services;
 using Rascor.Modules.SiteAttendance.Domain.Entities;
 using Rascor.Modules.SiteAttendance.Domain.Enums;

@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+using Rascor.Core.Application.Abstractions.Email;
 
 namespace Rascor.Modules.SiteAttendance.Infrastructure.Services.Email;
 

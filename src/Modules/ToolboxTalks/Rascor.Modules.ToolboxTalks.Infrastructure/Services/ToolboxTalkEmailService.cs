@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Core.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
@@ -8,19 +9,22 @@ namespace Rascor.Modules.ToolboxTalks.Infrastructure.Services;
 
 /// <summary>
 /// Email service for Toolbox Talk notifications.
-/// Stub implementation - replace with actual email provider integration (SendGrid, AWS SES, etc.)
+/// Uses IEmailProvider for actual email delivery (SendGrid, MailerSend, SMTP, etc.)
 /// </summary>
 public class ToolboxTalkEmailService : IToolboxTalkEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<ToolboxTalkEmailService> _logger;
+    private readonly IEmailProvider _emailProvider;
 
     public ToolboxTalkEmailService(
         IConfiguration configuration,
-        ILogger<ToolboxTalkEmailService> logger)
+        ILogger<ToolboxTalkEmailService> logger,
+        IEmailProvider emailProvider)
     {
         _configuration = configuration;
         _logger = logger;
+        _emailProvider = emailProvider;
     }
 
     public async Task SendTalkAssignmentEmailAsync(
@@ -77,16 +81,28 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
 </body>
 </html>";
 
-        // TODO: Integrate with actual email provider (SendGrid, AWS SES, etc.)
-        // await _emailSender.SendEmailAsync(employee.Email, subject, body, cancellationToken);
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
 
-        _logger.LogInformation(
-            "Email notification stub - Assignment: To={Email}, Subject={Subject}, TalkId={TalkId}",
-            employee.Email,
-            subject,
-            scheduledTalk.Id);
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
 
-        await Task.CompletedTask;
+        if (result.Success)
+        {
+            _logger.LogInformation(
+                "Toolbox Talk assignment email sent to {Email} for talk {TalkId}",
+                employee.Email, scheduledTalk.Id);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send Toolbox Talk assignment email to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
     }
 
     public async Task SendReminderEmailAsync(
@@ -153,15 +169,28 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
 </body>
 </html>";
 
-        // TODO: Integrate with actual email provider
-        _logger.LogInformation(
-            "Email notification stub - Reminder: To={Email}, Subject={Subject}, TalkId={TalkId}, ReminderNumber={ReminderNumber}",
-            employee.Email,
-            subject,
-            scheduledTalk.Id,
-            reminderNumber);
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
 
-        await Task.CompletedTask;
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
+
+        if (result.Success)
+        {
+            _logger.LogInformation(
+                "Toolbox Talk reminder email sent to {Email} for talk {TalkId}, reminder #{ReminderNumber}",
+                employee.Email, scheduledTalk.Id, reminderNumber);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send Toolbox Talk reminder email to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
     }
 
     public async Task SendCompletionConfirmationEmailAsync(
@@ -235,14 +264,28 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
 </body>
 </html>";
 
-        // TODO: Integrate with actual email provider
-        _logger.LogInformation(
-            "Email notification stub - Completion: To={Email}, Subject={Subject}, CompletionId={CompletionId}",
-            employee.Email,
-            subject,
-            completion.Id);
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
 
-        await Task.CompletedTask;
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
+
+        if (result.Success)
+        {
+            _logger.LogInformation(
+                "Toolbox Talk completion email sent to {Email} for completion {CompletionId}",
+                employee.Email, completion.Id);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send Toolbox Talk completion email to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
     }
 
     public async Task SendEscalationEmailAsync(
@@ -318,25 +361,56 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
 </body>
 </html>";
 
-        // TODO: Integrate with actual email provider
         // Send to manager
-        _logger.LogInformation(
-            "Email notification stub - Escalation to Manager: To={Email}, Subject={Subject}, TalkId={TalkId}",
-            manager.Email,
-            subject,
-            scheduledTalk.Id);
+        var managerEmail = new EmailMessage
+        {
+            ToEmail = manager.Email,
+            ToName = $"{manager.FirstName} {manager.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
 
-        // Also CC the employee if they have an email
-        if (!string.IsNullOrEmpty(employee.Email))
+        var result = await _emailProvider.SendAsync(managerEmail, cancellationToken);
+
+        if (result.Success)
         {
             _logger.LogInformation(
-                "Email notification stub - Escalation CC to Employee: To={Email}, Subject={Subject}, TalkId={TalkId}",
-                employee.Email,
-                subject,
-                scheduledTalk.Id);
+                "Toolbox Talk escalation email sent to manager {Email} for talk {TalkId}",
+                manager.Email, scheduledTalk.Id);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send Toolbox Talk escalation email to manager {Email}: {Error}",
+                manager.Email, result.ErrorMessage);
         }
 
-        await Task.CompletedTask;
+        // Also send to the employee if they have an email
+        if (!string.IsNullOrEmpty(employee.Email))
+        {
+            var employeeEmail = new EmailMessage
+            {
+                ToEmail = employee.Email,
+                ToName = $"{employee.FirstName} {employee.LastName}",
+                Subject = subject,
+                HtmlBody = body
+            };
+
+            var employeeResult = await _emailProvider.SendAsync(employeeEmail, cancellationToken);
+
+            if (employeeResult.Success)
+            {
+                _logger.LogInformation(
+                    "Toolbox Talk escalation copy sent to employee {Email} for talk {TalkId}",
+                    employee.Email, scheduledTalk.Id);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Failed to send Toolbox Talk escalation copy to employee {Email}: {Error}",
+                    employee.Email, employeeResult.ErrorMessage);
+            }
+        }
     }
 
     private static string FormatTimeSpent(int totalSeconds)

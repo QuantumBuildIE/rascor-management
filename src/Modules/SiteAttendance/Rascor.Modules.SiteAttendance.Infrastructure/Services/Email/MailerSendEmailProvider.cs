@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Modules.SiteAttendance.Infrastructure.Configuration;
 
 namespace Rascor.Modules.SiteAttendance.Infrastructure.Services.Email;

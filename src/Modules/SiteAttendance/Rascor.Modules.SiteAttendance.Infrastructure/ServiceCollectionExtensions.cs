@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Modules.SiteAttendance.Application.Abstractions.Storage;
 using Rascor.Modules.SiteAttendance.Application.Mappings;
 using Rascor.Modules.SiteAttendance.Application.Services;

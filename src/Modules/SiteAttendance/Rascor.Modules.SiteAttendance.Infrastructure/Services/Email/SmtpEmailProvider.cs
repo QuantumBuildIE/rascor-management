@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Modules.SiteAttendance.Infrastructure.Configuration;
 
 namespace Rascor.Modules.SiteAttendance.Infrastructure.Services.Email;
