@@ -17,6 +17,12 @@ public class DeviceRegistration : TenantEntity
     public DateTime? LastActiveAt { get; private set; }
     public bool IsActive { get; private set; }
 
+    // Device linking tracking (for Zoho migration and audit)
+    public DateTime? LinkedAt { get; private set; }
+    public string? LinkedBy { get; private set; } // "Admin", "QRCode", "ManualCode", "EmailCode"
+    public DateTime? UnlinkedAt { get; private set; }
+    public string? UnlinkedReason { get; private set; }
+
     // Navigation properties
     public virtual Employee? Employee { get; private set; }
     public virtual ICollection<AttendanceEvent> AttendanceEvents { get; private set; } = new List<AttendanceEvent>();
@@ -47,6 +53,41 @@ public class DeviceRegistration : TenantEntity
     public void AssignToEmployee(Guid employeeId)
     {
         EmployeeId = employeeId;
+    }
+
+    /// <summary>
+    /// Link the device to an employee with tracking metadata.
+    /// Use this for admin linking and soft migration from Zoho.
+    /// </summary>
+    /// <param name="employeeId">The employee to link to</param>
+    /// <param name="linkedBy">How the link was established: Admin, QRCode, ManualCode, EmailCode</param>
+    public void LinkToEmployee(Guid employeeId, string linkedBy)
+    {
+        EmployeeId = employeeId;
+        LinkedAt = DateTime.UtcNow;
+        LinkedBy = linkedBy;
+        UnlinkedAt = null;
+        UnlinkedReason = null;
+    }
+
+    /// <summary>
+    /// Unlink the device from its current employee.
+    /// </summary>
+    /// <param name="reason">Reason for unlinking (e.g., "Device lost", "Employee left", "Reassigned")</param>
+    public void Unlink(string reason)
+    {
+        EmployeeId = null;
+        UnlinkedAt = DateTime.UtcNow;
+        UnlinkedReason = reason;
+    }
+
+    /// <summary>
+    /// Reactivate a previously deactivated device.
+    /// </summary>
+    public void Reactivate()
+    {
+        IsActive = true;
+        LastActiveAt = DateTime.UtcNow;
     }
 
     public void UpdatePushToken(string pushToken)

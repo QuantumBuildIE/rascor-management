@@ -22,6 +22,8 @@ export interface CreateEmployeeDto {
   createUserAccount?: boolean;
   /** Optional role name to assign to the created user */
   userRole?: string;
+  /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
+  preferredLanguage?: string;
 }
 
 export interface UpdateEmployeeDto {
@@ -40,6 +42,8 @@ export interface UpdateEmployeeDto {
   notes?: string;
   /** Geo tracker device ID for mobile geofence app integration (format: EVT####) */
   geoTrackerId?: string;
+  /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
+  preferredLanguage?: string;
 }
 
 export interface GetEmployeesParams {

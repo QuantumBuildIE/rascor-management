@@ -38,6 +38,8 @@ export interface Employee {
   linkedUserId?: string;
   /** GeoTracker device ID for site attendance tracking */
   geoTrackerId?: string;
+  /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
+  preferredLanguage: string;
 }
 
 export interface CreateEmployeeRequest {
@@ -60,6 +62,8 @@ export interface CreateEmployeeRequest {
   userRole?: string;
   /** GeoTracker device ID for site attendance tracking */
   geoTrackerId?: string;
+  /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
+  preferredLanguage?: string;
 }
 
 export interface Company {
@@ -89,4 +93,43 @@ export interface Contact {
   isPrimaryContact: boolean;
   isActive: boolean;
   notes?: string;
+}
+
+/** Admin device information for listing view */
+export interface AdminDevice {
+  id: string;
+  /** Device identifier string (e.g., EVT0001) */
+  deviceIdentifier: string;
+  /** Platform: iOS, Android */
+  platform?: string;
+  /** Device name or model */
+  deviceName?: string;
+  /** When the device was first registered */
+  registeredAt: string;
+  /** Last time the device was active */
+  lastActiveAt?: string;
+  /** Whether the device is currently active */
+  isActive: boolean;
+  /** Linked employee ID */
+  employeeId?: string;
+  /** Linked employee name */
+  employeeName?: string;
+  /** Linked employee email */
+  employeeEmail?: string;
+  /** When the device was linked */
+  linkedAt?: string;
+  /** Who linked the device */
+  linkedBy?: string;
+  /** Whether the device is linked to an employee */
+  isLinked: boolean;
+}
+
+/** Admin device detail including unlinking history */
+export interface AdminDeviceDetail extends AdminDevice {
+  /** Push notification token */
+  pushToken?: string;
+  /** When the device was last unlinked */
+  unlinkedAt?: string;
+  /** Reason provided when device was unlinked */
+  unlinkedReason?: string;
 }

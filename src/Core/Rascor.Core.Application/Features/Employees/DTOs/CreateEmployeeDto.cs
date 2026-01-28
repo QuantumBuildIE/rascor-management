@@ -28,5 +28,10 @@ public record CreateEmployeeDto(
     /// Defaults to "SiteManager" if not specified.
     /// Valid roles: Admin, Finance, OfficeStaff, SiteManager, WarehouseStaff
     /// </summary>
-    string? UserRole = null
+    string? UserRole = null,
+    /// <summary>
+    /// Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code).
+    /// Defaults to "en" (English) if not specified.
+    /// </summary>
+    string PreferredLanguage = "en"
 );

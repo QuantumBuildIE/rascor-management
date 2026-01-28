@@ -11,6 +11,7 @@ const adminNavItems = [
   { href: "/admin/employees", label: "Employees" },
   { href: "/admin/companies", label: "Companies" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/devices", label: "Devices" },
   { href: "/admin/toolbox-talks", label: "Toolbox Talks" },
   { href: "/admin/rams-library", label: "RAMS Library" },
 ];
@@ -21,6 +22,7 @@ const corePermissions = [
   "Core.ManageCompanies",
   "Core.ManageUsers",
   "Core.Admin",
+  "SiteAttendance.Admin",
   "ToolboxTalks.Admin",
   "ToolboxTalks.Create",
   "ToolboxTalks.Edit",

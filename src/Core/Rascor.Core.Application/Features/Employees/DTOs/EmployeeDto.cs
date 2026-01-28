@@ -28,5 +28,9 @@ public record EmployeeDto(
     /// <summary>
     /// The linked User ID if a user account exists
     /// </summary>
-    Guid? LinkedUserId = null
+    Guid? LinkedUserId = null,
+    /// <summary>
+    /// Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code)
+    /// </summary>
+    string PreferredLanguage = "en"
 );

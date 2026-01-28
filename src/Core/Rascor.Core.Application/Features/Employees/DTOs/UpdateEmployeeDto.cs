@@ -17,5 +17,9 @@ public record UpdateEmployeeDto(
     /// <summary>
     /// Geo tracker device ID for mobile geofence app integration (format: EVT####, e.g., "EVT0011")
     /// </summary>
-    string? GeoTrackerID = null
+    string? GeoTrackerID = null,
+    /// <summary>
+    /// Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code).
+    /// </summary>
+    string? PreferredLanguage = null
 );

@@ -25,6 +25,13 @@ public class DeviceRegistrationConfiguration : IEntityTypeConfiguration<DeviceRe
         builder.Property(e => e.PushToken)
             .HasMaxLength(500);
 
+        // Device linking tracking fields
+        builder.Property(e => e.LinkedBy)
+            .HasMaxLength(50);
+
+        builder.Property(e => e.UnlinkedReason)
+            .HasMaxLength(500);
+
         builder.HasOne(e => e.Employee)
             .WithMany()
             .HasForeignKey(e => e.EmployeeId)

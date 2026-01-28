@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Modules.SiteAttendance.Application.Abstractions.Email;
 using Rascor.Modules.SiteAttendance.Application.Abstractions.Storage;
 using Rascor.Modules.SiteAttendance.Application.Mappings;
 using Rascor.Modules.SiteAttendance.Application.Services;
@@ -10,6 +11,7 @@ using Rascor.Modules.SiteAttendance.Infrastructure.Configuration;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
 using Rascor.Modules.SiteAttendance.Infrastructure.Repositories;
 using Rascor.Modules.SiteAttendance.Infrastructure.Services;
+using Rascor.Modules.SiteAttendance.Infrastructure.Services.Email;
 using Rascor.Modules.SiteAttendance.Infrastructure.Services.Storage;
 using Rascor.Modules.SiteAttendance.Infrastructure.Sync;
 
@@ -58,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGeofenceService, GeofenceService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAttendanceAnalyticsService, AttendanceAnalyticsService>();
+        services.AddScoped<IAdminDeviceService, AdminDeviceService>();
 
         // Register SPA storage configuration and services
         // Try SpaStorage section first, fall back to R2Storage if not configured
@@ -68,6 +71,36 @@ public static class ServiceCollectionExtensions
         }
         services.Configure<SpaStorageSettings>(spaStorageSection);
         services.AddScoped<ISpaStorageService, SpaStorageService>();
+
+        // Register email configuration and provider
+        // Provider selection based on Email:Provider setting:
+        // - "SendGrid": Uses SendGrid Web API
+        // - "Smtp": Uses SMTP protocol
+        // - "MailerSend": Uses MailerSend REST API
+        // - Empty/None: Uses stub provider (logs but doesn't send)
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+        services.AddScoped<SpaEmailTemplateService>();
+
+        // Register HttpClient for MailerSend
+        services.AddHttpClient("MailerSend");
+
+        var emailProvider = configuration.GetSection(EmailSettings.SectionName)["Provider"]?.ToLowerInvariant();
+        switch (emailProvider)
+        {
+            case "sendgrid":
+                services.AddScoped<IEmailProvider, SendGridEmailProvider>();
+                break;
+            case "smtp":
+                services.AddScoped<IEmailProvider, SmtpEmailProvider>();
+                break;
+            case "mailersend":
+                services.AddScoped<IEmailProvider, MailerSendEmailProvider>();
+                break;
+            default:
+                // Use stub provider when no provider configured
+                services.AddScoped<IEmailProvider, StubEmailProvider>();
+                break;
+        }
 
         // Register geofence sync settings and services
         services.Configure<GeofenceSyncSettings>(

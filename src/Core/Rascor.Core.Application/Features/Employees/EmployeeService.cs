@@ -61,7 +61,8 @@ public class EmployeeService : IEmployeeService
                     e.Notes,
                     e.GeoTrackerID,
                     e.UserId != null,
-                    e.UserId != null ? Guid.Parse(e.UserId) : null
+                    e.UserId != null ? Guid.Parse(e.UserId) : null,
+                    e.PreferredLanguage
                 ))
                 .ToListAsync();
 
@@ -124,7 +125,8 @@ public class EmployeeService : IEmployeeService
                     e.Notes,
                     e.GeoTrackerID,
                     e.UserId != null,
-                    e.UserId != null ? Guid.Parse(e.UserId) : null
+                    e.UserId != null ? Guid.Parse(e.UserId) : null,
+                    e.PreferredLanguage
                 ))
                 .ToListAsync();
 
@@ -185,7 +187,8 @@ public class EmployeeService : IEmployeeService
                     e.Notes,
                     e.GeoTrackerID,
                     e.UserId != null,
-                    e.UserId != null ? Guid.Parse(e.UserId) : null
+                    e.UserId != null ? Guid.Parse(e.UserId) : null,
+                    e.PreferredLanguage
                 ))
                 .FirstOrDefaultAsync();
 
@@ -267,7 +270,8 @@ public class EmployeeService : IEmployeeService
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
                 IsActive = dto.IsActive,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+                PreferredLanguage = dto.PreferredLanguage
             };
 
             employee.SetGeoTrackerID(dto.GeoTrackerID);
@@ -343,7 +347,8 @@ public class EmployeeService : IEmployeeService
                 createdEmployee.Notes,
                 createdEmployee.GeoTrackerID,
                 createdEmployee.UserId != null,
-                createdUser?.Id
+                createdUser?.Id,
+                createdEmployee.PreferredLanguage
             );
 
             return Result.Ok(employeeDto);
@@ -496,6 +501,12 @@ public class EmployeeService : IEmployeeService
             employee.Notes = dto.Notes;
             employee.SetGeoTrackerID(dto.GeoTrackerID);
 
+            // Update preferred language if provided
+            if (!string.IsNullOrWhiteSpace(dto.PreferredLanguage))
+            {
+                employee.PreferredLanguage = dto.PreferredLanguage;
+            }
+
             // Sync User account if email changed and employee has a linked user
             if (emailChanged && !string.IsNullOrWhiteSpace(employee.UserId))
             {
@@ -542,7 +553,8 @@ public class EmployeeService : IEmployeeService
                 employee.Notes,
                 employee.GeoTrackerID,
                 employee.UserId != null,
-                employee.UserId != null ? Guid.Parse(employee.UserId) : null
+                employee.UserId != null ? Guid.Parse(employee.UserId) : null,
+                employee.PreferredLanguage
             );
 
             return Result.Ok(employeeDto);

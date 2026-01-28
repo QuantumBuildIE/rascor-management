@@ -38,6 +38,41 @@ const AVAILABLE_ROLES = [
   { value: "Admin", label: "Admin" },
 ] as const;
 
+// Supported languages for Toolbox Talk subtitles
+// Most common construction worker languages in Ireland/UK listed first
+const SUPPORTED_LANGUAGES: Array<{ code: string; name: string; nativeName?: string }> = [
+  { code: "en", name: "English" },
+  { code: "pl", name: "Polish", nativeName: "Polski" },
+  { code: "ro", name: "Romanian", nativeName: "Română" },
+  { code: "lt", name: "Lithuanian", nativeName: "Lietuvių" },
+  { code: "pt", name: "Portuguese", nativeName: "Português" },
+  { code: "es", name: "Spanish", nativeName: "Español" },
+  { code: "lv", name: "Latvian", nativeName: "Latviešu" },
+  { code: "ru", name: "Russian", nativeName: "Русский" },
+  { code: "uk", name: "Ukrainian", nativeName: "Українська" },
+  { code: "bg", name: "Bulgarian", nativeName: "Български" },
+  { code: "cs", name: "Czech", nativeName: "Čeština" },
+  { code: "hr", name: "Croatian", nativeName: "Hrvatski" },
+  { code: "hu", name: "Hungarian", nativeName: "Magyar" },
+  { code: "sk", name: "Slovak", nativeName: "Slovenčina" },
+  { code: "ar", name: "Arabic", nativeName: "العربية" },
+  { code: "zh", name: "Chinese", nativeName: "中文" },
+  { code: "da", name: "Danish", nativeName: "Dansk" },
+  { code: "nl", name: "Dutch", nativeName: "Nederlands" },
+  { code: "fi", name: "Finnish", nativeName: "Suomi" },
+  { code: "fr", name: "French", nativeName: "Français" },
+  { code: "de", name: "German", nativeName: "Deutsch" },
+  { code: "el", name: "Greek", nativeName: "Ελληνικά" },
+  { code: "hi", name: "Hindi", nativeName: "हिन्दी" },
+  { code: "it", name: "Italian", nativeName: "Italiano" },
+  { code: "ja", name: "Japanese", nativeName: "日本語" },
+  { code: "ko", name: "Korean", nativeName: "한국어" },
+  { code: "no", name: "Norwegian", nativeName: "Norsk" },
+  { code: "sv", name: "Swedish", nativeName: "Svenska" },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe" },
+  { code: "vi", name: "Vietnamese", nativeName: "Tiếng Việt" },
+];
+
 const employeeFormSchema = z.object({
   employeeCode: z.string().min(1, "Employee code is required").max(50),
   firstName: z.string().min(1, "First name is required").max(100),
@@ -55,6 +90,7 @@ const employeeFormSchema = z.object({
   createUserAccount: z.boolean(),
   userRole: z.string().optional().nullable(),
   geoTrackerId: z.string().max(50).optional().nullable(),
+  preferredLanguage: z.string().default("en"),
 }).refine((data) => {
   if (data.startDate && data.endDate) {
     return new Date(data.endDate) > new Date(data.startDate);
@@ -99,6 +135,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
       createUserAccount: !isEditing, // Only default to true for new employees
       userRole: "SiteManager", // Default role
       geoTrackerId: employee?.geoTrackerId ?? "",
+      preferredLanguage: employee?.preferredLanguage ?? "en",
     },
   });
 
@@ -143,6 +180,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             notes: cleanedValues.notes,
             isActive: cleanedValues.isActive,
             geoTrackerId: cleanedValues.geoTrackerId,
+            preferredLanguage: values.preferredLanguage,
           },
         });
         toast.success("Employee updated successfully");
@@ -167,6 +205,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
           createUserAccount: values.createUserAccount,
           userRole: values.userRole || undefined,
           geoTrackerId: cleanedValues.geoTrackerId,
+          preferredLanguage: values.preferredLanguage,
         });
 
         if (willCreateUser) {
@@ -450,6 +489,38 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
               </Select>
               <FormDescription>
                 The primary site where this employee is based
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="preferredLanguage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Preferred Language</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value || "en"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                      {lang.nativeName && ` (${lang.nativeName})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Used for Toolbox Talk video subtitles and notifications
               </FormDescription>
               <FormMessage />
             </FormItem>
