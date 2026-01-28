@@ -75,7 +75,8 @@
       "Bash(timeout 30 dotnet run:*)",
       "Bash(git log:*)",
       "Bash(npx eslint:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(git status:*)"
     ]
   }
 }
