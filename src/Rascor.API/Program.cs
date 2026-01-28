@@ -222,6 +222,38 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Apply Site Attendance module migrations (separate DbContext and schema)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<SiteAttendanceDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Applying {Count} pending Site Attendance migration(s): {Migrations}",
+                pendingMigrations.Count,
+                string.Join(", ", pendingMigrations));
+
+            await context.Database.MigrateAsync();
+
+            logger.LogInformation("✓ Site Attendance database migrations applied successfully");
+        }
+        else
+        {
+            logger.LogInformation("✓ Site Attendance database schema is up to date");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "Failed to apply Site Attendance database migrations");
+        throw;
+    }
+}
+
 // Seed database with initial data
 await DataSeeder.SeedAsync(app.Services);
 
