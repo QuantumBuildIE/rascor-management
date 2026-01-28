@@ -46,6 +46,7 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserDto) => createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
   });
 }

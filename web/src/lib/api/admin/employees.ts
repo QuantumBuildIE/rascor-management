@@ -111,6 +111,11 @@ export async function getAllEmployees(): Promise<Employee[]> {
   return response.data.data ?? [];
 }
 
+export async function getUnlinkedEmployees(): Promise<Employee[]> {
+  const response = await apiClient.get<ApiResponse<Employee[]>>("/employees/unlinked");
+  return response.data.data ?? [];
+}
+
 export async function getEmployee(id: string): Promise<Employee> {
   const response = await apiClient.get<ApiResponse<Employee>>(`/employees/${id}`);
   return response.data.data;

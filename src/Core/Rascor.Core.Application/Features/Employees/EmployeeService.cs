@@ -686,6 +686,47 @@ public class EmployeeService : IEmployeeService
         }
     }
 
+    public async Task<Result<List<EmployeeDto>>> GetUnlinkedAsync()
+    {
+        try
+        {
+            var employees = await _context.Employees
+                .Include(e => e.PrimarySite)
+                .Where(e => e.UserId == null && e.IsActive)
+                .OrderBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .Select(e => new EmployeeDto(
+                    e.Id,
+                    e.EmployeeCode,
+                    e.FirstName,
+                    e.LastName,
+                    e.FirstName + " " + e.LastName,
+                    e.Email,
+                    e.Phone,
+                    e.Mobile,
+                    e.JobTitle,
+                    e.Department,
+                    e.PrimarySiteId,
+                    e.PrimarySite != null ? e.PrimarySite.SiteName : null,
+                    e.StartDate,
+                    e.EndDate,
+                    e.IsActive,
+                    e.Notes,
+                    e.GeoTrackerID,
+                    false,
+                    null,
+                    e.PreferredLanguage
+                ))
+                .ToListAsync();
+
+            return Result.Ok(employees);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<List<EmployeeDto>>($"Error retrieving unlinked employees: {ex.Message}");
+        }
+    }
+
     private async Task DeactivateLinkedUserAsync(string userId)
     {
         try

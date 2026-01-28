@@ -18,6 +18,24 @@ public class EmployeesController : ControllerBase
     }
 
     /// <summary>
+    /// Get employees that do not have a linked User account
+    /// </summary>
+    /// <returns>List of unlinked employees</returns>
+    [HttpGet("unlinked")]
+    [Authorize(Policy = "Core.ManageUsers")]
+    public async Task<IActionResult> GetUnlinked()
+    {
+        var result = await _employeeService.GetUnlinkedAsync();
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Get all employees (non-paginated)
     /// </summary>
     /// <returns>List of employees</returns>

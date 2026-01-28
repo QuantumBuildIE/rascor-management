@@ -12,15 +12,18 @@ public class UserService : IUserService
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<Role> _roleManager;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ICoreDbContext _context;
 
     public UserService(
         UserManager<User> userManager,
         RoleManager<Role> roleManager,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        ICoreDbContext context)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _currentUserService = currentUserService;
+        _context = context;
     }
 
     public async Task<Result<List<UserDto>>> GetAllAsync()
@@ -33,6 +36,7 @@ public class UserService : IUserService
                 .Where(u => u.TenantId == tenantId)
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
+                .Include(u => u.Employee)
                 .OrderBy(u => u.LastName)
                 .ThenBy(u => u.FirstName)
                 .Select(u => new UserDto(
@@ -44,7 +48,9 @@ public class UserService : IUserService
                     u.TenantId,
                     u.IsActive,
                     u.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
-                    u.CreatedAt
+                    u.CreatedAt,
+                    u.EmployeeId,
+                    u.Employee != null ? u.Employee.FirstName + " " + u.Employee.LastName : null
                 ))
                 .ToListAsync();
 
@@ -66,6 +72,7 @@ public class UserService : IUserService
                 .Where(u => u.TenantId == tenantId)
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
+                .Include(u => u.Employee)
                 .AsQueryable();
 
             // Apply search filter
@@ -99,7 +106,9 @@ public class UserService : IUserService
                     u.TenantId,
                     u.IsActive,
                     u.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
-                    u.CreatedAt
+                    u.CreatedAt,
+                    u.EmployeeId,
+                    u.Employee != null ? u.Employee.FirstName + " " + u.Employee.LastName : null
                 ))
                 .ToListAsync();
 
@@ -140,6 +149,7 @@ public class UserService : IUserService
                 .Where(u => u.Id == id && u.TenantId == tenantId)
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
+                .Include(u => u.Employee)
                 .Select(u => new UserDto(
                     u.Id,
                     u.Email!,
@@ -149,7 +159,9 @@ public class UserService : IUserService
                     u.TenantId,
                     u.IsActive,
                     u.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
-                    u.CreatedAt
+                    u.CreatedAt,
+                    u.EmployeeId,
+                    u.Employee != null ? u.Employee.FirstName + " " + u.Employee.LastName : null
                 ))
                 .FirstOrDefaultAsync();
 
@@ -217,11 +229,99 @@ public class UserService : IUserService
                 await _userManager.AddToRoleAsync(user, role.Name!);
             }
 
-            // Reload user with roles
+            // Handle employee linking
+            switch (dto.EmployeeLinkOption)
+            {
+                case EmployeeLinkOption.LinkExisting:
+                {
+                    if (!dto.ExistingEmployeeId.HasValue)
+                    {
+                        return Result.Fail<UserDto>("ExistingEmployeeId is required when linking to an existing employee");
+                    }
+
+                    var employee = await _context.Employees
+                        .FirstOrDefaultAsync(e => e.Id == dto.ExistingEmployeeId.Value);
+
+                    if (employee == null)
+                    {
+                        return Result.Fail<UserDto>($"Employee with ID {dto.ExistingEmployeeId} not found");
+                    }
+
+                    if (!string.IsNullOrEmpty(employee.UserId))
+                    {
+                        return Result.Fail<UserDto>("This employee is already linked to a user account");
+                    }
+
+                    employee.UserId = user.Id.ToString();
+                    user.EmployeeId = employee.Id;
+
+                    await _userManager.UpdateAsync(user);
+                    await _context.SaveChangesAsync();
+                    break;
+                }
+                case EmployeeLinkOption.CreateNew:
+                {
+                    if (dto.NewEmployee == null)
+                    {
+                        return Result.Fail<UserDto>("NewEmployee data is required when creating a new employee");
+                    }
+
+                    // Validate employee code uniqueness within tenant
+                    var duplicateCode = await _context.Employees
+                        .AnyAsync(e => e.EmployeeCode == dto.NewEmployee.EmployeeCode);
+                    if (duplicateCode)
+                    {
+                        return Result.Fail<UserDto>($"Employee with code '{dto.NewEmployee.EmployeeCode}' already exists");
+                    }
+
+                    // Validate PrimarySiteId if provided
+                    if (dto.NewEmployee.PrimarySiteId.HasValue)
+                    {
+                        var siteExists = await _context.Sites
+                            .AnyAsync(s => s.Id == dto.NewEmployee.PrimarySiteId.Value);
+                        if (!siteExists)
+                        {
+                            return Result.Fail<UserDto>($"Site with ID {dto.NewEmployee.PrimarySiteId} not found");
+                        }
+                    }
+
+                    var newEmployee = new Employee
+                    {
+                        Id = Guid.NewGuid(),
+                        EmployeeCode = dto.NewEmployee.EmployeeCode,
+                        FirstName = dto.FirstName,
+                        LastName = dto.LastName,
+                        Email = dto.Email,
+                        Phone = dto.NewEmployee.Phone,
+                        Mobile = dto.NewEmployee.Mobile,
+                        JobTitle = dto.NewEmployee.JobTitle,
+                        Department = dto.NewEmployee.Department,
+                        PrimarySiteId = dto.NewEmployee.PrimarySiteId,
+                        IsActive = true,
+                        UserId = user.Id.ToString(),
+                        TenantId = tenantId
+                    };
+
+                    newEmployee.SetGeoTrackerID(dto.NewEmployee.GeoTrackerID);
+
+                    _context.Employees.Add(newEmployee);
+
+                    user.EmployeeId = newEmployee.Id;
+                    await _userManager.UpdateAsync(user);
+                    await _context.SaveChangesAsync();
+                    break;
+                }
+                case EmployeeLinkOption.None:
+                default:
+                    break;
+            }
+
+            // Reload user with roles and employee
             var createdUser = await _userManager.Users
                 .Where(u => u.Id == user.Id)
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
+                .Include(u => u.Employee)
                 .FirstAsync();
 
             var userDto = new UserDto(
@@ -233,7 +333,11 @@ public class UserService : IUserService
                 createdUser.TenantId,
                 createdUser.IsActive,
                 createdUser.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
-                createdUser.CreatedAt
+                createdUser.CreatedAt,
+                createdUser.EmployeeId,
+                createdUser.Employee != null
+                    ? createdUser.Employee.FirstName + " " + createdUser.Employee.LastName
+                    : null
             );
 
             return Result.Ok(userDto);
@@ -297,11 +401,12 @@ public class UserService : IUserService
                 await _userManager.AddToRoleAsync(user, role.Name!);
             }
 
-            // Reload user with roles
+            // Reload user with roles and employee
             var updatedUser = await _userManager.Users
                 .Where(u => u.Id == user.Id)
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
+                .Include(u => u.Employee)
                 .FirstAsync();
 
             var userDto = new UserDto(
@@ -313,7 +418,11 @@ public class UserService : IUserService
                 updatedUser.TenantId,
                 updatedUser.IsActive,
                 updatedUser.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
-                updatedUser.CreatedAt
+                updatedUser.CreatedAt,
+                updatedUser.EmployeeId,
+                updatedUser.Employee != null
+                    ? updatedUser.Employee.FirstName + " " + updatedUser.Employee.LastName
+                    : null
             );
 
             return Result.Ok(userDto);

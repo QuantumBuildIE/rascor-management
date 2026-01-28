@@ -16,8 +16,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Combobox } from "@/components/ui/combobox";
 import { useCreateUser, useUpdateUser, type User } from "@/lib/api/admin/use-users";
+import type { CreateUserDto, EmployeeLinkOption } from "@/lib/api/admin/users";
 import { useRoles, type Role } from "@/lib/api/admin/use-roles";
+import { useUnlinkedEmployees } from "@/lib/api/admin/use-employees";
+import { useAllSites } from "@/lib/api/admin/use-sites";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -53,11 +66,45 @@ const createUserSchema = z
     confirmPassword: z.string().min(1, "Please confirm your password"),
     roleIds: z.array(z.string()).min(1, "At least one role is required"),
     isActive: z.boolean(),
+    // Employee linking
+    employeeLinkOption: z.enum(["None", "LinkExisting", "CreateNew"]),
+    existingEmployeeId: z.string().optional(),
+    newEmployeeCode: z.string().max(50).optional(),
+    newEmployeePhone: z.string().max(50).optional(),
+    newEmployeeMobile: z.string().max(50).optional(),
+    newEmployeeJobTitle: z.string().max(100).optional(),
+    newEmployeeDepartment: z.string().max(100).optional(),
+    newEmployeePrimarySiteId: z.string().optional(),
+    newEmployeeGeoTrackerId: z.string().max(50).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.employeeLinkOption === "LinkExisting") {
+        return !!data.existingEmployeeId;
+      }
+      return true;
+    },
+    {
+      message: "Please select an employee to link",
+      path: ["existingEmployeeId"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.employeeLinkOption === "CreateNew") {
+        return !!data.newEmployeeCode && data.newEmployeeCode.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Employee code is required",
+      path: ["newEmployeeCode"],
+    }
+  );
 
 const updateUserSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -82,6 +129,8 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const { data: roles, isLoading: rolesLoading } = useRoles();
+  const { data: unlinkedEmployees, isLoading: employeesLoading } = useUnlinkedEmployees();
+  const { data: sites, isLoading: sitesLoading } = useAllSites();
 
   const form = useForm<CreateUserFormValues | UpdateUserFormValues>({
     resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema) as any,
@@ -89,7 +138,19 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       email: user?.email ?? "",
       firstName: user?.firstName ?? "",
       lastName: user?.lastName ?? "",
-      ...(isEditing ? {} : { password: "", confirmPassword: "" }),
+      ...(isEditing ? {} : {
+        password: "",
+        confirmPassword: "",
+        employeeLinkOption: "None" as const,
+        existingEmployeeId: "",
+        newEmployeeCode: "",
+        newEmployeePhone: "",
+        newEmployeeMobile: "",
+        newEmployeeJobTitle: "",
+        newEmployeeDepartment: "",
+        newEmployeePrimarySiteId: "",
+        newEmployeeGeoTrackerId: "",
+      }),
       roleIds: user?.roles.map((r) => r.id) ?? [],
       isActive: user?.isActive ?? true,
     },
@@ -100,6 +161,10 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const passwordStrength = watchedPassword && typeof watchedPassword === "string"
     ? calculatePasswordStrength(watchedPassword)
     : null;
+
+  const watchEmployeeLinkOption = !isEditing
+    ? (form.watch as any)("employeeLinkOption") as string
+    : "None";
 
   const isSubmitting = createUser.isPending || updateUser.isPending;
 
@@ -119,7 +184,9 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         toast.success("User updated successfully");
       } else {
         const createValues = values as CreateUserFormValues;
-        await createUser.mutateAsync({
+        const linkOption = createValues.employeeLinkOption as EmployeeLinkOption;
+
+        const payload: CreateUserDto = {
           email: createValues.email,
           firstName: createValues.firstName,
           lastName: createValues.lastName,
@@ -127,8 +194,30 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           confirmPassword: createValues.confirmPassword,
           isActive: createValues.isActive,
           roleIds: createValues.roleIds,
-        });
-        toast.success("User created successfully");
+          employeeLinkOption: linkOption,
+        };
+
+        if (linkOption === "LinkExisting" && createValues.existingEmployeeId) {
+          payload.existingEmployeeId = createValues.existingEmployeeId;
+        } else if (linkOption === "CreateNew") {
+          payload.newEmployee = {
+            employeeCode: createValues.newEmployeeCode!,
+            phone: createValues.newEmployeePhone || undefined,
+            mobile: createValues.newEmployeeMobile || undefined,
+            jobTitle: createValues.newEmployeeJobTitle || undefined,
+            department: createValues.newEmployeeDepartment || undefined,
+            primarySiteId: createValues.newEmployeePrimarySiteId || undefined,
+            geoTrackerId: createValues.newEmployeeGeoTrackerId || undefined,
+          };
+        }
+
+        await createUser.mutateAsync(payload);
+
+        if (linkOption !== "None") {
+          toast.success("User created and linked to employee");
+        } else {
+          toast.success("User created successfully");
+        }
       }
       onSuccess?.();
     } catch (error: unknown) {
@@ -336,6 +425,218 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           )}
         />
 
+        {!isEditing && (
+          <>
+            <Separator />
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Employee Record</h3>
+                <p className="text-sm text-muted-foreground">
+                  Optionally link this user to an employee record for attendance tracking and other employee features.
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name={"employeeLinkOption" as any}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value as string}
+                        className="space-y-3"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="None" id="emp-none" />
+                          <label htmlFor="emp-none" className="text-sm font-medium cursor-pointer">
+                            No employee record
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="LinkExisting" id="emp-link" />
+                          <label htmlFor="emp-link" className="text-sm font-medium cursor-pointer">
+                            Link to existing employee
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="CreateNew" id="emp-create" />
+                          <label htmlFor="emp-create" className="text-sm font-medium cursor-pointer">
+                            Create new employee
+                          </label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {watchEmployeeLinkOption === "LinkExisting" && (
+                <div className="ml-6 space-y-3">
+                  <FormField
+                    control={form.control}
+                    name={"existingEmployeeId" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Employee *</FormLabel>
+                        <Combobox
+                          options={(unlinkedEmployees ?? []).map((emp) => ({
+                            value: emp.id,
+                            label: `${emp.firstName} ${emp.lastName}`,
+                            description: `${emp.employeeCode}${emp.email ? ` - ${emp.email}` : ""}`,
+                          }))}
+                          value={field.value as string}
+                          onValueChange={(val) => field.onChange(val)}
+                          placeholder="Search employees..."
+                          searchPlaceholder="Type name or code..."
+                          emptyText="No unlinked employees found"
+                          isLoading={employeesLoading}
+                          allowCustomValue={false}
+                        />
+                        <FormDescription>
+                          Only employees without a linked user account are shown
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {watchEmployeeLinkOption === "CreateNew" && (
+                <div className="ml-6 rounded-lg border bg-muted/30 p-4 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Name and email will be copied from the user account details above.
+                  </p>
+
+                  <FormField
+                    control={form.control}
+                    name={"newEmployeeCode" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employee Code *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., EMP001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name={"newEmployeeJobTitle" as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Site Manager" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={"newEmployeeDepartment" as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Operations" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name={"newEmployeePhone" as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., +353 1 234 5678" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={"newEmployeeMobile" as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mobile</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., +353 87 123 4567" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name={"newEmployeePrimarySiteId" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Default Site</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
+                          value={(field.value as string) || "__none__"}
+                          disabled={sitesLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={sitesLoading ? "Loading sites..." : "Select a site"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            {sites?.filter((s) => s.isActive).map((site) => (
+                              <SelectItem key={site.id} value={site.id}>
+                                {site.siteName} ({site.siteCode})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={"newEmployeeGeoTrackerId" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Geo Tracker ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., EVT0001" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Device ID for mobile geofence app (format: EVT####)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
         <FormField
           control={form.control}
           name="isActive"
@@ -402,4 +703,3 @@ function LoadingSpinner({ className }: { className?: string }) {
     </svg>
   );
 }
-

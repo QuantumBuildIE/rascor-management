@@ -16,6 +16,20 @@ export interface User {
   isActive: boolean;
   roles: UserRole[];
   createdAt: string;
+  employeeId?: string;
+  employeeName?: string;
+}
+
+export type EmployeeLinkOption = "None" | "LinkExisting" | "CreateNew";
+
+export interface CreateUserEmployeeDto {
+  employeeCode: string;
+  phone?: string;
+  mobile?: string;
+  jobTitle?: string;
+  department?: string;
+  primarySiteId?: string;
+  geoTrackerId?: string;
 }
 
 export interface CreateUserDto {
@@ -26,6 +40,9 @@ export interface CreateUserDto {
   confirmPassword: string;
   isActive: boolean;
   roleIds: string[];
+  employeeLinkOption?: EmployeeLinkOption;
+  existingEmployeeId?: string;
+  newEmployee?: CreateUserEmployeeDto;
 }
 
 export interface UpdateUserDto {

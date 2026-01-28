@@ -11,4 +11,5 @@ public interface IEmployeeService
     Task<Result<EmployeeDto>> CreateAsync(CreateEmployeeDto dto);
     Task<Result<EmployeeDto>> UpdateAsync(Guid id, UpdateEmployeeDto dto);
     Task<Result> DeleteAsync(Guid id);
+    Task<Result<List<EmployeeDto>>> GetUnlinkedAsync();
 }

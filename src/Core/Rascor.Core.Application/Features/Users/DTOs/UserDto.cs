@@ -9,7 +9,9 @@ public record UserDto(
     Guid TenantId,
     bool IsActive,
     List<UserRoleDto> Roles,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    Guid? EmployeeId = null,
+    string? EmployeeName = null
 );
 
 public record UserRoleDto(

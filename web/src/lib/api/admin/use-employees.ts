@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getEmployees,
   getAllEmployees,
+  getUnlinkedEmployees,
   getEmployee,
   createEmployee,
   updateEmployee,
@@ -24,6 +25,13 @@ export function useAllEmployees() {
   return useQuery({
     queryKey: [...EMPLOYEES_KEY, "all"],
     queryFn: getAllEmployees,
+  });
+}
+
+export function useUnlinkedEmployees() {
+  return useQuery({
+    queryKey: [...EMPLOYEES_KEY, "unlinked"],
+    queryFn: getUnlinkedEmployees,
   });
 }
 
