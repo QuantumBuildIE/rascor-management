@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
-  EyeIcon,
   BellIcon,
   UserIcon,
   CalendarIcon,
@@ -15,7 +14,6 @@ import {
   SearchIcon,
   XCircleIcon,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -26,12 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
@@ -298,45 +290,65 @@ export function AssignmentsList({
     {
       key: 'actions',
       header: '',
-      className: 'w-[100px]',
-      render: (item) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              Actions
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => router.push(`/toolbox-talks/my/${item.id}`)}
-            >
-              <EyeIcon className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            {(item.status === 'Pending' || item.status === 'InProgress' || item.status === 'Overdue') && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => handleSendReminder(item)}
-                  disabled={reminderMutation.isPending}
-                >
-                  <BellIcon className="mr-2 h-4 w-4" />
-                  Send Reminder
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => {
-                    setAssignmentToCancel(item);
-                    setCancelDialogOpen(true);
-                  }}
-                >
-                  <XCircleIcon className="mr-2 h-4 w-4" />
-                  Cancel Assignment
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      className: 'w-[80px]',
+      render: (item) => {
+        const isActionable = item.status === 'Pending' || item.status === 'InProgress' || item.status === 'Overdue';
+
+        return (
+          <div className="flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!isActionable || reminderMutation.isPending}
+                    onClick={() => isActionable && handleSendReminder(item)}
+                    className={cn(
+                      'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors',
+                      isActionable
+                        ? 'text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer'
+                        : 'text-muted-foreground/40 cursor-not-allowed'
+                    )}
+                  >
+                    <BellIcon className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Send Reminder</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!isActionable || cancelMutation.isPending}
+                    onClick={() => {
+                      if (isActionable) {
+                        setAssignmentToCancel(item);
+                        setCancelDialogOpen(true);
+                      }
+                    }}
+                    className={cn(
+                      'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors',
+                      isActionable
+                        ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer'
+                        : 'text-muted-foreground/40 cursor-not-allowed'
+                    )}
+                  >
+                    <XCircleIcon className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cancel Assignment</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      },
     },
   ];
 

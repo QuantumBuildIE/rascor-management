@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
 using Rascor.Modules.ToolboxTalks.Application.Commands.CancelScheduledTalk;
+using Rascor.Modules.ToolboxTalks.Application.Commands.SendScheduledTalkReminder;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetScheduledTalks;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
@@ -286,6 +287,44 @@ public class ScheduledTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving completed scheduled talks");
             return StatusCode(500, Result.Fail("Error retrieving completed scheduled talks"));
+        }
+    }
+
+    /// <summary>
+    /// Send a reminder for a scheduled talk assignment
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <returns>Success status</returns>
+    [HttpPost("{id:guid}/reminder")]
+    [Authorize(Policy = "ToolboxTalks.Schedule")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendReminder(Guid id)
+    {
+        try
+        {
+            var command = new SendScheduledTalkReminderCommand
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            await _mediator.Send(command);
+            return Ok(Result.Ok("Reminder sent successfully"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending reminder for scheduled talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error sending reminder" });
         }
     }
 
