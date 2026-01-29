@@ -30,6 +30,7 @@ import {
 import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
 import { useToolboxTalk, useDeleteToolboxTalk } from '@/lib/api/toolbox-talks';
 import { SubtitleProcessingPanel } from './SubtitleProcessingPanel';
+import { ContentTranslationPanel } from './ContentTranslationPanel';
 import type { ToolboxTalk, RecentCompletion } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -291,6 +292,14 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
         <SubtitleProcessingPanel
           toolboxTalkId={talk.id}
           currentVideoUrl={talk.videoUrl}
+        />
+      )}
+
+      {/* Content Translations - show if talk has sections or questions */}
+      {(talk.sections.length > 0 || talk.questions.length > 0) && (
+        <ContentTranslationPanel
+          toolboxTalkId={talk.id}
+          existingTranslations={talk.translations}
         />
       )}
 

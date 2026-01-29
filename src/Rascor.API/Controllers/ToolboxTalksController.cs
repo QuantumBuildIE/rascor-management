@@ -6,6 +6,7 @@ using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
 using Rascor.Modules.ToolboxTalks.Application.Commands.CreateToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.DeleteToolboxTalk;
+using Rascor.Modules.ToolboxTalks.Application.Commands.GenerateContentTranslations;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Reports;
@@ -443,6 +444,128 @@ public class ToolboxTalksController : ControllerBase
 
     #endregion
 
+    #region Content Translations
+
+    /// <summary>
+    /// Generates content translations for a toolbox talk's sections and questions.
+    /// Translates the title, description, sections, questions, and email templates.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="request">Languages to translate to</param>
+    /// <returns>Translation results per language</returns>
+    [HttpPost("{id:guid}/translations/generate")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(typeof(GenerateContentTranslationsResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GenerateTranslations(
+        Guid id,
+        [FromBody] GenerateTranslationsRequest request)
+    {
+        try
+        {
+            if (request.Languages == null || request.Languages.Count == 0)
+            {
+                return BadRequest(new { error = "At least one language is required" });
+            }
+
+            var command = new GenerateContentTranslationsCommand
+            {
+                ToolboxTalkId = id,
+                TenantId = _currentUserService.TenantId,
+                TargetLanguages = request.Languages
+            };
+
+            var result = await _mediator.Send(command);
+
+            if (!result.Success)
+            {
+                if (result.ErrorMessage?.Contains("not found") == true)
+                {
+                    return NotFound(new { error = result.ErrorMessage });
+                }
+                return BadRequest(new { error = result.ErrorMessage });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating translations for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error generating translations" });
+        }
+    }
+
+    /// <summary>
+    /// Gets existing content translations for a toolbox talk.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <returns>List of existing translations</returns>
+    [HttpGet("{id:guid}/translations")]
+    [ProducesResponseType(typeof(List<ContentTranslationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTranslations(Guid id)
+    {
+        try
+        {
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox talk not found" });
+            }
+
+            // Map translations from the toolbox talk
+            var translations = toolboxTalk.Translations?.Select(t => new ContentTranslationDto
+            {
+                LanguageCode = t.LanguageCode,
+                Language = t.Language,
+                TranslatedTitle = t.TranslatedTitle,
+                TranslatedAt = t.TranslatedAt,
+                TranslationProvider = t.TranslationProvider
+            }).ToList() ?? new List<ContentTranslationDto>();
+
+            return Ok(translations);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving translations for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error retrieving translations" });
+        }
+    }
+
+    /// <summary>
+    /// Deletes a specific content translation for a toolbox talk.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="languageCode">Language code to delete (e.g., "pl", "ro")</param>
+    /// <returns>No content on success</returns>
+    [HttpDelete("{id:guid}/translations/{languageCode}")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteTranslation(Guid id, string languageCode)
+    {
+        try
+        {
+            // This would need a command, but for simplicity we can handle directly
+            // In a production app, this should use a proper command pattern
+            return StatusCode(501, new { error = "Delete translation not yet implemented" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting translation {LanguageCode} for toolbox talk {ToolboxTalkId}", languageCode, id);
+            return StatusCode(500, new { error = "Error deleting translation" });
+        }
+    }
+
+    #endregion
+
     #region Reports
 
     /// <summary>
@@ -746,3 +869,45 @@ public record GenerateContentResponse(
     string JobId,
     string Message,
     Guid ToolboxTalkId);
+
+/// <summary>
+/// Request DTO for generating content translations
+/// </summary>
+public record GenerateTranslationsRequest
+{
+    /// <summary>
+    /// List of language names to translate to (e.g., "Polish", "Romanian")
+    /// </summary>
+    public List<string> Languages { get; init; } = new();
+}
+
+/// <summary>
+/// DTO for content translation information
+/// </summary>
+public class ContentTranslationDto
+{
+    /// <summary>
+    /// ISO 639-1 language code
+    /// </summary>
+    public string LanguageCode { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Display name of the language
+    /// </summary>
+    public string Language { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Translated title
+    /// </summary>
+    public string TranslatedTitle { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When the translation was generated
+    /// </summary>
+    public DateTime TranslatedAt { get; set; }
+
+    /// <summary>
+    /// Provider used for translation (e.g., "Claude", "Manual")
+    /// </summary>
+    public string TranslationProvider { get; set; } = string.Empty;
+}

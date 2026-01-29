@@ -56,6 +56,14 @@ export interface ToolboxTalkCompletionStats {
   completionRate: number;
 }
 
+export interface ToolboxTalkTranslation {
+  languageCode: string;
+  language: string;
+  translatedTitle: string;
+  translatedAt: string;
+  translationProvider: string;
+}
+
 export interface ToolboxTalk {
   id: string;
   title: string;
@@ -78,6 +86,7 @@ export interface ToolboxTalk {
   generatedFromPdf: boolean;
   sections: ToolboxTalkSection[];
   questions: ToolboxTalkQuestion[];
+  translations: ToolboxTalkTranslation[];
   completionStats: ToolboxTalkCompletionStats | null;
   createdAt: string;
   updatedAt: string | null;

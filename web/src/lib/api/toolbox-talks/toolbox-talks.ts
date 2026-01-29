@@ -276,3 +276,54 @@ export async function generateToolboxTalkContent(
   );
   return response.data;
 }
+
+// ============================================
+// Content Translations
+// ============================================
+
+export interface GenerateTranslationsRequest {
+  languages: string[];
+}
+
+export interface LanguageTranslationResult {
+  language: string;
+  languageCode: string;
+  success: boolean;
+  errorMessage?: string;
+  sectionsTranslated: number;
+  questionsTranslated: number;
+}
+
+export interface GenerateTranslationsResponse {
+  success: boolean;
+  errorMessage?: string;
+  languageResults: LanguageTranslationResult[];
+}
+
+export interface ContentTranslationInfo {
+  languageCode: string;
+  language: string;
+  translatedTitle: string;
+  translatedAt: string;
+  translationProvider: string;
+}
+
+export async function generateContentTranslations(
+  id: string,
+  request: GenerateTranslationsRequest
+): Promise<GenerateTranslationsResponse> {
+  const response = await apiClient.post<GenerateTranslationsResponse>(
+    `/toolbox-talks/${id}/translations/generate`,
+    request
+  );
+  return response.data;
+}
+
+export async function getContentTranslations(
+  id: string
+): Promise<ContentTranslationInfo[]> {
+  const response = await apiClient.get<ContentTranslationInfo[]>(
+    `/toolbox-talks/${id}/translations`
+  );
+  return response.data;
+}

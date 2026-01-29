@@ -8,6 +8,11 @@ import {
   getToolboxTalkDashboard,
   getToolboxTalkSettings,
   updateToolboxTalkSettings,
+  generateContentTranslations,
+  getContentTranslations,
+} from './toolbox-talks';
+import type {
+  GenerateTranslationsRequest,
 } from './toolbox-talks';
 import type {
   CreateToolboxTalkRequest,
@@ -103,6 +108,31 @@ export function useUpdateToolboxTalkSettings() {
     mutationFn: (data: UpdateToolboxTalkSettingsRequest) => updateToolboxTalkSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TOOLBOX_TALKS_SETTINGS_KEY });
+    },
+  });
+}
+
+// ============================================
+// Content Translation Hooks
+// ============================================
+
+export function useContentTranslations(toolboxTalkId: string) {
+  return useQuery({
+    queryKey: [...TOOLBOX_TALKS_KEY, toolboxTalkId, 'translations'],
+    queryFn: () => getContentTranslations(toolboxTalkId),
+    enabled: !!toolboxTalkId,
+  });
+}
+
+export function useGenerateContentTranslations() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ toolboxTalkId, request }: { toolboxTalkId: string; request: GenerateTranslationsRequest }) =>
+      generateContentTranslations(toolboxTalkId, request),
+    onSuccess: (_, { toolboxTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...TOOLBOX_TALKS_KEY, toolboxTalkId] });
+      queryClient.invalidateQueries({ queryKey: [...TOOLBOX_TALKS_KEY, toolboxTalkId, 'translations'] });
     },
   });
 }

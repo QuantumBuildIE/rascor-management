@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkById;
@@ -10,10 +11,14 @@ namespace Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkById;
 public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkByIdQuery, ToolboxTalkDto?>
 {
     private readonly IToolboxTalksDbContext _context;
+    private readonly ILanguageCodeService _languageCodeService;
 
-    public GetToolboxTalkByIdQueryHandler(IToolboxTalksDbContext context)
+    public GetToolboxTalkByIdQueryHandler(
+        IToolboxTalksDbContext context,
+        ILanguageCodeService languageCodeService)
     {
         _context = context;
+        _languageCodeService = languageCodeService;
     }
 
     public async Task<ToolboxTalkDto?> Handle(GetToolboxTalkByIdQuery request, CancellationToken cancellationToken)
@@ -21,6 +26,7 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
         var talk = await _context.ToolboxTalks
             .Include(t => t.Sections.OrderBy(s => s.SectionNumber))
             .Include(t => t.Questions.OrderBy(q => q.QuestionNumber))
+            .Include(t => t.Translations)
             .Where(t => t.Id == request.Id && t.TenantId == request.TenantId && !t.IsDeleted)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -85,6 +91,14 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
                 CorrectAnswer = q.CorrectAnswer,
                 Points = q.Points
             }).ToList(),
+            Translations = talk.Translations.Select(t => new ToolboxTalkTranslationDto
+            {
+                LanguageCode = t.LanguageCode,
+                Language = _languageCodeService.GetLanguageName(t.LanguageCode),
+                TranslatedTitle = t.TranslatedTitle,
+                TranslatedAt = t.TranslatedAt,
+                TranslationProvider = t.TranslationProvider
+            }).OrderBy(t => t.Language).ToList(),
             CompletionStats = stats != null ? new ToolboxTalkCompletionStatsDto
             {
                 TotalAssignments = stats.TotalAssignments,

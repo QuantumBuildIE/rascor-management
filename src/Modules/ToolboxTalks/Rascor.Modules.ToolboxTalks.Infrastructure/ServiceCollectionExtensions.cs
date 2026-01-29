@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Pdf;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Storage;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Translations;
 using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Application.Services.Storage;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
@@ -11,6 +12,7 @@ using Rascor.Modules.ToolboxTalks.Infrastructure.Services;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Pdf;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Storage;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Subtitles;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Translations;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure;
 
@@ -64,6 +66,12 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<ITranslationService, ClaudeTranslationService>(client =>
         {
             client.Timeout = TimeSpan.FromMinutes(5); // 5 minutes for translation
+        });
+
+        // Content translation service for translating sections and quiz questions
+        services.AddHttpClient<IContentTranslationService, ContentTranslationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5); // 5 minutes for content translation
         });
 
         // Register SRT storage provider based on configuration
