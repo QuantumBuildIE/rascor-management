@@ -35,7 +35,7 @@ public class FloatProject
     /// Tags associated with the project.
     /// </summary>
     [JsonPropertyName("tags")]
-    public List<string> Tags { get; set; } = new();
+    public List<FloatTag> Tags { get; set; } = new();
 
     /// <summary>
     /// Whether the project is active (1) or inactive (0).

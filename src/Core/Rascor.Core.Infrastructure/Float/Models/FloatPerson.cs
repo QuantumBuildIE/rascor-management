@@ -47,7 +47,7 @@ public class FloatPerson
     /// Tags associated with the person.
     /// </summary>
     [JsonPropertyName("tags")]
-    public List<string> Tags { get; set; } = new();
+    public List<FloatTag> Tags { get; set; } = new();
 
     /// <summary>
     /// Convenience property to check if the person is active.
