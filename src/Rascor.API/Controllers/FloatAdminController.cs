@@ -554,6 +554,231 @@ public class FloatAdminController : ControllerBase
 
         return Ok(sites);
     }
+
+    /// <summary>
+    /// Get comprehensive linking summary.
+    /// </summary>
+    /// <returns>Summary of linked and unmatched items</returns>
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetLinkingSummary(CancellationToken ct)
+    {
+        var tenantId = _currentUserService.TenantId;
+
+        var linkedPeople = await _dbContext.Employees
+            .IgnoreQueryFilters()
+            .CountAsync(e => e.TenantId == tenantId && !e.IsDeleted && e.FloatPersonId != null, ct);
+
+        var linkedProjects = await _dbContext.Sites
+            .IgnoreQueryFilters()
+            .CountAsync(s => s.TenantId == tenantId && !s.IsDeleted && s.FloatProjectId != null, ct);
+
+        var unmatchedPeople = await _dbContext.FloatUnmatchedItems
+            .IgnoreQueryFilters()
+            .CountAsync(u => u.TenantId == tenantId && !u.IsDeleted && u.ItemType == "Person" && u.Status == "Pending", ct);
+
+        var unmatchedProjects = await _dbContext.FloatUnmatchedItems
+            .IgnoreQueryFilters()
+            .CountAsync(u => u.TenantId == tenantId && !u.IsDeleted && u.ItemType == "Project" && u.Status == "Pending", ct);
+
+        // Get totals from Float
+        int floatPeopleTotal = 0;
+        int floatProjectsTotal = 0;
+
+        if (_floatApiClient.IsConfigured)
+        {
+            try
+            {
+                var people = await _floatApiClient.GetPeopleAsync(ct);
+                var projects = await _floatApiClient.GetProjectsAsync(ct);
+                floatPeopleTotal = people.Count;
+                floatProjectsTotal = projects.Count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch Float totals for summary");
+            }
+        }
+
+        return Ok(new FloatLinkingSummaryDto
+        {
+            LinkedPeople = linkedPeople,
+            LinkedProjects = linkedProjects,
+            UnmatchedPeople = unmatchedPeople,
+            UnmatchedProjects = unmatchedProjects,
+            FloatPeopleTotal = floatPeopleTotal,
+            FloatProjectsTotal = floatProjectsTotal
+        });
+    }
+
+    /// <summary>
+    /// Get all linked employees with their Float person info.
+    /// </summary>
+    /// <returns>List of linked employees</returns>
+    [HttpGet("linked/employees")]
+    public async Task<IActionResult> GetLinkedEmployees(CancellationToken ct)
+    {
+        var tenantId = _currentUserService.TenantId;
+
+        var linkedEmployees = await _dbContext.Employees
+            .IgnoreQueryFilters()
+            .Where(e => e.TenantId == tenantId && !e.IsDeleted && e.FloatPersonId != null)
+            .OrderBy(e => e.FirstName)
+            .ThenBy(e => e.LastName)
+            .Select(e => new FloatLinkedEmployeeDto
+            {
+                EmployeeId = e.Id,
+                EmployeeCode = e.EmployeeCode,
+                EmployeeName = e.FirstName + " " + e.LastName,
+                EmployeeEmail = e.Email,
+                FloatPersonId = e.FloatPersonId!.Value,
+                FloatLinkMethod = e.FloatLinkMethod,
+                FloatLinkedAt = e.FloatLinkedAt
+            })
+            .ToListAsync(ct);
+
+        // Optionally enrich with Float person names
+        if (_floatApiClient.IsConfigured && linkedEmployees.Count > 0)
+        {
+            try
+            {
+                var floatPeople = await _floatApiClient.GetPeopleAsync(ct);
+                var floatPeopleDict = floatPeople.ToDictionary(p => p.PeopleId);
+
+                foreach (var emp in linkedEmployees)
+                {
+                    if (floatPeopleDict.TryGetValue(emp.FloatPersonId, out var fp))
+                    {
+                        emp.FloatPersonName = fp.Name;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to enrich linked employees with Float names");
+            }
+        }
+
+        return Ok(linkedEmployees);
+    }
+
+    /// <summary>
+    /// Get all linked sites with their Float project info.
+    /// </summary>
+    /// <returns>List of linked sites</returns>
+    [HttpGet("linked/sites")]
+    public async Task<IActionResult> GetLinkedSites(CancellationToken ct)
+    {
+        var tenantId = _currentUserService.TenantId;
+
+        var linkedSites = await _dbContext.Sites
+            .IgnoreQueryFilters()
+            .Where(s => s.TenantId == tenantId && !s.IsDeleted && s.FloatProjectId != null)
+            .OrderBy(s => s.SiteName)
+            .Select(s => new FloatLinkedSiteDto
+            {
+                SiteId = s.Id,
+                SiteName = s.SiteName,
+                SiteAddress = s.Address,
+                FloatProjectId = s.FloatProjectId!.Value,
+                FloatLinkMethod = s.FloatLinkMethod,
+                FloatLinkedAt = s.FloatLinkedAt
+            })
+            .ToListAsync(ct);
+
+        // Optionally enrich with Float project names
+        if (_floatApiClient.IsConfigured && linkedSites.Count > 0)
+        {
+            try
+            {
+                var floatProjects = await _floatApiClient.GetProjectsAsync(ct);
+                var floatProjectsDict = floatProjects.ToDictionary(p => p.ProjectId);
+
+                foreach (var site in linkedSites)
+                {
+                    if (floatProjectsDict.TryGetValue(site.FloatProjectId, out var fp))
+                    {
+                        site.FloatProjectName = fp.Name;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to enrich linked sites with Float names");
+            }
+        }
+
+        return Ok(linkedSites);
+    }
+
+    /// <summary>
+    /// Unlink an employee from Float.
+    /// </summary>
+    /// <param name="employeeId">Employee ID to unlink</param>
+    /// <returns>Success message</returns>
+    [HttpPost("unlink/employee/{employeeId}")]
+    public async Task<IActionResult> UnlinkEmployee(Guid employeeId, CancellationToken ct)
+    {
+        var tenantId = _currentUserService.TenantId;
+
+        var employee = await _dbContext.Employees
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && e.TenantId == tenantId && !e.IsDeleted, ct);
+
+        if (employee == null)
+            return NotFound(new { Error = "Employee not found" });
+
+        if (employee.FloatPersonId == null)
+            return BadRequest(new { Error = "Employee is not linked to Float" });
+
+        var floatPersonId = employee.FloatPersonId;
+
+        employee.FloatPersonId = null;
+        employee.FloatLinkedAt = null;
+        employee.FloatLinkMethod = null;
+
+        await _dbContext.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Unlinked Employee {EmployeeId} from Float Person {FloatPersonId} by user {UserId}",
+            employeeId, floatPersonId, _currentUserService.UserId);
+
+        return Ok(new { Message = "Employee unlinked from Float" });
+    }
+
+    /// <summary>
+    /// Unlink a site from Float.
+    /// </summary>
+    /// <param name="siteId">Site ID to unlink</param>
+    /// <returns>Success message</returns>
+    [HttpPost("unlink/site/{siteId}")]
+    public async Task<IActionResult> UnlinkSite(Guid siteId, CancellationToken ct)
+    {
+        var tenantId = _currentUserService.TenantId;
+
+        var site = await _dbContext.Sites
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.Id == siteId && s.TenantId == tenantId && !s.IsDeleted, ct);
+
+        if (site == null)
+            return NotFound(new { Error = "Site not found" });
+
+        if (site.FloatProjectId == null)
+            return BadRequest(new { Error = "Site is not linked to Float" });
+
+        var floatProjectId = site.FloatProjectId;
+
+        site.FloatProjectId = null;
+        site.FloatLinkedAt = null;
+        site.FloatLinkMethod = null;
+
+        await _dbContext.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Unlinked Site {SiteId} from Float Project {FloatProjectId} by user {UserId}",
+            siteId, floatProjectId, _currentUserService.UserId);
+
+        return Ok(new { Message = "Site unlinked from Float" });
+    }
 }
 
 /// <summary>
@@ -636,4 +861,46 @@ public record AvailableSiteDto
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? Address { get; init; }
+}
+
+/// <summary>
+/// DTO for a linked employee with Float person info.
+/// </summary>
+public record FloatLinkedEmployeeDto
+{
+    public Guid EmployeeId { get; init; }
+    public string EmployeeCode { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
+    public string? EmployeeEmail { get; init; }
+    public int FloatPersonId { get; init; }
+    public string? FloatPersonName { get; set; }
+    public string? FloatLinkMethod { get; init; }
+    public DateTime? FloatLinkedAt { get; init; }
+}
+
+/// <summary>
+/// DTO for a linked site with Float project info.
+/// </summary>
+public record FloatLinkedSiteDto
+{
+    public Guid SiteId { get; init; }
+    public string SiteName { get; init; } = string.Empty;
+    public string? SiteAddress { get; init; }
+    public int FloatProjectId { get; init; }
+    public string? FloatProjectName { get; set; }
+    public string? FloatLinkMethod { get; init; }
+    public DateTime? FloatLinkedAt { get; init; }
+}
+
+/// <summary>
+/// Comprehensive linking summary DTO.
+/// </summary>
+public record FloatLinkingSummaryDto
+{
+    public int LinkedPeople { get; init; }
+    public int LinkedProjects { get; init; }
+    public int UnmatchedPeople { get; init; }
+    public int UnmatchedProjects { get; init; }
+    public int FloatPeopleTotal { get; init; }
+    public int FloatProjectsTotal { get; init; }
 }

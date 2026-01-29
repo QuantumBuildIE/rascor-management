@@ -24,8 +24,10 @@ export function PhotoCapture({
 }: PhotoCaptureProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
   const [isCapturing, setIsCapturing] = React.useState(false);
+  const [isVideoReady, setIsVideoReady] = React.useState(false);
   const [stream, setStream] = React.useState<MediaStream | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isCameraSupported, setIsCameraSupported] = React.useState(true);
@@ -88,6 +90,7 @@ export function PhotoCapture({
 
   const startCamera = async () => {
     setError(null);
+    setIsVideoReady(false);
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -96,51 +99,89 @@ export function PhotoCapture({
           height: { ideal: 1080 },
         },
       });
+      // Store in both ref (for immediate access) and state (for cleanup effect)
+      streamRef.current = mediaStream;
       setStream(mediaStream);
       setIsCapturing(true);
-
-      // Wait for next tick to ensure video element is rendered
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-      }, 0);
     } catch {
       setError('Could not access camera. Please check permissions or use file upload.');
       setIsCameraSupported(false);
     }
   };
 
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
+  // Handle video element ready
+  const handleVideoCanPlay = () => {
+    setIsVideoReady(true);
+  };
 
+  // Attach stream to video element when capturing starts
+  React.useEffect(() => {
+    if (isCapturing && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCapturing]);
+
+  const capturePhoto = () => {
     const video = videoRef.current;
+
+    if (!video) {
+      setError('Video element not found. Please try again.');
+      return;
+    }
+
+    if (!video.srcObject) {
+      setError('Camera stream not available. Please try again.');
+      return;
+    }
+
+    // Ensure video has loaded and has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError('Video not ready. Please wait a moment and try again.');
+      return;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      setError('Could not create canvas context.');
+      return;
+    }
 
-    ctx.drawImage(video, 0, 0);
+    try {
+      ctx.drawImage(video, 0, 0);
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const file = new File([blob], `spa-photo-${Date.now()}.jpg`, {
-          type: 'image/jpeg',
-        });
-        onChange(file);
-        stopCamera();
-      }
-    }, 'image/jpeg', 0.9);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `spa-photo-${Date.now()}.jpg`, {
+            type: 'image/jpeg',
+          });
+          onChange(file);
+          stopCamera();
+        } else {
+          setError('Failed to capture photo. Please try again.');
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (err) {
+      console.error('Capture error:', err);
+      setError('Failed to capture photo. Please try again.');
+    }
   };
 
   const stopCamera = () => {
+    // Stop tracks from both ref and state to ensure cleanup
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
     setIsCapturing(false);
+    setIsVideoReady(false);
   };
 
   const clearPhoto = () => {
@@ -174,8 +215,15 @@ export function PhotoCapture({
             autoPlay
             playsInline
             muted
+            onCanPlay={handleVideoCanPlay}
+            onLoadedMetadata={handleVideoCanPlay}
             className="w-full h-64 object-cover"
           />
+          {!isVideoReady && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <div className="text-white text-sm">Loading camera...</div>
+            </div>
+          )}
           <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
             <Button
               type="button"
@@ -191,6 +239,7 @@ export function PhotoCapture({
               type="button"
               size="lg"
               onClick={capturePhoto}
+              disabled={!isVideoReady}
               className="gap-2"
             >
               <Camera className="h-5 w-5" />
