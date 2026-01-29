@@ -15,12 +15,14 @@
     <ProjectReference Include="..\..\Modules\Proposals\Rascor.Modules.Proposals.Application\Rascor.Modules.Proposals.Application.csproj" />
     <ProjectReference Include="..\..\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Application\Rascor.Modules.ToolboxTalks.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Rams\Rascor.Modules.Rams.Application\Rascor.Modules.Rams.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\SiteAttendance\Rascor.Modules.SiteAttendance.Application\Rascor.Modules.SiteAttendance.Application.csproj" />
 
     <!-- Module Infrastructure projects (for entity configurations - configurations loaded via ApplyConfigurationsFromAssembly) -->
     <ProjectReference Include="..\..\Modules\StockManagement\Rascor.Modules.StockManagement.Infrastructure\Rascor.Modules.StockManagement.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Proposals\Rascor.Modules.Proposals.Infrastructure\Rascor.Modules.Proposals.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\ToolboxTalks\Rascor.Modules.ToolboxTalks.Infrastructure\Rascor.Modules.ToolboxTalks.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Rams\Rascor.Modules.Rams.Infrastructure\Rascor.Modules.Rams.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\SiteAttendance\Rascor.Modules.SiteAttendance.Infrastructure\Rascor.Modules.SiteAttendance.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +32,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="9.0.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
   </ItemGroup>
 

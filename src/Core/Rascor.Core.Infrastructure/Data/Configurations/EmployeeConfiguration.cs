@@ -51,6 +51,11 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.GeoTrackerID)
             .HasMaxLength(10);
 
+        // Float integration fields
+        builder.Property(e => e.FloatPersonId);
+        builder.Property(e => e.FloatLinkedAt);
+        builder.Property(e => e.FloatLinkMethod).HasMaxLength(50);
+
         // Ignore computed property
         builder.Ignore(e => e.FullName);
 
@@ -63,6 +68,11 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .IsUnique()
             .HasFilter("\"GeoTrackerID\" IS NOT NULL")
             .HasDatabaseName("IX_Employees_TenantId_GeoTrackerID");
+
+        // Index on FloatPersonId for quick lookups (where not null)
+        builder.HasIndex(e => e.FloatPersonId)
+            .HasFilter("\"FloatPersonId\" IS NOT NULL")
+            .HasDatabaseName("IX_Employees_FloatPersonId");
 
         builder.HasOne(e => e.PrimarySite)
             .WithMany()

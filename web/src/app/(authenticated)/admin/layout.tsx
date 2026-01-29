@@ -14,6 +14,7 @@ const adminNavItems = [
   { href: "/admin/devices", label: "Devices" },
   { href: "/admin/toolbox-talks", label: "Toolbox Talks" },
   { href: "/admin/rams-library", label: "RAMS Library" },
+  { href: "/admin/float", label: "Float" },
 ];
 
 const corePermissions = [

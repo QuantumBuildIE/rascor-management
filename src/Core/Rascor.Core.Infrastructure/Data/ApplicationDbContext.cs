@@ -53,6 +53,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<FloatUnmatchedItem> FloatUnmatchedItems => Set<FloatUnmatchedItem>();
+    public DbSet<SpaNotificationAudit> SpaNotificationAudits => Set<SpaNotificationAudit>();
 
     // Identity/Authorization DbSets
     public DbSet<Permission> Permissions => Set<Permission>();
@@ -206,6 +208,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyConfiguration());
         modelBuilder.ApplyConfiguration(new ContactConfiguration());
+        modelBuilder.ApplyConfiguration(new FloatUnmatchedItemConfiguration());
+        modelBuilder.ApplyConfiguration(new SpaNotificationAuditConfiguration());
 
         // Apply Stock Management entity configurations
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
@@ -265,6 +269,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.Entity<Employee>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
         modelBuilder.Entity<Company>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
         modelBuilder.Entity<Contact>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
+        modelBuilder.Entity<FloatUnmatchedItem>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
+        modelBuilder.Entity<SpaNotificationAudit>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);
 
         // Apply global query filters - Stock Management entities
         modelBuilder.Entity<Category>().HasQueryFilter(e => !e.IsDeleted && e.TenantId == TenantId);

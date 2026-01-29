@@ -86,4 +86,19 @@ public class Site : TenantEntity
     /// Site-specific geofence radius in meters (overrides tenant default if set)
     /// </summary>
     public int? GeofenceRadiusMeters { get; set; }
+
+    /// <summary>
+    /// Float project ID - links this site to a Float project record
+    /// </summary>
+    public int? FloatProjectId { get; set; }
+
+    /// <summary>
+    /// When this site was linked to Float
+    /// </summary>
+    public DateTime? FloatLinkedAt { get; set; }
+
+    /// <summary>
+    /// How this site was linked to Float (Auto-Name, Manual)
+    /// </summary>
+    public string? FloatLinkMethod { get; set; }
 }

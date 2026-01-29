@@ -43,9 +43,19 @@ public class SiteConfiguration : IEntityTypeConfiguration<Site>
         builder.Property(e => e.Longitude)
             .HasPrecision(11, 8);
 
+        // Float integration fields
+        builder.Property(s => s.FloatProjectId);
+        builder.Property(s => s.FloatLinkedAt);
+        builder.Property(s => s.FloatLinkMethod).HasMaxLength(50);
+
         builder.HasIndex(e => new { e.TenantId, e.SiteCode })
             .IsUnique()
             .HasDatabaseName("IX_Sites_TenantId_SiteCode");
+
+        // Index on FloatProjectId for quick lookups (where not null)
+        builder.HasIndex(s => s.FloatProjectId)
+            .HasFilter("\"FloatProjectId\" IS NOT NULL")
+            .HasDatabaseName("IX_Sites_FloatProjectId");
 
         builder.HasOne(e => e.SiteManager)
             .WithMany()

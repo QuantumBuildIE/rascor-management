@@ -106,4 +106,19 @@ public class Employee : TenantEntity
     {
         GeoTrackerID = geoTrackerId;
     }
+
+    /// <summary>
+    /// Float person ID - links this employee to a Float person record
+    /// </summary>
+    public int? FloatPersonId { get; set; }
+
+    /// <summary>
+    /// When this employee was linked to Float
+    /// </summary>
+    public DateTime? FloatLinkedAt { get; set; }
+
+    /// <summary>
+    /// How this employee was linked to Float (Auto-Email, Auto-Name, Manual)
+    /// </summary>
+    public string? FloatLinkMethod { get; set; }
 }

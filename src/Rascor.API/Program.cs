@@ -27,6 +27,8 @@ using Rascor.Modules.Rams.Infrastructure;
 using Rascor.Modules.Rams.Infrastructure.Jobs;
 using Rascor.Modules.Rams.Infrastructure.Persistence.Seed;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Hubs;
+using Rascor.Core.Infrastructure.Float;
+using Rascor.Core.Infrastructure.Float.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +81,9 @@ builder.Services.AddToolboxTalksInfrastructure(builder.Configuration);
 
 // Register RAMS module services
 builder.Services.AddRamsInfrastructure(builder.Configuration);
+
+// Register Float API client for schedule integration
+builder.Services.AddFloatApiClient(builder.Configuration);
 
 // Register DbContext (for DataSeeder)
 builder.Services.AddScoped<DbContext>(provider =>
@@ -340,6 +345,21 @@ using (var scope = app.Services.CreateScope())
         job => job.ExecuteAsync(CancellationToken.None),
         "0 8 * * 1-5", // Run at 8:00 AM on weekdays (Monday-Friday)
         new RecurringJobOptions { TimeZone = irelandTimeZone });
+
+    // Float SPA check job - sends reminders to employees who are scheduled but haven't submitted SPA
+    // Cron expression is configurable via Float:SpaCheckCronExpression (default: 10:00 AM daily)
+    var floatSettings = builder.Configuration
+        .GetSection(FloatSettings.SectionName)
+        .Get<FloatSettings>();
+
+    if (floatSettings?.Enabled == true)
+    {
+        recurringJobManager.AddOrUpdate<FloatSpaCheckJob>(
+            "float-spa-check",
+            job => job.ExecuteAsync(CancellationToken.None),
+            floatSettings.SpaCheckCronExpression,
+            new RecurringJobOptions { TimeZone = irelandTimeZone });
+    }
 }
 
 app.Run();
