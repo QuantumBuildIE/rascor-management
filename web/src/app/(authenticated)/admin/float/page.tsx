@@ -281,10 +281,12 @@ export default function FloatIntegrationPage() {
         </p>
       </div>
 
-      {/* Connection Status Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Connection Status</CardTitle>
+      {/* Connection Status and Actions Cards - Side by Side */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Connection Status Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Connection Status</CardTitle>
           <CardDescription>
             Current Float API connection status and settings
           </CardDescription>
@@ -375,6 +377,7 @@ export default function FloatIntegrationPage() {
           </p>
         </CardContent>
       </Card>
+      </div>
 
       {/* Linking Statistics */}
       {linkingSummary && (
