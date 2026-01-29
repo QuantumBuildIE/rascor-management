@@ -30,6 +30,11 @@ import {
   useIgnoreUnmatchedItem,
   useAvailableEmployees,
   useAvailableSites,
+  useLinkingSummary,
+  useLinkedEmployees,
+  useLinkedSites,
+  useUnlinkEmployee,
+  useUnlinkSite,
   type FloatUnmatchedItem,
 } from "@/lib/api/admin/use-float";
 import { toast } from "sonner";
@@ -51,6 +56,9 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function FloatIntegrationPage() {
+  const [activeTab, setActiveTab] = React.useState<
+    "unmatched" | "linkedPeople" | "linkedProjects"
+  >("unmatched");
   const [filter, setFilter] = React.useState<"all" | "Person" | "Project">(
     "all"
   );
@@ -65,6 +73,10 @@ export default function FloatIntegrationPage() {
   // Queries
   const { data: status, isLoading: statusLoading } = useFloatStatus();
   const { data: summary, isLoading: summaryLoading } = useUnmatchedSummary();
+  const { data: linkingSummary } = useLinkingSummary();
+  const { data: linkedEmployees, isLoading: linkedEmployeesLoading } =
+    useLinkedEmployees();
+  const { data: linkedSites, isLoading: linkedSitesLoading } = useLinkedSites();
   const { data: unmatchedData, isLoading: unmatchedLoading } = useUnmatchedItems(
     {
       itemType: filter === "all" ? undefined : filter,
@@ -85,6 +97,8 @@ export default function FloatIntegrationPage() {
   const linkPersonMutation = useLinkFloatPerson();
   const linkProjectMutation = useLinkFloatProject();
   const ignoreMutation = useIgnoreUnmatchedItem();
+  const unlinkEmployeeMutation = useUnlinkEmployee();
+  const unlinkSiteMutation = useUnlinkSite();
 
   const handleSync = async () => {
     try {
@@ -161,6 +175,71 @@ export default function FloatIntegrationPage() {
       toast.success("Item ignored");
     } catch {
       toast.error("Failed to ignore. Please try again.");
+    }
+  };
+
+  const handleUnlinkEmployee = async (
+    employeeId: string,
+    employeeName: string
+  ) => {
+    if (
+      !window.confirm(
+        `Unlink "${employeeName}" from Float? They will need to be re-linked manually.`
+      )
+    )
+      return;
+
+    try {
+      await unlinkEmployeeMutation.mutateAsync(employeeId);
+      toast.success("Employee unlinked from Float");
+    } catch {
+      toast.error("Failed to unlink employee. Please try again.");
+    }
+  };
+
+  const handleUnlinkSite = async (siteId: string, siteName: string) => {
+    if (
+      !window.confirm(
+        `Unlink "${siteName}" from Float? It will need to be re-linked manually.`
+      )
+    )
+      return;
+
+    try {
+      await unlinkSiteMutation.mutateAsync(siteId);
+      toast.success("Site unlinked from Float");
+    } catch {
+      toast.error("Failed to unlink site. Please try again.");
+    }
+  };
+
+  const formatLinkMethod = (method?: string) => {
+    if (!method) return "Unknown";
+    switch (method) {
+      case "Auto-Email":
+        return (
+          <span className="inline-flex rounded bg-green-100 px-2 py-1 text-xs text-green-800 dark:bg-green-900 dark:text-green-200">
+            Auto-Email
+          </span>
+        );
+      case "Auto-Name":
+        return (
+          <span className="inline-flex rounded bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            Auto-Name
+          </span>
+        );
+      case "Manual":
+        return (
+          <span className="inline-flex rounded bg-purple-100 px-2 py-1 text-xs text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+            Manual
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex rounded bg-gray-100 px-2 py-1 text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            {method}
+          </span>
+        );
     }
   };
 
@@ -297,6 +376,48 @@ export default function FloatIntegrationPage() {
         </CardContent>
       </Card>
 
+      {/* Linking Statistics */}
+      {linkingSummary && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Linking Statistics</CardTitle>
+            <CardDescription>
+              Overview of Float people and projects linked to local entities
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="rounded-lg bg-muted p-3 text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {linkingSummary.floatPeopleTotal}
+                </div>
+                <div className="text-sm text-muted-foreground">Float People</div>
+              </div>
+              <div className="rounded-lg bg-muted p-3 text-center">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {linkingSummary.linkedPeople}
+                </div>
+                <div className="text-sm text-muted-foreground">Linked</div>
+              </div>
+              <div className="rounded-lg bg-muted p-3 text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {linkingSummary.floatProjectsTotal}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Float Projects
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted p-3 text-center">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {linkingSummary.linkedProjects}
+                </div>
+                <div className="text-sm text-muted-foreground">Linked</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Unmatched Summary Alert */}
       {summary && summary.totalPending > 0 && (
         <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
@@ -320,124 +441,326 @@ export default function FloatIntegrationPage() {
         </Card>
       )}
 
-      {/* Unmatched Items Card */}
+      {/* Tabbed Content */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Unmatched Items</CardTitle>
-              <CardDescription>
-                Float people and projects that couldn&apos;t be auto-matched
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={filter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter("all")}
-              >
-                All
-              </Button>
-              <Button
-                variant={filter === "Person" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter("Person")}
-              >
-                People ({summary?.pendingPeople || 0})
-              </Button>
-              <Button
-                variant={filter === "Project" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter("Project")}
-              >
-                Projects ({summary?.pendingProjects || 0})
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : unmatchedItems.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No unmatched items. All Float data is linked!
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Float Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Email
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Suggested Match
-                    </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {unmatchedItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-muted/50">
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={
-                            item.itemType === "Person" ? "default" : "secondary"
-                          }
-                        >
-                          {item.itemType}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 font-medium">{item.floatName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {item.floatEmail || "-"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {item.suggestedMatchName ? (
-                          <div>
-                            <span>{item.suggestedMatchName}</span>
-                            <br />
-                            {formatConfidence(item.matchConfidence)}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            No suggestion
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => openLinkModal(item)}
-                          >
-                            Link
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleIgnore(item)}
-                            disabled={ignoreMutation.isPending}
-                          >
-                            Ignore
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Tabs */}
+        <div className="border-b">
+          <nav className="-mb-px flex">
+            <button
+              onClick={() => setActiveTab("unmatched")}
+              className={`border-b-2 px-6 py-3 text-sm font-medium ${
+                activeTab === "unmatched"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Unmatched (
+              {(linkingSummary?.unmatchedPeople || 0) +
+                (linkingSummary?.unmatchedProjects || 0)}
+              )
+            </button>
+            <button
+              onClick={() => setActiveTab("linkedPeople")}
+              className={`border-b-2 px-6 py-3 text-sm font-medium ${
+                activeTab === "linkedPeople"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Linked People ({linkingSummary?.linkedPeople || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab("linkedProjects")}
+              className={`border-b-2 px-6 py-3 text-sm font-medium ${
+                activeTab === "linkedProjects"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Linked Projects ({linkingSummary?.linkedProjects || 0})
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <CardContent className="pt-4">
+          {/* Unmatched Tab */}
+          {activeTab === "unmatched" && (
+            <>
+              <div className="mb-4 flex gap-2">
+                <Button
+                  variant={filter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filter === "Person" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("Person")}
+                >
+                  People ({summary?.pendingPeople || 0})
+                </Button>
+                <Button
+                  variant={filter === "Project" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("Project")}
+                >
+                  Projects ({summary?.pendingProjects || 0})
+                </Button>
+              </div>
+
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              ) : unmatchedItems.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  No unmatched items. All Float data is linked!
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Type
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Float Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Email
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Suggested Match
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {unmatchedItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-muted/50">
+                          <td className="px-4 py-3">
+                            <Badge
+                              variant={
+                                item.itemType === "Person"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {item.itemType}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 font-medium">
+                            {item.floatName}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {item.floatEmail || "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {item.suggestedMatchName ? (
+                              <div>
+                                <span>{item.suggestedMatchName}</span>
+                                <br />
+                                {formatConfidence(item.matchConfidence)}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                No suggestion
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => openLinkModal(item)}
+                              >
+                                Link
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleIgnore(item)}
+                                disabled={ignoreMutation.isPending}
+                              >
+                                Ignore
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Linked People Tab */}
+          {activeTab === "linkedPeople" && (
+            <>
+              {linkedEmployeesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              ) : !linkedEmployees || linkedEmployees.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  No employees linked to Float yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Employee
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Float Person
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Method
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Linked
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {linkedEmployees.map((emp) => (
+                        <tr key={emp.employeeId} className="hover:bg-muted/50">
+                          <td className="px-4 py-3">
+                            <div className="font-medium">{emp.employeeName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {emp.employeeCode}
+                              {emp.employeeEmail && ` • ${emp.employeeEmail}`}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              {emp.floatPersonName ||
+                                `Float ID: ${emp.floatPersonId}`}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {formatLinkMethod(emp.floatLinkMethod)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {emp.floatLinkedAt
+                              ? new Date(emp.floatLinkedAt).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleUnlinkEmployee(
+                                  emp.employeeId,
+                                  emp.employeeName
+                                )
+                              }
+                              disabled={unlinkEmployeeMutation.isPending}
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              Unlink
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Linked Projects Tab */}
+          {activeTab === "linkedProjects" && (
+            <>
+              {linkedSitesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              ) : !linkedSites || linkedSites.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  No sites linked to Float yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Site
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Float Project
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Method
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Linked
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {linkedSites.map((site) => (
+                        <tr key={site.siteId} className="hover:bg-muted/50">
+                          <td className="px-4 py-3">
+                            <div className="font-medium">{site.siteName}</div>
+                            {site.siteAddress && (
+                              <div className="text-sm text-muted-foreground">
+                                {site.siteAddress}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              {site.floatProjectName ||
+                                `Float ID: ${site.floatProjectId}`}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {formatLinkMethod(site.floatLinkMethod)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {site.floatLinkedAt
+                              ? new Date(site.floatLinkedAt).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleUnlinkSite(site.siteId, site.siteName)
+                              }
+                              disabled={unlinkSiteMutation.isPending}
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              Unlink
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

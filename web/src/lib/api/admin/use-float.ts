@@ -10,6 +10,11 @@ import {
   ignoreUnmatchedItem,
   getAvailableEmployees,
   getAvailableSites,
+  getLinkingSummary,
+  getLinkedEmployees,
+  getLinkedSites,
+  unlinkEmployee,
+  unlinkSite,
   type GetUnmatchedItemsParams,
 } from "./float";
 
@@ -22,6 +27,9 @@ export const FLOAT_AVAILABLE_EMPLOYEES_KEY = [
   "available-employees",
 ];
 export const FLOAT_AVAILABLE_SITES_KEY = [...FLOAT_KEY, "available-sites"];
+export const FLOAT_LINKING_SUMMARY_KEY = [...FLOAT_KEY, "linking-summary"];
+export const FLOAT_LINKED_EMPLOYEES_KEY = [...FLOAT_KEY, "linked-employees"];
+export const FLOAT_LINKED_SITES_KEY = [...FLOAT_KEY, "linked-sites"];
 
 export function useFloatStatus() {
   return useQuery({
@@ -113,6 +121,49 @@ export function useAvailableSites(search?: string) {
   });
 }
 
+export function useLinkingSummary() {
+  return useQuery({
+    queryKey: FLOAT_LINKING_SUMMARY_KEY,
+    queryFn: getLinkingSummary,
+  });
+}
+
+export function useLinkedEmployees() {
+  return useQuery({
+    queryKey: FLOAT_LINKED_EMPLOYEES_KEY,
+    queryFn: getLinkedEmployees,
+  });
+}
+
+export function useLinkedSites() {
+  return useQuery({
+    queryKey: FLOAT_LINKED_SITES_KEY,
+    queryFn: getLinkedSites,
+  });
+}
+
+export function useUnlinkEmployee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employeeId: string) => unlinkEmployee(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FLOAT_KEY });
+    },
+  });
+}
+
+export function useUnlinkSite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (siteId: string) => unlinkSite(siteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FLOAT_KEY });
+    },
+  });
+}
+
 // Re-export types
 export type {
   FloatUnmatchedItem,
@@ -124,4 +175,7 @@ export type {
   SpaCheckResult,
   FloatStatusResponse,
   GetUnmatchedItemsParams,
+  FloatLinkedEmployee,
+  FloatLinkedSite,
+  FloatLinkingSummary,
 } from "./float";
