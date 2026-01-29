@@ -48,7 +48,7 @@ public class FloatApiClient : IFloatApiClient
 
         try
         {
-            return await GetAllPagesAsync<FloatPerson>("/people", ct);
+            return await GetAllPagesAsync<FloatPerson>("people", ct);
         }
         catch (Exception ex)
         {
@@ -68,7 +68,7 @@ public class FloatApiClient : IFloatApiClient
 
         try
         {
-            return await GetAllPagesAsync<FloatProject>("/projects", ct);
+            return await GetAllPagesAsync<FloatProject>("projects", ct);
         }
         catch (Exception ex)
         {
@@ -97,7 +97,7 @@ public class FloatApiClient : IFloatApiClient
 
         try
         {
-            var endpoint = $"/tasks?start_date={startDate:yyyy-MM-dd}&end_date={endDate:yyyy-MM-dd}";
+            var endpoint = $"tasks?start_date={startDate:yyyy-MM-dd}&end_date={endDate:yyyy-MM-dd}";
             return await GetAllPagesAsync<FloatTask>(endpoint, ct);
         }
         catch (Exception ex)
@@ -115,7 +115,9 @@ public class FloatApiClient : IFloatApiClient
     {
         if (!string.IsNullOrEmpty(_settings.BaseUrl))
         {
-            _httpClient.BaseAddress = new Uri(_settings.BaseUrl);
+            // Ensure trailing slash for proper path resolution with HttpClient
+            var baseUrl = _settings.BaseUrl.TrimEnd('/') + "/";
+            _httpClient.BaseAddress = new Uri(baseUrl);
         }
 
         if (!string.IsNullOrEmpty(_settings.ApiKey))
