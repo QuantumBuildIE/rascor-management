@@ -47,15 +47,17 @@ public record ContentGenerationOptions(
 /// <summary>
 /// Result of a content generation operation.
 /// </summary>
-/// <param name="Success">Whether the generation completed successfully (no critical errors)</param>
+/// <param name="Success">Whether the generation completed successfully (content was generated)</param>
+/// <param name="PartialSuccess">True if some content sources failed but content was still generated from others</param>
 /// <param name="SectionsGenerated">Number of sections created</param>
 /// <param name="QuestionsGenerated">Number of quiz questions created</param>
 /// <param name="HasFinalPortionQuestion">Whether at least one question is from video final portion</param>
 /// <param name="Errors">List of critical errors that occurred</param>
-/// <param name="Warnings">List of non-fatal warnings</param>
+/// <param name="Warnings">List of non-fatal warnings (e.g., one source failed but generation continued)</param>
 /// <param name="TotalTokensUsed">Total AI tokens consumed (for cost tracking)</param>
 public record ContentGenerationResult(
     bool Success,
+    bool PartialSuccess,
     int SectionsGenerated,
     int QuestionsGenerated,
     bool HasFinalPortionQuestion,

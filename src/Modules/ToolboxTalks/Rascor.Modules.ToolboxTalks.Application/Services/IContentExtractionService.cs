@@ -28,13 +28,15 @@ public interface IContentExtractionService
 /// Result of a content extraction operation.
 /// </summary>
 /// <param name="Success">Whether the extraction was successful (at least one source was extracted)</param>
+/// <param name="PartialSuccess">True if some sources succeeded but others failed (content was still generated)</param>
 /// <param name="CombinedContent">The combined content from all sources, formatted for AI processing</param>
 /// <param name="VideoContent">Information about extracted video content, if any</param>
 /// <param name="PdfContent">Information about extracted PDF content, if any</param>
-/// <param name="Errors">List of errors encountered during extraction</param>
-/// <param name="Warnings">List of non-fatal warnings (e.g., potential OCR issues)</param>
+/// <param name="Errors">List of critical errors that prevented all extraction</param>
+/// <param name="Warnings">List of non-fatal warnings (e.g., one source failed but another succeeded, potential OCR issues)</param>
 public record ContentExtractionResult(
     bool Success,
+    bool PartialSuccess,
     string? CombinedContent,
     VideoContentInfo? VideoContent,
     PdfContentInfo? PdfContent,

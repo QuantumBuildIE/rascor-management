@@ -79,6 +79,7 @@ public class ContentExtractionService : IContentExtractionService
 
         var errors = new List<string>();
         var warnings = new List<string>();
+        var sourceFailures = new List<string>(); // Track which sources failed
         VideoContentInfo? videoContent = null;
         PdfContentInfo? pdfContent = null;
 
@@ -92,6 +93,7 @@ public class ContentExtractionService : IContentExtractionService
                 toolboxTalkId, tenantId);
             return new ContentExtractionResult(
                 Success: false,
+                PartialSuccess: false,
                 CombinedContent: null,
                 VideoContent: null,
                 PdfContent: null,
@@ -113,7 +115,7 @@ public class ContentExtractionService : IContentExtractionService
                 _logger.LogWarning(
                     "[Video Extraction] SKIPPED - No video URL set for toolbox talk {Id}",
                     toolboxTalkId);
-                errors.Add("Video extraction requested but no video URL is set");
+                sourceFailures.Add("Video extraction requested but no video URL is set");
             }
             else
             {
@@ -175,7 +177,7 @@ public class ContentExtractionService : IContentExtractionService
                             _logger.LogError(
                                 "[Video Extraction] FAILED - Auto-transcription failed. Error: {Error}",
                                 autoTranscribeResult.ErrorMessage);
-                            errors.Add($"Failed to extract video transcript: {autoTranscribeResult.ErrorMessage}");
+                            sourceFailures.Add(GetUserFriendlyVideoError(autoTranscribeResult.ErrorMessage));
                         }
                     }
                 }
@@ -185,7 +187,7 @@ public class ContentExtractionService : IContentExtractionService
                         "[Video Extraction] EXCEPTION - Error extracting transcript for toolbox talk {Id}. " +
                         "ExceptionType: {ExceptionType}, Message: {Message}",
                         toolboxTalkId, ex.GetType().FullName, ex.Message);
-                    errors.Add($"Failed to extract video transcript: {ex.Message}");
+                    sourceFailures.Add(GetUserFriendlyVideoError(ex.Message));
                 }
             }
         }
@@ -202,7 +204,7 @@ public class ContentExtractionService : IContentExtractionService
                 _logger.LogWarning(
                     "[PDF Extraction] SKIPPED - No PDF URL set for toolbox talk {Id}",
                     toolboxTalkId);
-                errors.Add("PDF extraction requested but no PDF is uploaded");
+                sourceFailures.Add("PDF extraction requested but no PDF document has been uploaded");
             }
             else
             {
@@ -247,7 +249,7 @@ public class ContentExtractionService : IContentExtractionService
                         _logger.LogError(
                             "[PDF Extraction] FAILED - Text extraction returned failure. Error: {Error}",
                             pdfResult.ErrorMessage);
-                        errors.Add($"Failed to extract PDF content: {pdfResult.ErrorMessage}");
+                        sourceFailures.Add(GetUserFriendlyPdfError(pdfResult.ErrorMessage));
                     }
                 }
                 catch (Exception ex)
@@ -256,7 +258,7 @@ public class ContentExtractionService : IContentExtractionService
                         "[PDF Extraction] EXCEPTION - Error extracting PDF for toolbox talk {Id}. " +
                         "ExceptionType: {ExceptionType}, Message: {Message}",
                         toolboxTalkId, ex.GetType().FullName, ex.Message);
-                    errors.Add($"Failed to extract PDF content: {ex.Message}");
+                    sourceFailures.Add(GetUserFriendlyPdfError(ex.Message));
                 }
             }
         }
@@ -283,15 +285,39 @@ public class ContentExtractionService : IContentExtractionService
         // Build combined content for AI processing
         var combinedContent = BuildCombinedContent(videoContent, pdfContent);
 
-        // Success if we have at least some combined content
-        var success = errors.Count == 0 && !string.IsNullOrEmpty(combinedContent);
+        // Determine success status:
+        // - Success: We have at least some combined content to work with
+        // - PartialSuccess: Some sources failed but we still have content from others
+        var hasContent = !string.IsNullOrEmpty(combinedContent);
+        var hadSourceFailures = sourceFailures.Count > 0;
+        var success = hasContent;
+        var partialSuccess = hasContent && hadSourceFailures;
+
+        // If we have content, source failures become warnings (content can still be generated)
+        // If we have no content, source failures become critical errors
+        if (hasContent && hadSourceFailures)
+        {
+            foreach (var failure in sourceFailures)
+            {
+                warnings.Add($"{failure} - content will be generated from available sources");
+            }
+        }
+        else if (!hasContent)
+        {
+            errors.AddRange(sourceFailures);
+            if (errors.Count == 0)
+            {
+                errors.Add("No content could be extracted from any source. Please check your video and PDF files.");
+            }
+        }
 
         _logger.LogInformation(
             "[ContentExtractionService] Extraction complete for toolbox talk {Id}. " +
-            "Success={Success}, HasVideo={HasVideo}, HasPdf={HasPdf}, " +
+            "Success={Success}, PartialSuccess={PartialSuccess}, HasVideo={HasVideo}, HasPdf={HasPdf}, " +
             "CombinedContentLength={ContentLength}, Errors={ErrorCount}, Warnings={WarningCount}",
             toolboxTalkId,
             success,
+            partialSuccess,
             videoContent != null,
             pdfContent != null,
             combinedContent?.Length ?? 0,
@@ -305,8 +331,16 @@ public class ContentExtractionService : IContentExtractionService
                 toolboxTalkId, string.Join("; ", errors));
         }
 
+        if (partialSuccess)
+        {
+            _logger.LogWarning(
+                "[ContentExtractionService] Partial extraction for toolbox talk {Id}. Some sources failed: {Failures}",
+                toolboxTalkId, string.Join("; ", sourceFailures));
+        }
+
         return new ContentExtractionResult(
             Success: success,
+            PartialSuccess: partialSuccess,
             CombinedContent: combinedContent,
             VideoContent: videoContent,
             PdfContent: pdfContent,
@@ -729,5 +763,75 @@ public class ContentExtractionService : IContentExtractionService
                 Success = false,
                 ErrorMessage = errorMessage
             };
+    }
+
+    /// <summary>
+    /// Converts technical video extraction errors to user-friendly messages.
+    /// </summary>
+    private static string GetUserFriendlyVideoError(string? technicalError)
+    {
+        if (string.IsNullOrEmpty(technicalError))
+            return "Video transcription failed. Please try again or use a different video.";
+
+        var lowerError = technicalError.ToLowerInvariant();
+
+        if (lowerError.Contains("copying content to a stream") || lowerError.Contains("stream"))
+            return "The video file could not be processed. This may be a temporary issue - please try again later.";
+
+        if (lowerError.Contains("timeout") || lowerError.Contains("timed out"))
+            return "Video processing timed out. The video may be too long - try a shorter video or check your connection.";
+
+        if (lowerError.Contains("http request failed") || lowerError.Contains("network"))
+            return "Video could not be downloaded. Please check that the video URL is accessible.";
+
+        if (lowerError.Contains("api key") || lowerError.Contains("not configured"))
+            return "Video transcription service is not configured. Please contact support.";
+
+        if (lowerError.Contains("transcription failed"))
+            return "Video transcription service is temporarily unavailable. Please try again later.";
+
+        if (lowerError.Contains("format") || lowerError.Contains("codec") || lowerError.Contains("unsupported"))
+            return "The video format is not supported. Please use MP4, MOV, AVI, or WebM format.";
+
+        if (lowerError.Contains("not found") || lowerError.Contains("404"))
+            return "The video file could not be found. Please check the video URL is correct.";
+
+        if (lowerError.Contains("access denied") || lowerError.Contains("403") || lowerError.Contains("unauthorized"))
+            return "Cannot access the video file. Please check the video permissions or try uploading directly.";
+
+        // Default message
+        return "Video transcription unavailable";
+    }
+
+    /// <summary>
+    /// Converts technical PDF extraction errors to user-friendly messages.
+    /// </summary>
+    private static string GetUserFriendlyPdfError(string? technicalError)
+    {
+        if (string.IsNullOrEmpty(technicalError))
+            return "PDF extraction failed. Please try again or use a different PDF.";
+
+        var lowerError = technicalError.ToLowerInvariant();
+
+        if (lowerError.Contains("password") || lowerError.Contains("encrypted"))
+            return "The PDF is password-protected. Please use an unprotected PDF.";
+
+        if (lowerError.Contains("corrupt") || lowerError.Contains("invalid"))
+            return "The PDF appears to be corrupted. Please try uploading a different file.";
+
+        if (lowerError.Contains("scanned") || lowerError.Contains("ocr") || lowerError.Contains("image"))
+            return "The PDF appears to be a scanned document. Text-based PDFs work better.";
+
+        if (lowerError.Contains("timeout") || lowerError.Contains("timed out"))
+            return "PDF processing timed out. The document may be too large.";
+
+        if (lowerError.Contains("not found") || lowerError.Contains("404"))
+            return "The PDF file could not be found. Please try uploading it again.";
+
+        if (lowerError.Contains("access denied") || lowerError.Contains("403"))
+            return "Cannot access the PDF file. Please try uploading it again.";
+
+        // Default message
+        return "PDF extraction unavailable";
     }
 }

@@ -52,6 +52,7 @@ public class ContentGenerationService : IContentGenerationService
         var sectionsGenerated = 0;
         var questionsGenerated = 0;
         var hasFinalPortionQuestion = false;
+        var extractionWasPartial = false;
 
         _logger.LogInformation(
             "[ContentGenerationService] Starting content generation for toolbox talk {Id}. " +
@@ -75,6 +76,7 @@ public class ContentGenerationService : IContentGenerationService
                     toolboxTalkId, tenantId);
                 return new ContentGenerationResult(
                     Success: false,
+                    PartialSuccess: false,
                     SectionsGenerated: 0,
                     QuestionsGenerated: 0,
                     HasFinalPortionQuestion: false,
@@ -122,6 +124,7 @@ public class ContentGenerationService : IContentGenerationService
 
                 return new ContentGenerationResult(
                     Success: false,
+                    PartialSuccess: false,
                     SectionsGenerated: 0,
                     QuestionsGenerated: 0,
                     HasFinalPortionQuestion: false,
@@ -129,6 +132,9 @@ public class ContentGenerationService : IContentGenerationService
                     Warnings: warnings,
                     TotalTokensUsed: 0);
             }
+
+            // Track if extraction was partial (some sources failed but we still have content)
+            extractionWasPartial = extractionResult.PartialSuccess;
 
             _logger.LogInformation(
                 "[Step: Extract] SUCCESS - Content extraction completed. " +
@@ -302,13 +308,19 @@ public class ContentGenerationService : IContentGenerationService
             progress?.Report(new ContentGenerationProgress(
                 "Complete", 100, "Content generation complete!"));
 
+            // Determine final success status
+            var success = errors.Count == 0 && (sectionsGenerated > 0 || questionsGenerated > 0);
+            var partialSuccess = success && (extractionWasPartial || warnings.Count > 0);
+
             _logger.LogInformation(
                 "[ContentGenerationService] Content generation complete for toolbox talk {Id}. " +
-                "Final Results: Sections={Sections}, Questions={Questions}, TotalTokens={Tokens}, Errors={ErrorCount}, Warnings={WarningCount}",
-                toolboxTalkId, sectionsGenerated, questionsGenerated, totalTokens, errors.Count, warnings.Count);
+                "Final Results: Success={Success}, PartialSuccess={PartialSuccess}, Sections={Sections}, " +
+                "Questions={Questions}, TotalTokens={Tokens}, Errors={ErrorCount}, Warnings={WarningCount}",
+                toolboxTalkId, success, partialSuccess, sectionsGenerated, questionsGenerated, totalTokens, errors.Count, warnings.Count);
 
             return new ContentGenerationResult(
-                Success: errors.Count == 0,
+                Success: success,
+                PartialSuccess: partialSuccess,
                 SectionsGenerated: sectionsGenerated,
                 QuestionsGenerated: questionsGenerated,
                 HasFinalPortionQuestion: hasFinalPortionQuestion,
@@ -355,9 +367,10 @@ public class ContentGenerationService : IContentGenerationService
                     toolboxTalkId, cleanupEx.Message);
             }
 
-            errors.Add(ex.Message);
+            errors.Add(GetUserFriendlyError(ex.Message));
             return new ContentGenerationResult(
                 Success: false,
+                PartialSuccess: false,
                 SectionsGenerated: sectionsGenerated,
                 QuestionsGenerated: questionsGenerated,
                 HasFinalPortionQuestion: hasFinalPortionQuestion,
@@ -365,6 +378,35 @@ public class ContentGenerationService : IContentGenerationService
                 Warnings: warnings,
                 TotalTokensUsed: totalTokens);
         }
+    }
+
+    /// <summary>
+    /// Converts technical error messages to user-friendly messages.
+    /// </summary>
+    private static string GetUserFriendlyError(string technicalError)
+    {
+        if (string.IsNullOrEmpty(technicalError))
+            return "An unexpected error occurred. Please try again.";
+
+        var lowerError = technicalError.ToLowerInvariant();
+
+        if (lowerError.Contains("timeout") || lowerError.Contains("timed out"))
+            return "The operation took too long. Please try again.";
+
+        if (lowerError.Contains("network") || lowerError.Contains("connection"))
+            return "A network error occurred. Please check your connection and try again.";
+
+        if (lowerError.Contains("cancelled") || lowerError.Contains("canceled"))
+            return "The operation was cancelled.";
+
+        if (lowerError.Contains("api") && (lowerError.Contains("key") || lowerError.Contains("unauthorized")))
+            return "AI service configuration error. Please contact support.";
+
+        if (lowerError.Contains("rate limit") || lowerError.Contains("too many requests"))
+            return "Service is temporarily busy. Please wait a moment and try again.";
+
+        // Default: return the technical message but trimmed
+        return technicalError.Length > 200 ? technicalError[..200] + "..." : technicalError;
     }
 
     /// <summary>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import {
   Info,
   Rocket,
   RefreshCw,
+  ArrowRight,
 } from 'lucide-react';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
 import { generateToolboxTalkContent, getToolboxTalk } from '@/lib/api/toolbox-talks/toolbox-talks';
@@ -39,12 +40,14 @@ interface GenerationProgress {
 
 interface GenerationComplete {
   success: boolean;
+  partialSuccess?: boolean;
   sectionsGenerated: number;
   questionsGenerated: number;
   hasFinalPortionQuestion: boolean;
   errors: string[];
   warnings: string[];
   totalTokensUsed: number;
+  message?: string;
 }
 
 export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepProps) {
@@ -64,10 +67,22 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
 
   const connectionRef = useRef<HubConnection | null>(null);
   const hasConnectedRef = useRef(false);
+  const lastProgressTimeRef = useRef<number>(Date.now());
 
   const hasVideo = !!data.videoUrl;
   const hasPdf = !!data.pdfUrl;
   const hasContent = hasVideo || hasPdf;
+
+  // Check if content actually exists (regardless of generation status)
+  // This allows proceeding if partial content was created even when generation "failed"
+  const hasGeneratedContent = useMemo(() => {
+    const hasSections = data.sections && data.sections.length > 0;
+    const hasQuestions = data.questions && data.questions.length > 0;
+    return hasSections || hasQuestions;
+  }, [data.sections, data.questions]);
+
+  // Can proceed if generation succeeded OR if content actually exists
+  const canProceed = !isGenerating && (result?.success || hasGeneratedContent);
 
   // Set up SignalR connection
   const setupSignalR = useCallback(async () => {
@@ -104,6 +119,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         message: string;
       }) => {
         if (payload.toolboxTalkId === data.id) {
+          lastProgressTimeRef.current = Date.now();
           setProgress({
             stage: payload.stage,
             percentComplete: payload.percentComplete,
@@ -116,80 +132,91 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       connection.on('ContentGenerationComplete', async (payload: {
         toolboxTalkId: string;
         success: boolean;
+        partialSuccess?: boolean;
         sectionsGenerated: number;
         questionsGenerated: number;
         hasFinalPortionQuestion: boolean;
         errors: string[];
         warnings: string[];
         totalTokensUsed: number;
+        message?: string;
       }) => {
         if (payload.toolboxTalkId === data.id) {
           setResult({
             success: payload.success,
+            partialSuccess: payload.partialSuccess,
             sectionsGenerated: payload.sectionsGenerated,
             questionsGenerated: payload.questionsGenerated,
             hasFinalPortionQuestion: payload.hasFinalPortionQuestion,
             errors: payload.errors,
             warnings: payload.warnings,
             totalTokensUsed: payload.totalTokensUsed,
+            message: payload.message,
           });
 
-          // If successful, fetch the updated content and populate wizard state
-          if (payload.success && payload.sectionsGenerated > 0 && data.id) {
+          // Always try to fetch content, even on failure (partial content may exist)
+          if (data.id) {
             try {
               const updatedTalk = await getToolboxTalk(data.id);
 
-              // Map API sections to wizard GeneratedSection format
-              const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
-                id: s.id,
-                sortOrder: s.sectionNumber,
-                title: s.title,
-                content: s.content,
-                source: s.source || 'Manual',
-                requiresAcknowledgment: s.requiresAcknowledgment,
-              }));
+              // Check if any content was actually created
+              const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
+                                 (updatedTalk.questions?.length ?? 0) > 0;
 
-              // Map API questions to wizard GeneratedQuestion format
-              const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
-                // Find the index of the correct answer in the options array
-                const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
+              if (hasContent) {
+                // Map API sections to wizard GeneratedSection format
+                const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
+                  id: s.id,
+                  sortOrder: s.sectionNumber,
+                  title: s.title,
+                  content: s.content,
+                  source: s.source || 'Manual',
+                  requiresAcknowledgment: s.requiresAcknowledgment,
+                }));
 
-                // Map 'Both' to 'Video' since wizard type doesn't include 'Both'
-                const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-                  if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-                  if (src === 'Both') return 'Video'; // Default 'Both' to 'Video'
-                  return 'Manual';
-                };
+                // Map API questions to wizard GeneratedQuestion format
+                const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
+                  // Find the index of the correct answer in the options array
+                  const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
 
-                return {
-                  id: q.id,
-                  sortOrder: q.questionNumber,
-                  questionText: q.questionText,
-                  questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
-                  options: q.options || [],
-                  correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-                  source: mapSource(q.source),
-                  points: q.points,
-                };
-              });
+                  // Map 'Both' to 'Video' since wizard type doesn't include 'Both'
+                  const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
+                    if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
+                    if (src === 'Both') return 'Video'; // Default 'Both' to 'Video'
+                    return 'Manual';
+                  };
 
-              // Update wizard state with the fetched content
-              updateData({
-                sections,
-                questions,
-                generateFromVideo: includeVideo,
-                generateFromPdf: includePdf,
-                minimumSections,
-                minimumQuestions,
-              });
+                  return {
+                    id: q.id,
+                    sortOrder: q.questionNumber,
+                    questionText: q.questionText,
+                    questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
+                    options: q.options || [],
+                    correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+                    source: mapSource(q.source),
+                    points: q.points,
+                  };
+                });
 
-              console.log('✅ Loaded generated content:', {
-                sections: sections.length,
-                questions: questions.length
-              });
+                // Update wizard state with the fetched content
+                updateData({
+                  sections,
+                  questions,
+                  generateFromVideo: includeVideo,
+                  generateFromPdf: includePdf,
+                  minimumSections,
+                  minimumQuestions,
+                });
+
+                console.log('✅ Loaded generated content:', {
+                  sections: sections.length,
+                  questions: questions.length,
+                  wasSuccessful: payload.success
+                });
+              }
             } catch (error) {
               console.error('Failed to fetch generated content:', error);
-              // Still show success, but user may need to refresh
+              // Still show result, but user may need to refresh
             }
           }
 
@@ -257,6 +284,91 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
     };
   }, [data.id, setupSignalR]);
 
+  // Timeout fallback: if no SignalR updates received for 45 seconds during generation,
+  // check status via API in case SignalR connection was lost
+  useEffect(() => {
+    if (!isGenerating || result) return;
+
+    const checkInterval = setInterval(async () => {
+      const timeSinceLastProgress = Date.now() - lastProgressTimeRef.current;
+
+      // If no progress update in 45 seconds, check status via API
+      if (timeSinceLastProgress > 45000 && data.id) {
+        console.log('No SignalR updates received, checking status via API...');
+        try {
+          const updatedTalk = await getToolboxTalk(data.id);
+
+          // Check if content was generated (sections or questions exist)
+          if (updatedTalk.sections?.length > 0 || updatedTalk.questions?.length > 0) {
+            console.log('Content was generated, SignalR may have missed completion event');
+
+            // Content exists - generation succeeded but we missed the SignalR event
+            setResult({
+              success: true,
+              partialSuccess: true,
+              sectionsGenerated: updatedTalk.sections?.length || 0,
+              questionsGenerated: updatedTalk.questions?.length || 0,
+              hasFinalPortionQuestion: false, // Can't determine from API response
+              errors: [],
+              warnings: ['Progress updates were delayed, but content was generated successfully'],
+              totalTokensUsed: 0,
+              message: 'Content generated (status recovered)',
+            });
+
+            // Map and update wizard data
+            const sections = updatedTalk.sections.map((s) => ({
+              id: s.id,
+              sortOrder: s.sectionNumber,
+              title: s.title,
+              content: s.content,
+              source: s.source || 'Manual',
+              requiresAcknowledgment: s.requiresAcknowledgment,
+            }));
+
+            const questions = updatedTalk.questions.map((q) => {
+              const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
+              const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
+                if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
+                if (src === 'Both') return 'Video';
+                return 'Manual';
+              };
+
+              return {
+                id: q.id,
+                sortOrder: q.questionNumber,
+                questionText: q.questionText,
+                questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' as const : 'MultipleChoice' as const,
+                options: q.options || [],
+                correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+                source: mapSource(q.source),
+                points: q.points,
+              };
+            });
+
+            updateData({
+              sections,
+              questions,
+              generateFromVideo: includeVideo,
+              generateFromPdf: includePdf,
+              minimumSections,
+              minimumQuestions,
+            });
+
+            setIsGenerating(false);
+          } else if (updatedTalk.status === 'Draft') {
+            // Status is Draft - generation may have failed
+            console.log('Toolbox talk status is Draft, generation may have failed');
+            // Don't auto-fail yet, keep waiting for SignalR
+          }
+        } catch (error) {
+          console.error('Status check failed:', error);
+        }
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => clearInterval(checkInterval);
+  }, [isGenerating, result, data.id, includeVideo, includePdf, minimumSections, minimumQuestions, updateData]);
+
   const handleStartGeneration = async () => {
     if (!data.id) {
       setError('Toolbox Talk not found. Please go back and save the basic info first.');
@@ -313,6 +425,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           message: string;
         }) => {
           if (payload.toolboxTalkId === data.id) {
+            lastProgressTimeRef.current = Date.now();
             setProgress({
               stage: payload.stage,
               percentComplete: payload.percentComplete,
@@ -324,70 +437,82 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         currentConnection.on('ContentGenerationComplete', async (payload: {
           toolboxTalkId: string;
           success: boolean;
+          partialSuccess?: boolean;
           sectionsGenerated: number;
           questionsGenerated: number;
           hasFinalPortionQuestion: boolean;
           errors: string[];
           warnings: string[];
           totalTokensUsed: number;
+          message?: string;
         }) => {
           if (payload.toolboxTalkId === data.id) {
             setResult({
               success: payload.success,
+              partialSuccess: payload.partialSuccess,
               sectionsGenerated: payload.sectionsGenerated,
               questionsGenerated: payload.questionsGenerated,
               hasFinalPortionQuestion: payload.hasFinalPortionQuestion,
               errors: payload.errors,
               warnings: payload.warnings,
               totalTokensUsed: payload.totalTokensUsed,
+              message: payload.message,
             });
 
-            // If successful, fetch the updated content
-            if (payload.success && payload.sectionsGenerated > 0 && data.id) {
+            // Always try to fetch content, even on failure (partial content may exist)
+            if (data.id) {
               try {
                 const updatedTalk = await getToolboxTalk(data.id);
-                const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
-                  id: s.id,
-                  sortOrder: s.sectionNumber,
-                  title: s.title,
-                  content: s.content,
-                  source: s.source || 'Manual',
-                  requiresAcknowledgment: s.requiresAcknowledgment,
-                }));
 
-                const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
-                  const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
-                  const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-                    if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-                    if (src === 'Both') return 'Video';
-                    return 'Manual';
-                  };
+                // Check if any content was actually created
+                const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
+                                   (updatedTalk.questions?.length ?? 0) > 0;
 
-                  return {
-                    id: q.id,
-                    sortOrder: q.questionNumber,
-                    questionText: q.questionText,
-                    questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
-                    options: q.options || [],
-                    correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-                    source: mapSource(q.source),
-                    points: q.points,
-                  };
-                });
+                if (hasContent) {
+                  const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
+                    id: s.id,
+                    sortOrder: s.sectionNumber,
+                    title: s.title,
+                    content: s.content,
+                    source: s.source || 'Manual',
+                    requiresAcknowledgment: s.requiresAcknowledgment,
+                  }));
 
-                updateData({
-                  sections,
-                  questions,
-                  generateFromVideo: includeVideo,
-                  generateFromPdf: includePdf,
-                  minimumSections,
-                  minimumQuestions,
-                });
+                  const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
+                    const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
+                    const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
+                      if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
+                      if (src === 'Both') return 'Video';
+                      return 'Manual';
+                    };
 
-                console.log('Loaded generated content:', {
-                  sections: sections.length,
-                  questions: questions.length
-                });
+                    return {
+                      id: q.id,
+                      sortOrder: q.questionNumber,
+                      questionText: q.questionText,
+                      questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
+                      options: q.options || [],
+                      correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+                      source: mapSource(q.source),
+                      points: q.points,
+                    };
+                  });
+
+                  updateData({
+                    sections,
+                    questions,
+                    generateFromVideo: includeVideo,
+                    generateFromPdf: includePdf,
+                    minimumSections,
+                    minimumQuestions,
+                  });
+
+                  console.log('Loaded generated content:', {
+                    sections: sections.length,
+                    questions: questions.length,
+                    wasSuccessful: payload.success
+                  });
+                }
               } catch (error) {
                 console.error('Failed to fetch generated content:', error);
               }
@@ -702,15 +827,36 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
 
       {/* Generation Result */}
       {result && (
-        <Card className={result.success ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}>
+        <Card className={
+          result.success && !result.partialSuccess
+            ? 'border-green-200 bg-green-50/50'
+            : result.success && result.partialSuccess
+            ? 'border-yellow-200 bg-yellow-50/50'
+            : 'border-red-200 bg-red-50/50'
+        }>
           <CardContent className="pt-6">
             {result.success ? (
               <div className="space-y-4">
-                {/* Success header */}
-                <div className="flex items-center gap-2 text-green-700">
-                  <Check className="h-5 w-5" />
-                  <span className="font-medium">Content Generated Successfully!</span>
+                {/* Success/Partial Success header */}
+                <div className={`flex items-center gap-2 ${result.partialSuccess ? 'text-yellow-700' : 'text-green-700'}`}>
+                  {result.partialSuccess ? (
+                    <Info className="h-5 w-5" />
+                  ) : (
+                    <Check className="h-5 w-5" />
+                  )}
+                  <span className="font-medium">
+                    {result.partialSuccess
+                      ? 'Content Generated with Some Limitations'
+                      : 'Content Generated Successfully!'}
+                  </span>
                 </div>
+
+                {/* Partial success explanation */}
+                {result.partialSuccess && (
+                  <p className="text-sm text-yellow-700">
+                    Some content sources were unavailable, but content was successfully generated from available sources.
+                  </p>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4">
@@ -738,8 +884,11 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                 {result.warnings.length > 0 && (
                   <Alert className="bg-yellow-50 border-yellow-200">
                     <Info className="h-4 w-4 text-yellow-700" />
+                    <AlertTitle className="text-yellow-800">
+                      {result.partialSuccess ? 'Source Limitations' : 'Notes'}
+                    </AlertTitle>
                     <AlertDescription className="text-yellow-700">
-                      <ul className="list-disc list-inside space-y-1">
+                      <ul className="list-disc list-inside space-y-1 mt-2">
                         {result.warnings.map((warning, i) => (
                           <li key={i}>{warning}</li>
                         ))}
@@ -753,7 +902,9 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                 {/* Failure header */}
                 <div className="flex items-center gap-2 text-red-700">
                   <AlertCircle className="h-5 w-5" />
-                  <span className="font-medium">Generation Failed</span>
+                  <span className="font-medium">
+                    {result.message || 'Content Generation Failed'}
+                  </span>
                 </div>
 
                 {/* Errors */}
@@ -767,6 +918,21 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                     </ul>
                   </AlertDescription>
                 </Alert>
+
+                {/* Show helpful message if content exists despite "failure" */}
+                {hasGeneratedContent && (
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <AlertTitle className="text-blue-800">Content was partially generated</AlertTitle>
+                    <AlertDescription className="text-blue-700">
+                      <p className="mt-1">
+                        Some content sources weren&apos;t available, but {data.sections?.length || 0} sections
+                        and {data.questions?.length || 0} quiz questions were created.
+                        You can continue to review and edit the content.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {/* Retry button */}
                 <Button onClick={handleRetry} variant="outline" className="gap-2">
@@ -798,39 +964,49 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           Back
         </Button>
 
-        {/* Show generate button when ready */}
-        {!isGenerating && !result && hasContent && (
-          <Button
-            onClick={handleStartGeneration}
-            disabled={!includeVideo && !includePdf}
-            className="gap-2"
-          >
-            <Rocket className="h-4 w-4" />
-            Generate Sections &amp; Quiz
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {/* Show generate button when ready */}
+          {!isGenerating && !result && hasContent && (
+            <Button
+              onClick={handleStartGeneration}
+              disabled={!includeVideo && !includePdf}
+              className="gap-2"
+            >
+              <Rocket className="h-4 w-4" />
+              Generate Sections &amp; Quiz
+            </Button>
+          )}
 
-        {/* Show next button after successful generation */}
-        {result?.success && (
-          <Button onClick={handleNext} className="gap-2">
-            Next: Review Content
-          </Button>
-        )}
+          {/* Show next button after successful generation OR if content exists */}
+          {canProceed && (
+            <Button onClick={handleNext} className="gap-2">
+              {result?.success ? 'Next: Review Content' : 'Continue to Review'}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
 
-        {/* Show generating state */}
-        {isGenerating && (
-          <Button disabled className="gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Generating...
-          </Button>
-        )}
+          {/* Show generating state */}
+          {isGenerating && (
+            <Button disabled className="gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generating...
+            </Button>
+          )}
 
-        {/* Skip button when no content */}
-        {!hasContent && (
-          <Button onClick={onNext} variant="outline">
-            Skip to Review
-          </Button>
-        )}
+          {/* Skip button when no content sources available */}
+          {!hasContent && !hasGeneratedContent && (
+            <Button onClick={onNext} variant="outline">
+              Skip to Review
+            </Button>
+          )}
+
+          {/* Skip & Add Manually button when generation failed and no content exists */}
+          {result && !result.success && !hasGeneratedContent && (
+            <Button onClick={onNext} variant="ghost" className="gap-2">
+              Skip &amp; Add Manually
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

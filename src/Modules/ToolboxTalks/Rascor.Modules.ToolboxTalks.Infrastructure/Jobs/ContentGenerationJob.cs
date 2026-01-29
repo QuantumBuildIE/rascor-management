@@ -98,18 +98,22 @@ public class ContentGenerationJob
 
             if (result.Success)
             {
+                var successType = result.PartialSuccess ? "WITH WARNINGS" : "SUCCESSFULLY";
                 _logger.LogInformation(
-                    "========== CONTENT GENERATION JOB COMPLETED SUCCESSFULLY ==========\n" +
+                    "========== CONTENT GENERATION JOB COMPLETED {SuccessType} ==========\n" +
                     "ToolboxTalkId: {ToolboxTalkId}\n" +
                     "Duration: {Duration}ms ({DurationSeconds:F1}s)\n" +
+                    "Partial Success: {PartialSuccess}\n" +
                     "Sections Generated: {Sections}\n" +
                     "Questions Generated: {Questions}\n" +
                     "Has Final Portion Question: {HasFinalQuestion}\n" +
                     "Total Tokens Used: {Tokens}\n" +
                     "Warnings: {WarningCount}",
+                    successType,
                     toolboxTalkId,
                     stopwatch.ElapsedMilliseconds,
                     stopwatch.ElapsedMilliseconds / 1000.0,
+                    result.PartialSuccess,
                     result.SectionsGenerated,
                     result.QuestionsGenerated,
                     result.HasFinalPortionQuestion,
@@ -152,10 +156,11 @@ public class ContentGenerationJob
             // Send failure notification to client
             await SendCompletionNotificationAsync(toolboxTalkId, connectionId, new ContentGenerationResult(
                 Success: false,
+                PartialSuccess: false,
                 SectionsGenerated: 0,
                 QuestionsGenerated: 0,
                 HasFinalPortionQuestion: false,
-                Errors: new List<string> { "Job was cancelled" },
+                Errors: new List<string> { "Content generation was cancelled" },
                 Warnings: new List<string>(),
                 TotalTokensUsed: 0));
 
@@ -180,15 +185,34 @@ public class ContentGenerationJob
             // Send failure notification to client
             await SendCompletionNotificationAsync(toolboxTalkId, connectionId, new ContentGenerationResult(
                 Success: false,
+                PartialSuccess: false,
                 SectionsGenerated: result?.SectionsGenerated ?? 0,
                 QuestionsGenerated: result?.QuestionsGenerated ?? 0,
                 HasFinalPortionQuestion: result?.HasFinalPortionQuestion ?? false,
-                Errors: new List<string> { $"Unexpected error: {ex.Message}" },
+                Errors: new List<string> { "An unexpected error occurred. Please try again." },
                 Warnings: result?.Warnings ?? new List<string>(),
                 TotalTokensUsed: result?.TotalTokensUsed ?? 0));
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// Generates a user-friendly completion message based on the result.
+    /// </summary>
+    private static string GetCompletionMessage(ContentGenerationResult result)
+    {
+        if (!result.Success)
+        {
+            return "Content generation failed";
+        }
+
+        if (result.PartialSuccess)
+        {
+            return $"Content generated with some limitations ({result.SectionsGenerated} sections, {result.QuestionsGenerated} questions)";
+        }
+
+        return $"Content generated successfully ({result.SectionsGenerated} sections, {result.QuestionsGenerated} questions)";
     }
 
     /// <summary>
@@ -246,12 +270,14 @@ public class ContentGenerationJob
             {
                 toolboxTalkId,
                 success = result.Success,
+                partialSuccess = result.PartialSuccess,
                 sectionsGenerated = result.SectionsGenerated,
                 questionsGenerated = result.QuestionsGenerated,
                 hasFinalPortionQuestion = result.HasFinalPortionQuestion,
                 errors = result.Errors,
                 warnings = result.Warnings,
-                totalTokensUsed = result.TotalTokensUsed
+                totalTokensUsed = result.TotalTokensUsed,
+                message = GetCompletionMessage(result)
             };
 
             if (!string.IsNullOrEmpty(connectionId))
