@@ -123,9 +123,18 @@ public class GenerateContentTranslationsCommandHandler
                 var descResult = await _translationService.TranslateTextAsync(
                     toolboxTalk.Description, language, false, cancellationToken);
 
+                // Only set translated description if translation succeeded
+                // Null description will cause retrieval to fall back to original English
                 translation.TranslatedDescription = descResult.Success
                     ? descResult.TranslatedContent
-                    : toolboxTalk.Description; // Fallback to original
+                    : null;
+
+                if (!descResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Description translation failed for ToolboxTalk {ToolboxTalkId} to {Language}: {Error}",
+                        toolboxTalk.Id, language, descResult.ErrorMessage);
+                }
             }
 
             // Translate sections
@@ -140,16 +149,23 @@ public class GenerateContentTranslationsCommandHandler
                 var sectionContentResult = await _translationService.TranslateTextAsync(
                     section.Content, language, true, cancellationToken); // Content may contain HTML
 
-                translatedSections.Add(new TranslatedSectionData
-                {
-                    SectionId = section.Id,
-                    Title = sectionTitleResult.Success ? sectionTitleResult.TranslatedContent : section.Title,
-                    Content = sectionContentResult.Success ? sectionContentResult.TranslatedContent : section.Content
-                });
-
+                // Only add to translated sections if BOTH title and content translated successfully
+                // This ensures retrieval code falls back to English for untranslated sections
                 if (sectionTitleResult.Success && sectionContentResult.Success)
                 {
+                    translatedSections.Add(new TranslatedSectionData
+                    {
+                        SectionId = section.Id,
+                        Title = sectionTitleResult.TranslatedContent,
+                        Content = sectionContentResult.TranslatedContent
+                    });
                     sectionsTranslated++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Section {SectionId} translation failed for {Language}. Title: {TitleSuccess}, Content: {ContentSuccess}",
+                        section.Id, language, sectionTitleResult.Success, sectionContentResult.Success);
                 }
             }
 
@@ -164,7 +180,16 @@ public class GenerateContentTranslationsCommandHandler
                 var questionTextResult = await _translationService.TranslateTextAsync(
                     question.QuestionText, language, false, cancellationToken);
 
+                if (!questionTextResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Question {QuestionId} text translation failed for {Language}: {Error}",
+                        question.Id, language, questionTextResult.ErrorMessage);
+                    continue; // Skip this question, retrieval will fall back to English
+                }
+
                 List<string>? translatedOptions = null;
+                var allOptionsTranslated = true;
 
                 if (!string.IsNullOrWhiteSpace(question.Options))
                 {
@@ -178,26 +203,44 @@ public class GenerateContentTranslationsCommandHandler
                             {
                                 var optionResult = await _translationService.TranslateTextAsync(
                                     option, language, false, cancellationToken);
-                                translatedOptions.Add(optionResult.Success ? optionResult.TranslatedContent : option);
+                                if (optionResult.Success)
+                                {
+                                    translatedOptions.Add(optionResult.TranslatedContent);
+                                }
+                                else
+                                {
+                                    _logger.LogWarning(
+                                        "Question {QuestionId} option translation failed for {Language}",
+                                        question.Id, language);
+                                    allOptionsTranslated = false;
+                                    break;
+                                }
                             }
                         }
                     }
                     catch (JsonException)
                     {
-                        // Keep original options if parsing fails
+                        _logger.LogWarning("Failed to parse options for question {QuestionId}", question.Id);
+                        allOptionsTranslated = false;
                     }
                 }
 
-                translatedQuestions.Add(new TranslatedQuestionData
+                // Only add if question text and all options translated successfully
+                if (allOptionsTranslated)
                 {
-                    QuestionId = question.Id,
-                    QuestionText = questionTextResult.Success ? questionTextResult.TranslatedContent : question.QuestionText,
-                    Options = translatedOptions
-                });
-
-                if (questionTextResult.Success)
-                {
+                    translatedQuestions.Add(new TranslatedQuestionData
+                    {
+                        QuestionId = question.Id,
+                        QuestionText = questionTextResult.TranslatedContent,
+                        Options = translatedOptions
+                    });
                     questionsTranslated++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Question {QuestionId} skipped due to option translation failures for {Language}",
+                        question.Id, language);
                 }
             }
 

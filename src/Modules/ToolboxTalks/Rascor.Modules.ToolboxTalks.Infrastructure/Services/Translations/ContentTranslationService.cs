@@ -48,11 +48,11 @@ public class ContentTranslationService : IContentTranslationService
 
             if (string.IsNullOrWhiteSpace(translatedText))
             {
-                _logger.LogWarning("Translation returned empty content for {Language}, returning original", targetLanguage);
-                return ContentTranslationResult.SuccessResult(text);
+                _logger.LogWarning("Translation returned empty content for {Language}", targetLanguage);
+                return ContentTranslationResult.FailureResult($"Translation to {targetLanguage} returned empty content");
             }
 
-            _logger.LogInformation("Translation to {Language} completed", targetLanguage);
+            _logger.LogInformation("Translation to {Language} completed successfully", targetLanguage);
             return ContentTranslationResult.SuccessResult(translatedText);
         }
         catch (HttpRequestException ex)
@@ -248,13 +248,13 @@ Return only the translated text, nothing else.
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Failed to parse batch response as JSON array, falling back to original texts");
+            _logger.LogWarning(ex, "Failed to parse batch response as JSON array");
         }
 
-        // Fallback: return original texts
+        // Fallback: return failures - don't mask translation errors with original text
         foreach (var item in items)
         {
-            results[item.Key] = ContentTranslationResult.SuccessResult(item.Text);
+            results[item.Key] = ContentTranslationResult.FailureResult("Failed to parse translation response");
         }
 
         return results;
