@@ -530,4 +530,52 @@ public class UserService : IUserService
             return Result.Fail($"Error changing password: {ex.Message}");
         }
     }
+
+    public async Task<Result> SetPasswordWithTokenAsync(SetPasswordWithTokenDto dto)
+    {
+        try
+        {
+            // Validate passwords match
+            if (dto.NewPassword != dto.ConfirmPassword)
+            {
+                return Result.Fail("Passwords do not match");
+            }
+
+            // Find user by email
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user == null)
+            {
+                // Return generic error to avoid user enumeration
+                return Result.Fail("Invalid token or email");
+            }
+
+            // Validate and reset password using the token
+            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToList();
+
+                // Check for specific token errors and return generic message
+                if (errors.Any(e => e.Contains("Invalid token", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return Result.Fail("This password setup link has expired or is invalid. Please contact your administrator.");
+                }
+
+                return Result.Fail(errors);
+            }
+
+            // Mark email as confirmed since user has verified ownership
+            user.EmailConfirmed = true;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Error setting password: {ex.Message}");
+        }
+    }
 }

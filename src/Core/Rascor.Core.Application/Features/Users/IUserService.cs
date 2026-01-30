@@ -13,4 +13,10 @@ public interface IUserService
     Task<Result> DeleteAsync(Guid id);
     Task<Result> ResetPasswordAsync(Guid id, ResetPasswordDto dto);
     Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
+
+    /// <summary>
+    /// Sets a user's password using an email verification token.
+    /// Used when new users click the "Set Password" link in their welcome email.
+    /// </summary>
+    Task<Result> SetPasswordWithTokenAsync(SetPasswordWithTokenDto dto);
 }

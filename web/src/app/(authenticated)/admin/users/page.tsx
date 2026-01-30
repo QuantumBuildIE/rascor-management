@@ -173,12 +173,7 @@ export default function UsersPage() {
       header: "Name",
       sortable: true,
       render: (user) => (
-        <Link
-          href={`/admin/users/${user.id}`}
-          className="text-primary hover:underline font-medium"
-        >
-          {user.fullName}
-        </Link>
+        <span className="font-medium">{user.fullName}</span>
       ),
     },
     {

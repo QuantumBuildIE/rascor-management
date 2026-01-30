@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rascor.Core.Application.DTOs.Auth;
+using Rascor.Core.Application.Features.Users;
+using Rascor.Core.Application.Features.Users.DTOs;
 using Rascor.Core.Application.Interfaces;
 
 namespace Rascor.API.Controllers;
@@ -11,10 +13,12 @@ namespace Rascor.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserService _userService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IUserService userService)
     {
         _authService = authService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -121,5 +125,23 @@ public class AuthController : ControllerBase
             roles,
             permissions
         });
+    }
+
+    /// <summary>
+    /// Set password for a new user using the token sent in their welcome email.
+    /// This is a public endpoint - no authentication required.
+    /// </summary>
+    [HttpPost("set-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SetPasswordWithToken([FromBody] SetPasswordWithTokenDto dto)
+    {
+        var result = await _userService.SetPasswordWithTokenAsync(dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(new { errors = result.Errors });
+        }
+
+        return Ok(new { message = "Password set successfully. You can now log in." });
     }
 }
