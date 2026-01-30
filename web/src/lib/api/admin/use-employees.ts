@@ -8,10 +8,16 @@ import {
   updateEmployee,
   deleteEmployee,
   resendInvite,
+  linkEmployeeToUser,
+  createUserForEmployee,
+  unlinkEmployeeFromUser,
   type CreateEmployeeDto,
   type UpdateEmployeeDto,
   type GetEmployeesParams,
+  type LinkEmployeeToUserDto,
+  type CreateUserForEmployeeDto,
 } from "./employees";
+import { USERS_KEY } from "./use-users";
 
 export const EMPLOYEES_KEY = ["employees"];
 
@@ -84,5 +90,53 @@ export function useResendInvite() {
   });
 }
 
+export function useLinkEmployeeToUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      employeeId,
+      data,
+    }: {
+      employeeId: string;
+      data: LinkEmployeeToUserDto;
+    }) => linkEmployeeToUser(employeeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+    },
+  });
+}
+
+export function useCreateUserForEmployee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      employeeId,
+      data,
+    }: {
+      employeeId: string;
+      data: CreateUserForEmployeeDto;
+    }) => createUserForEmployee(employeeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+    },
+  });
+}
+
+export function useUnlinkEmployeeFromUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employeeId: string) => unlinkEmployeeFromUser(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+    },
+  });
+}
+
 export type { CreateEmployeeDto, UpdateEmployeeDto, GetEmployeesParams } from "./employees";
-export type { PaginatedResponse } from "./employees";
+export type { PaginatedResponse, LinkEmployeeToUserDto, CreateUserForEmployeeDto } from "./employees";

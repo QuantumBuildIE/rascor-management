@@ -19,4 +19,32 @@ public interface IUserService
     /// Used when new users click the "Set Password" link in their welcome email.
     /// </summary>
     Task<Result> SetPasswordWithTokenAsync(SetPasswordWithTokenDto dto);
+
+    /// <summary>
+    /// Gets users that do not have a linked employee record
+    /// </summary>
+    Task<Result<List<UnlinkedUserDto>>> GetUnlinkedAsync();
+
+    /// <summary>
+    /// Links an existing user to an existing employee record
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="dto">DTO containing the employee ID to link</param>
+    /// <returns>Updated user DTO</returns>
+    Task<Result<UserDto>> LinkToEmployeeAsync(Guid userId, LinkUserToEmployeeDto dto);
+
+    /// <summary>
+    /// Creates a new employee record for an existing user
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="dto">DTO containing the employee details</param>
+    /// <returns>Updated user DTO</returns>
+    Task<Result<UserDto>> CreateEmployeeForUserAsync(Guid userId, CreateEmployeeForUserDto dto);
+
+    /// <summary>
+    /// Unlinks the employee record from a user (does not delete the employee)
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <returns>Result indicating success or failure</returns>
+    Task<Result> UnlinkEmployeeAsync(Guid userId);
 }

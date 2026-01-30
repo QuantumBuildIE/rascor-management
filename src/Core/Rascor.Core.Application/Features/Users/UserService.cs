@@ -578,4 +578,247 @@ public class UserService : IUserService
             return Result.Fail($"Error setting password: {ex.Message}");
         }
     }
+
+    public async Task<Result<List<UnlinkedUserDto>>> GetUnlinkedAsync()
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            var users = await _userManager.Users
+                .Where(u => u.TenantId == tenantId && u.EmployeeId == null && u.IsActive)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .OrderBy(u => u.LastName)
+                .ThenBy(u => u.FirstName)
+                .Select(u => new UnlinkedUserDto(
+                    u.Id,
+                    u.Email!,
+                    u.FirstName,
+                    u.LastName,
+                    u.FirstName + " " + u.LastName,
+                    u.IsActive,
+                    u.UserRoles.Select(ur => ur.Role.Name!).ToList()
+                ))
+                .ToListAsync();
+
+            return Result.Ok(users);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<List<UnlinkedUserDto>>($"Error retrieving unlinked users: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<UserDto>> LinkToEmployeeAsync(Guid userId, LinkUserToEmployeeDto dto)
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            var user = await _userManager.Users
+                .Where(u => u.Id == userId && u.TenantId == tenantId)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return Result.Fail<UserDto>($"User with ID {userId} not found");
+            }
+
+            if (user.EmployeeId.HasValue)
+            {
+                return Result.Fail<UserDto>("This user is already linked to an employee");
+            }
+
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Id == dto.EmployeeId);
+
+            if (employee == null)
+            {
+                return Result.Fail<UserDto>($"Employee with ID {dto.EmployeeId} not found");
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                return Result.Fail<UserDto>("This employee is already linked to another user account");
+            }
+
+            // Create the bidirectional link
+            user.EmployeeId = employee.Id;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = _currentUserService.UserId;
+            employee.UserId = user.Id.ToString();
+
+            await _userManager.UpdateAsync(user);
+            await _context.SaveChangesAsync();
+
+            var userDto = new UserDto(
+                user.Id,
+                user.Email!,
+                user.FirstName,
+                user.LastName,
+                user.FirstName + " " + user.LastName,
+                user.TenantId,
+                user.IsActive,
+                user.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
+                user.CreatedAt,
+                employee.Id,
+                employee.FirstName + " " + employee.LastName
+            );
+
+            return Result.Ok(userDto);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<UserDto>($"Error linking user to employee: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<UserDto>> CreateEmployeeForUserAsync(Guid userId, CreateEmployeeForUserDto dto)
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            var user = await _userManager.Users
+                .Where(u => u.Id == userId && u.TenantId == tenantId)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return Result.Fail<UserDto>($"User with ID {userId} not found");
+            }
+
+            if (user.EmployeeId.HasValue)
+            {
+                return Result.Fail<UserDto>("This user is already linked to an employee");
+            }
+
+            // Check employee code uniqueness (including soft-deleted records)
+            var duplicateCode = await _context.Employees
+                .IgnoreQueryFilters()
+                .Where(e => e.TenantId == tenantId && e.EmployeeCode == dto.EmployeeCode)
+                .Select(e => new { e.Id, e.FirstName, e.LastName, e.IsDeleted })
+                .FirstOrDefaultAsync();
+
+            if (duplicateCode != null)
+            {
+                if (duplicateCode.IsDeleted)
+                {
+                    return Result.Fail<UserDto>(
+                        $"Employee code '{dto.EmployeeCode}' was previously assigned to deleted employee " +
+                        $"{duplicateCode.FirstName} {duplicateCode.LastName}. " +
+                        "Please choose a different code.");
+                }
+                return Result.Fail<UserDto>($"Employee code '{dto.EmployeeCode}' is already in use.");
+            }
+
+            // Validate site if provided
+            if (dto.PrimarySiteId.HasValue)
+            {
+                var siteExists = await _context.Sites.AnyAsync(s => s.Id == dto.PrimarySiteId.Value);
+                if (!siteExists)
+                {
+                    return Result.Fail<UserDto>($"Site with ID {dto.PrimarySiteId} not found");
+                }
+            }
+
+            var employee = new Employee
+            {
+                Id = Guid.NewGuid(),
+                EmployeeCode = dto.EmployeeCode,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = dto.Phone,
+                Mobile = dto.Mobile,
+                JobTitle = dto.JobTitle,
+                Department = dto.Department,
+                PrimarySiteId = dto.PrimarySiteId,
+                IsActive = true,
+                UserId = user.Id.ToString(),
+                TenantId = tenantId,
+                PreferredLanguage = dto.PreferredLanguage
+            };
+
+            employee.SetGeoTrackerID(dto.GeoTrackerID);
+
+            _context.Employees.Add(employee);
+
+            user.EmployeeId = employee.Id;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = _currentUserService.UserId;
+
+            await _userManager.UpdateAsync(user);
+            await _context.SaveChangesAsync();
+
+            var userDto = new UserDto(
+                user.Id,
+                user.Email!,
+                user.FirstName,
+                user.LastName,
+                user.FirstName + " " + user.LastName,
+                user.TenantId,
+                user.IsActive,
+                user.UserRoles.Select(ur => new UserRoleDto(ur.RoleId, ur.Role.Name!)).ToList(),
+                user.CreatedAt,
+                employee.Id,
+                employee.FirstName + " " + employee.LastName
+            );
+
+            return Result.Ok(userDto);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<UserDto>($"Error creating employee: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> UnlinkEmployeeAsync(Guid userId)
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            var user = await _userManager.Users
+                .Where(u => u.Id == userId && u.TenantId == tenantId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return Result.Fail($"User with ID {userId} not found");
+            }
+
+            if (!user.EmployeeId.HasValue)
+            {
+                return Result.Fail("This user is not linked to any employee");
+            }
+
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Id == user.EmployeeId.Value);
+
+            if (employee != null)
+            {
+                employee.UserId = null;
+            }
+
+            var previousEmployeeId = user.EmployeeId;
+            user.EmployeeId = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = _currentUserService.UserId;
+
+            await _userManager.UpdateAsync(user);
+            await _context.SaveChangesAsync();
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Error unlinking employee: {ex.Message}");
+        }
+    }
 }

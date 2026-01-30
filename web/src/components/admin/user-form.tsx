@@ -33,6 +33,7 @@ import { useUnlinkedEmployees } from "@/lib/api/admin/use-employees";
 import { useAllSites } from "@/lib/api/admin/use-sites";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { UserEmployeeRecordSection } from "./user-employee-record-section";
 
 // Password strength calculation
 function calculatePasswordStrength(password: string): {
@@ -654,6 +655,11 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
             </FormItem>
           )}
         />
+
+        {/* Employee Record Section - Show for existing users to manage linkage */}
+        {isEditing && user && (
+          <UserEmployeeRecordSection user={user} />
+        )}
 
         <div className="flex justify-end gap-4">
           {onCancel && (

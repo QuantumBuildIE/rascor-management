@@ -174,4 +174,63 @@ public class EmployeesController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Link an existing employee to an existing user account
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <param name="dto">User ID to link</param>
+    /// <returns>Updated employee</returns>
+    [HttpPost("{id:guid}/link-user")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> LinkToUser(Guid id, [FromBody] LinkEmployeeToUserDto dto)
+    {
+        var result = await _employeeService.LinkToUserAsync(id, dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Create a new user account for an existing employee
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <param name="dto">Role IDs for the new user</param>
+    /// <returns>Updated employee</returns>
+    [HttpPost("{id:guid}/create-user")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> CreateUserForEmployee(Guid id, [FromBody] CreateUserForEmployeeDto dto)
+    {
+        var result = await _employeeService.CreateUserForEmployeeAsync(id, dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = id }, result);
+    }
+
+    /// <summary>
+    /// Unlink the user account from an employee (does not delete the user)
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <returns>Success or error</returns>
+    [HttpDelete("{id:guid}/unlink-user")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> UnlinkUser(Guid id)
+    {
+        var result = await _employeeService.UnlinkUserAsync(id);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

@@ -144,3 +144,41 @@ export async function deleteEmployee(id: string): Promise<void> {
 export async function resendInvite(id: string): Promise<void> {
   await apiClient.post(`/employees/${id}/resend-invite`);
 }
+
+// Employee linkage DTOs
+
+export interface LinkEmployeeToUserDto {
+  userId: string;
+}
+
+export interface CreateUserForEmployeeDto {
+  roleIds: string[];
+}
+
+// Employee linkage functions
+
+export async function linkEmployeeToUser(
+  employeeId: string,
+  data: LinkEmployeeToUserDto
+): Promise<Employee> {
+  const response = await apiClient.post<ApiResponse<Employee>>(
+    `/employees/${employeeId}/link-user`,
+    data
+  );
+  return response.data.data;
+}
+
+export async function createUserForEmployee(
+  employeeId: string,
+  data: CreateUserForEmployeeDto
+): Promise<Employee> {
+  const response = await apiClient.post<ApiResponse<Employee>>(
+    `/employees/${employeeId}/create-user`,
+    data
+  );
+  return response.data.data;
+}
+
+export async function unlinkEmployeeFromUser(employeeId: string): Promise<void> {
+  await apiClient.delete(`/employees/${employeeId}/unlink-user`);
+}

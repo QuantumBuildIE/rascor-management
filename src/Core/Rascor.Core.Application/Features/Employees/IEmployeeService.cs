@@ -19,4 +19,27 @@ public interface IEmployeeService
     /// <param name="employeeId">Employee ID</param>
     /// <returns>Result indicating success or failure</returns>
     Task<Result> ResendInviteAsync(Guid employeeId);
+
+    /// <summary>
+    /// Links an existing employee to an existing user account
+    /// </summary>
+    /// <param name="employeeId">Employee ID</param>
+    /// <param name="dto">DTO containing the user ID to link</param>
+    /// <returns>Updated employee DTO</returns>
+    Task<Result<EmployeeDto>> LinkToUserAsync(Guid employeeId, LinkEmployeeToUserDto dto);
+
+    /// <summary>
+    /// Creates a new user account for an existing employee
+    /// </summary>
+    /// <param name="employeeId">Employee ID</param>
+    /// <param name="dto">DTO containing the role IDs for the new user</param>
+    /// <returns>Updated employee DTO</returns>
+    Task<Result<EmployeeDto>> CreateUserForEmployeeAsync(Guid employeeId, CreateUserForEmployeeDto dto);
+
+    /// <summary>
+    /// Unlinks the user account from an employee (does not delete the user)
+    /// </summary>
+    /// <param name="employeeId">Employee ID</param>
+    /// <returns>Result indicating success or failure</returns>
+    Task<Result> UnlinkUserAsync(Guid employeeId);
 }

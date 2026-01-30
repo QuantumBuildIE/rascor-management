@@ -29,6 +29,7 @@ import { useAllSites } from "@/lib/api/admin/use-sites";
 import type { Employee } from "@/types/admin";
 import { toast } from "sonner";
 import { Info, User as UserIcon } from "lucide-react";
+import { EmployeeUserAccountSection } from "./employee-user-account-section";
 
 const AVAILABLE_ROLES = [
   { value: "SiteManager", label: "Site Manager" },
@@ -419,17 +420,9 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
           </div>
         )}
 
-        {/* Show existing user account status when editing */}
-        {isEditing && employee?.hasUserAccount && (
-          <div className="flex items-start gap-2 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-300">
-            <UserIcon className="h-4 w-4 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-medium">This employee has a login account</p>
-              <p className="text-green-700 dark:text-green-400">
-                Changes to email or name will be synced to the user account.
-              </p>
-            </div>
-          </div>
+        {/* User Account Section - Show for existing employees to manage linkage */}
+        {isEditing && employee && (
+          <EmployeeUserAccountSection employee={employee} />
         )}
 
         <div className="grid gap-6 sm:grid-cols-2">

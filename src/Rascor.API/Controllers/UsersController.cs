@@ -185,4 +185,81 @@ public class UsersController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Get users that do not have a linked employee record
+    /// </summary>
+    /// <returns>List of unlinked users</returns>
+    [HttpGet("unlinked")]
+    [Authorize(Policy = "Core.ManageUsers")]
+    public async Task<IActionResult> GetUnlinked()
+    {
+        var result = await _userService.GetUnlinkedAsync();
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Link an existing user to an existing employee record
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <param name="dto">Employee ID to link</param>
+    /// <returns>Updated user</returns>
+    [HttpPost("{id:guid}/link-employee")]
+    [Authorize(Policy = "Core.ManageUsers")]
+    public async Task<IActionResult> LinkToEmployee(Guid id, [FromBody] LinkUserToEmployeeDto dto)
+    {
+        var result = await _userService.LinkToEmployeeAsync(id, dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Create a new employee record for an existing user
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <param name="dto">Employee details</param>
+    /// <returns>Updated user</returns>
+    [HttpPost("{id:guid}/create-employee")]
+    [Authorize(Policy = "Core.ManageUsers")]
+    public async Task<IActionResult> CreateEmployeeForUser(Guid id, [FromBody] CreateEmployeeForUserDto dto)
+    {
+        var result = await _userService.CreateEmployeeForUserAsync(id, dto);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = id }, result);
+    }
+
+    /// <summary>
+    /// Unlink the employee record from a user (does not delete the employee)
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <returns>Success or error</returns>
+    [HttpDelete("{id:guid}/unlink-employee")]
+    [Authorize(Policy = "Core.ManageUsers")]
+    public async Task<IActionResult> UnlinkEmployee(Guid id)
+    {
+        var result = await _userService.UnlinkEmployeeAsync(id);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

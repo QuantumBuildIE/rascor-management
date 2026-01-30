@@ -8,12 +8,19 @@ import {
   deleteUser,
   resetPassword,
   changePassword,
+  getUnlinkedUsers,
+  linkUserToEmployee,
+  createEmployeeForUser,
+  unlinkUserFromEmployee,
   type CreateUserDto,
   type UpdateUserDto,
   type ResetPasswordDto,
   type ChangePasswordDto,
   type GetUsersParams,
+  type LinkUserToEmployeeDto,
+  type CreateEmployeeForUserDto,
 } from "./users";
+import { EMPLOYEES_KEY } from "./use-employees";
 
 export const USERS_KEY = ["users"];
 
@@ -87,5 +94,60 @@ export function useChangePassword() {
   });
 }
 
+export function useUnlinkedUsers() {
+  return useQuery({
+    queryKey: [...USERS_KEY, "unlinked"],
+    queryFn: getUnlinkedUsers,
+  });
+}
+
+export function useLinkUserToEmployee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      data,
+    }: {
+      userId: string;
+      data: LinkUserToEmployeeDto;
+    }) => linkUserToEmployee(userId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+    },
+  });
+}
+
+export function useCreateEmployeeForUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      data,
+    }: {
+      userId: string;
+      data: CreateEmployeeForUserDto;
+    }) => createEmployeeForUser(userId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+    },
+  });
+}
+
+export function useUnlinkUserFromEmployee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => unlinkUserFromEmployee(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
+    },
+  });
+}
+
 export type { CreateUserDto, UpdateUserDto, ResetPasswordDto, ChangePasswordDto, GetUsersParams } from "./users";
-export type { PaginatedResponse, User, UserRole } from "./users";
+export type { PaginatedResponse, User, UserRole, UnlinkedUser, LinkUserToEmployeeDto, CreateEmployeeForUserDto } from "./users";

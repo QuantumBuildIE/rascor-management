@@ -836,4 +836,251 @@ public class EmployeeService : IEmployeeService
             return Result.Fail($"Error resending invite: {ex.Message}");
         }
     }
+
+    public async Task<Result<EmployeeDto>> LinkToUserAsync(Guid employeeId, LinkEmployeeToUserDto dto)
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            // Get the employee
+            var employee = await _context.Employees
+                .Include(e => e.PrimarySite)
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (employee == null)
+            {
+                return Result.Fail<EmployeeDto>($"Employee with ID {employeeId} not found");
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                return Result.Fail<EmployeeDto>("This employee is already linked to a user account");
+            }
+
+            // Get the user
+            var user = await _userManager.Users
+                .Where(u => u.Id == dto.UserId && u.TenantId == tenantId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return Result.Fail<EmployeeDto>($"User with ID {dto.UserId} not found");
+            }
+
+            if (user.EmployeeId.HasValue)
+            {
+                return Result.Fail<EmployeeDto>("This user is already linked to another employee");
+            }
+
+            // Create the bidirectional link
+            employee.UserId = user.Id.ToString();
+            user.EmployeeId = employee.Id;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = _currentUserService.UserId;
+
+            await _userManager.UpdateAsync(user);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Linked Employee {EmployeeId} to User {UserId}",
+                employeeId, dto.UserId);
+
+            var employeeDto = new EmployeeDto(
+                employee.Id,
+                employee.EmployeeCode,
+                employee.FirstName,
+                employee.LastName,
+                employee.FirstName + " " + employee.LastName,
+                employee.Email,
+                employee.Phone,
+                employee.Mobile,
+                employee.JobTitle,
+                employee.Department,
+                employee.PrimarySiteId,
+                employee.PrimarySite?.SiteName,
+                employee.StartDate,
+                employee.EndDate,
+                employee.IsActive,
+                employee.Notes,
+                employee.GeoTrackerID,
+                true,
+                user.Id,
+                employee.PreferredLanguage
+            );
+
+            return Result.Ok(employeeDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error linking employee {EmployeeId} to user", employeeId);
+            return Result.Fail<EmployeeDto>($"Error linking employee to user: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<EmployeeDto>> CreateUserForEmployeeAsync(Guid employeeId, CreateUserForEmployeeDto dto)
+    {
+        try
+        {
+            var tenantId = _currentUserService.TenantId;
+
+            // Get the employee
+            var employee = await _context.Employees
+                .Include(e => e.PrimarySite)
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (employee == null)
+            {
+                return Result.Fail<EmployeeDto>($"Employee with ID {employeeId} not found");
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                return Result.Fail<EmployeeDto>("This employee already has a linked user account");
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.Email))
+            {
+                return Result.Fail<EmployeeDto>("Employee must have an email address to create a user account");
+            }
+
+            // Check if email is already in use
+            var existingUser = await _userManager.Users
+                .Where(u => u.TenantId == tenantId && u.NormalizedEmail == employee.Email.ToUpperInvariant())
+                .FirstOrDefaultAsync();
+
+            if (existingUser != null)
+            {
+                return Result.Fail<EmployeeDto>($"A user with email '{employee.Email}' already exists");
+            }
+
+            // Validate roles
+            if (dto.RoleIds == null || dto.RoleIds.Count == 0)
+            {
+                return Result.Fail<EmployeeDto>("At least one role must be specified");
+            }
+
+            var roles = await _roleManager.Roles
+                .Where(r => dto.RoleIds.Contains(r.Id))
+                .ToListAsync();
+
+            if (roles.Count != dto.RoleIds.Count)
+            {
+                return Result.Fail<EmployeeDto>("One or more role IDs are invalid");
+            }
+
+            // Create the user using the existing helper method
+            var userCreationResult = await CreateLinkedUserAccountAsync(
+                employee,
+                employee.Email,
+                tenantId,
+                roles.First().Name);
+
+            if (!userCreationResult.Success)
+            {
+                return Result.Fail<EmployeeDto>(userCreationResult.Errors);
+            }
+
+            var user = userCreationResult.Data!;
+            employee.UserId = user.Id.ToString();
+
+            // Add any additional roles (first one was added by CreateLinkedUserAccountAsync)
+            foreach (var role in roles.Skip(1))
+            {
+                await _userManager.AddToRoleAsync(user, role.Name!);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Send password setup email
+            try
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                await _emailService.SendPasswordSetupEmailAsync(employee.Email, employee.FirstName, token);
+                _logger.LogInformation(
+                    "Sent password setup email to {Email} for new User {UserId}",
+                    employee.Email, user.Id);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogWarning(
+                    emailEx,
+                    "Failed to send password setup email to {Email} for User {UserId}",
+                    employee.Email, user.Id);
+            }
+
+            var employeeDto = new EmployeeDto(
+                employee.Id,
+                employee.EmployeeCode,
+                employee.FirstName,
+                employee.LastName,
+                employee.FirstName + " " + employee.LastName,
+                employee.Email,
+                employee.Phone,
+                employee.Mobile,
+                employee.JobTitle,
+                employee.Department,
+                employee.PrimarySiteId,
+                employee.PrimarySite?.SiteName,
+                employee.StartDate,
+                employee.EndDate,
+                employee.IsActive,
+                employee.Notes,
+                employee.GeoTrackerID,
+                true,
+                user.Id,
+                employee.PreferredLanguage
+            );
+
+            return Result.Ok(employeeDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating user for employee {EmployeeId}", employeeId);
+            return Result.Fail<EmployeeDto>($"Error creating user: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> UnlinkUserAsync(Guid employeeId)
+    {
+        try
+        {
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (employee == null)
+            {
+                return Result.Fail($"Employee with ID {employeeId} not found");
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                return Result.Fail("This employee is not linked to any user account");
+            }
+
+            var user = await _userManager.FindByIdAsync(employee.UserId);
+            if (user != null)
+            {
+                user.EmployeeId = null;
+                user.UpdatedAt = DateTime.UtcNow;
+                user.UpdatedBy = _currentUserService.UserId;
+                await _userManager.UpdateAsync(user);
+            }
+
+            var previousUserId = employee.UserId;
+            employee.UserId = null;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Unlinked Employee {EmployeeId} from User {UserId}",
+                employeeId, previousUserId);
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unlinking user from employee {EmployeeId}", employeeId);
+            return Result.Fail($"Error unlinking user: {ex.Message}");
+        }
+    }
 }

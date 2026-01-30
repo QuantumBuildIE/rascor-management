@@ -162,3 +162,63 @@ export async function resetPassword(id: string, data: ResetPasswordDto): Promise
 export async function changePassword(data: ChangePasswordDto): Promise<void> {
   await apiClient.post("/users/change-password", data);
 }
+
+// User linkage DTOs
+
+export interface UnlinkedUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  isActive: boolean;
+  roleNames: string[];
+}
+
+export interface LinkUserToEmployeeDto {
+  employeeId: string;
+}
+
+export interface CreateEmployeeForUserDto {
+  employeeCode: string;
+  phone?: string;
+  mobile?: string;
+  jobTitle?: string;
+  department?: string;
+  primarySiteId?: string;
+  geoTrackerId?: string;
+  preferredLanguage?: string;
+}
+
+// User linkage functions
+
+export async function getUnlinkedUsers(): Promise<UnlinkedUser[]> {
+  const response = await apiClient.get<ApiResponse<UnlinkedUser[]>>("/users/unlinked");
+  return response.data.data ?? [];
+}
+
+export async function linkUserToEmployee(
+  userId: string,
+  data: LinkUserToEmployeeDto
+): Promise<User> {
+  const response = await apiClient.post<ApiResponse<User>>(
+    `/users/${userId}/link-employee`,
+    data
+  );
+  return response.data.data;
+}
+
+export async function createEmployeeForUser(
+  userId: string,
+  data: CreateEmployeeForUserDto
+): Promise<User> {
+  const response = await apiClient.post<ApiResponse<User>>(
+    `/users/${userId}/create-employee`,
+    data
+  );
+  return response.data.data;
+}
+
+export async function unlinkUserFromEmployee(userId: string): Promise<void> {
+  await apiClient.delete(`/users/${userId}/unlink-employee`);
+}
