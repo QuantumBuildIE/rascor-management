@@ -18,6 +18,7 @@ using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 using System.ComponentModel.DataAnnotations;
+using FileHashType = Rascor.Modules.ToolboxTalks.Application.Services.FileHashType;
 
 namespace Rascor.API.Controllers;
 
@@ -34,6 +35,7 @@ public class ToolboxTalksController : ControllerBase
     private readonly IToolboxTalkReportsService _reportsService;
     private readonly IToolboxTalkExportService _exportService;
     private readonly IContentExtractionService _contentExtractionService;
+    private readonly IContentDeduplicationService _deduplicationService;
     private readonly ILogger<ToolboxTalksController> _logger;
 
     public ToolboxTalksController(
@@ -42,6 +44,7 @@ public class ToolboxTalksController : ControllerBase
         IToolboxTalkReportsService reportsService,
         IToolboxTalkExportService exportService,
         IContentExtractionService contentExtractionService,
+        IContentDeduplicationService deduplicationService,
         ILogger<ToolboxTalksController> logger)
     {
         _mediator = mediator;
@@ -49,6 +52,7 @@ public class ToolboxTalksController : ControllerBase
         _reportsService = reportsService;
         _exportService = exportService;
         _contentExtractionService = contentExtractionService;
+        _deduplicationService = deduplicationService;
         _logger = logger;
     }
 
@@ -357,6 +361,220 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error extracting content for toolbox talk {ToolboxTalkId}", id);
             return StatusCode(500, Result.Fail("Error extracting content"));
+        }
+    }
+
+    #endregion
+
+    #region Content Deduplication
+
+    /// <summary>
+    /// Checks if a file has been previously processed in another toolbox talk.
+    /// Returns information about the source toolbox talk if a duplicate is found.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID to check against</param>
+    /// <param name="request">File hash and type to check</param>
+    /// <returns>Duplicate check result with source toolbox talk info if found</returns>
+    [HttpPost("{id:guid}/check-duplicate")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(typeof(DuplicateCheckResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CheckDuplicate(
+        Guid id,
+        [FromBody] CheckDuplicateRequest request)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Checking for duplicate content. ToolboxTalkId: {Id}, FileType: {FileType}",
+                id, request.FileType);
+
+            // Verify the toolbox talk exists
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox Talk not found" });
+            }
+
+            // Calculate hash from URL if not provided
+            var fileHash = request.FileHash;
+            if (string.IsNullOrEmpty(fileHash) && !string.IsNullOrEmpty(request.FileUrl))
+            {
+                _logger.LogDebug("Calculating hash from URL: {Url}", request.FileUrl);
+                fileHash = await _deduplicationService.CalculateFileHashFromUrlAsync(request.FileUrl);
+            }
+
+            if (string.IsNullOrEmpty(fileHash))
+            {
+                return BadRequest(new { error = "Either fileHash or fileUrl must be provided" });
+            }
+
+            var fileType = request.FileType.Equals("PDF", StringComparison.OrdinalIgnoreCase)
+                ? FileHashType.Pdf
+                : FileHashType.Video;
+
+            var result = await _deduplicationService.CheckForDuplicateAsync(
+                _currentUserService.TenantId,
+                fileHash,
+                fileType,
+                id);
+
+            return Ok(new DuplicateCheckResponse
+            {
+                IsDuplicate = result.IsDuplicate,
+                FileHash = fileHash,
+                SourceToolboxTalk = result.SourceToolboxTalk != null
+                    ? new SourceToolboxTalkResponse
+                    {
+                        Id = result.SourceToolboxTalk.Id,
+                        Title = result.SourceToolboxTalk.Title,
+                        ProcessedAt = result.SourceToolboxTalk.ProcessedAt,
+                        SectionCount = result.SourceToolboxTalk.SectionCount,
+                        QuestionCount = result.SourceToolboxTalk.QuestionCount,
+                        TranslationLanguages = result.SourceToolboxTalk.TranslationLanguages
+                    }
+                    : null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking for duplicate content for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error checking for duplicate content" });
+        }
+    }
+
+    /// <summary>
+    /// Reuses content from a source toolbox talk (sections, questions, translations).
+    /// Call this instead of /generate when user chooses to reuse existing content.
+    /// </summary>
+    /// <param name="id">Target toolbox talk ID to copy content into</param>
+    /// <param name="request">Source toolbox talk information</param>
+    /// <returns>Result of the reuse operation</returns>
+    [HttpPost("{id:guid}/reuse-content")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(typeof(ContentReuseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReuseContent(
+        Guid id,
+        [FromBody] ReuseContentRequest request)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Reusing content. TargetId: {TargetId}, SourceId: {SourceId}",
+                id, request.SourceToolboxTalkId);
+
+            // Verify the target toolbox talk exists
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Target Toolbox Talk not found" });
+            }
+
+            var result = await _deduplicationService.ReuseContentAsync(
+                id,
+                request.SourceToolboxTalkId,
+                _currentUserService.TenantId);
+
+            if (!result.Success)
+            {
+                return BadRequest(new { error = result.ErrorMessage });
+            }
+
+            return Ok(new ContentReuseResponse
+            {
+                Success = true,
+                SectionsCopied = result.SectionsCopied,
+                QuestionsCopied = result.QuestionsCopied,
+                TranslationsCopied = result.TranslationsCopied,
+                Message = $"Successfully reused content: {result.SectionsCopied} sections, {result.QuestionsCopied} questions, {result.TranslationsCopied} translations"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reusing content for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error reusing content" });
+        }
+    }
+
+    /// <summary>
+    /// Updates the file hash for a toolbox talk after file upload.
+    /// Should be called after uploading a PDF or setting a video URL.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="request">File hash information</param>
+    /// <returns>Success status</returns>
+    [HttpPost("{id:guid}/update-file-hash")]
+    [Authorize(Policy = "ToolboxTalks.Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateFileHash(
+        Guid id,
+        [FromBody] UpdateFileHashRequest request)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Updating file hash. ToolboxTalkId: {Id}, FileType: {FileType}",
+                id, request.FileType);
+
+            // Verify the toolbox talk exists
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox Talk not found" });
+            }
+
+            // Calculate hash from URL if not provided
+            var fileHash = request.FileHash;
+            if (string.IsNullOrEmpty(fileHash) && !string.IsNullOrEmpty(request.FileUrl))
+            {
+                _logger.LogDebug("Calculating hash from URL: {Url}", request.FileUrl);
+                fileHash = await _deduplicationService.CalculateFileHashFromUrlAsync(request.FileUrl);
+            }
+
+            if (string.IsNullOrEmpty(fileHash))
+            {
+                return BadRequest(new { error = "Either fileHash or fileUrl must be provided" });
+            }
+
+            var fileType = request.FileType.Equals("PDF", StringComparison.OrdinalIgnoreCase)
+                ? FileHashType.Pdf
+                : FileHashType.Video;
+
+            await _deduplicationService.UpdateFileHashAsync(
+                id,
+                fileHash,
+                fileType,
+                _currentUserService.TenantId);
+
+            return Ok(new { success = true, fileHash });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating file hash for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error updating file hash" });
         }
     }
 
@@ -930,4 +1148,152 @@ public class ContentTranslationDto
     /// Provider used for translation (e.g., "Claude", "Manual")
     /// </summary>
     public string TranslationProvider { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Request DTO for checking duplicate content
+/// </summary>
+public record CheckDuplicateRequest
+{
+    /// <summary>
+    /// The file hash (SHA-256) to check for duplicates.
+    /// If not provided, fileUrl must be provided and the hash will be calculated.
+    /// </summary>
+    public string? FileHash { get; init; }
+
+    /// <summary>
+    /// The file URL to calculate hash from.
+    /// Used if fileHash is not provided.
+    /// </summary>
+    public string? FileUrl { get; init; }
+
+    /// <summary>
+    /// Type of file: "PDF" or "Video"
+    /// </summary>
+    [Required]
+    public string FileType { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Response DTO for duplicate check
+/// </summary>
+public record DuplicateCheckResponse
+{
+    /// <summary>
+    /// Whether a duplicate was found
+    /// </summary>
+    public bool IsDuplicate { get; init; }
+
+    /// <summary>
+    /// The calculated file hash
+    /// </summary>
+    public string FileHash { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Information about the source toolbox talk if a duplicate was found
+    /// </summary>
+    public SourceToolboxTalkResponse? SourceToolboxTalk { get; init; }
+}
+
+/// <summary>
+/// Response DTO for source toolbox talk information
+/// </summary>
+public record SourceToolboxTalkResponse
+{
+    /// <summary>
+    /// ID of the source toolbox talk
+    /// </summary>
+    public Guid Id { get; init; }
+
+    /// <summary>
+    /// Title of the source toolbox talk
+    /// </summary>
+    public string Title { get; init; } = string.Empty;
+
+    /// <summary>
+    /// When the content was originally generated
+    /// </summary>
+    public DateTime? ProcessedAt { get; init; }
+
+    /// <summary>
+    /// Number of sections in the source
+    /// </summary>
+    public int SectionCount { get; init; }
+
+    /// <summary>
+    /// Number of questions in the source
+    /// </summary>
+    public int QuestionCount { get; init; }
+
+    /// <summary>
+    /// Languages that have translations available
+    /// </summary>
+    public List<string> TranslationLanguages { get; init; } = new();
+}
+
+/// <summary>
+/// Request DTO for reusing content from another toolbox talk
+/// </summary>
+public record ReuseContentRequest
+{
+    /// <summary>
+    /// ID of the source toolbox talk to copy content from
+    /// </summary>
+    [Required]
+    public Guid SourceToolboxTalkId { get; init; }
+}
+
+/// <summary>
+/// Response DTO for content reuse operation
+/// </summary>
+public record ContentReuseResponse
+{
+    /// <summary>
+    /// Whether the reuse was successful
+    /// </summary>
+    public bool Success { get; init; }
+
+    /// <summary>
+    /// Number of sections copied
+    /// </summary>
+    public int SectionsCopied { get; init; }
+
+    /// <summary>
+    /// Number of questions copied
+    /// </summary>
+    public int QuestionsCopied { get; init; }
+
+    /// <summary>
+    /// Number of translations copied
+    /// </summary>
+    public int TranslationsCopied { get; init; }
+
+    /// <summary>
+    /// Status message
+    /// </summary>
+    public string Message { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Request DTO for updating file hash
+/// </summary>
+public record UpdateFileHashRequest
+{
+    /// <summary>
+    /// The file hash (SHA-256).
+    /// If not provided, fileUrl must be provided and the hash will be calculated.
+    /// </summary>
+    public string? FileHash { get; init; }
+
+    /// <summary>
+    /// The file URL to calculate hash from.
+    /// Used if fileHash is not provided.
+    /// </summary>
+    public string? FileUrl { get; init; }
+
+    /// <summary>
+    /// Type of file: "PDF" or "Video"
+    /// </summary>
+    [Required]
+    public string FileType { get; init; } = string.Empty;
 }
