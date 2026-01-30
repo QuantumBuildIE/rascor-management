@@ -140,3 +140,7 @@ export async function updateEmployee(
 export async function deleteEmployee(id: string): Promise<void> {
   await apiClient.delete(`/employees/${id}`);
 }
+
+export async function resendInvite(id: string): Promise<void> {
+  await apiClient.post(`/employees/${id}/resend-invite`);
+}

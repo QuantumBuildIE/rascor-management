@@ -7,6 +7,7 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  resendInvite,
   type CreateEmployeeDto,
   type UpdateEmployeeDto,
   type GetEmployeesParams,
@@ -74,6 +75,12 @@ export function useDeleteEmployee() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY });
     },
+  });
+}
+
+export function useResendInvite() {
+  return useMutation({
+    mutationFn: (id: string) => resendInvite(id),
   });
 }
 

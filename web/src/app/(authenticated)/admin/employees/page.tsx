@@ -3,15 +3,24 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   DataTable,
   type Column,
   type SortDirection,
 } from "@/components/shared/data-table";
-import { useEmployees, useDeleteEmployee } from "@/lib/api/admin/use-employees";
+import { useEmployees, useDeleteEmployee, useResendInvite } from "@/lib/api/admin/use-employees";
 import type { Employee } from "@/types/admin";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -62,6 +71,7 @@ export default function EmployeesPage() {
   });
 
   const deleteEmployee = useDeleteEmployee();
+  const resendInvite = useResendInvite();
 
   const updateUrlParams = (
     updates: Record<string, string | number | null | undefined>
@@ -101,9 +111,19 @@ export default function EmployeesPage() {
     if (window.confirm("Are you sure you want to delete this employee?")) {
       try {
         await deleteEmployee.mutateAsync(id);
+        toast.success("Employee deleted successfully");
       } catch {
-        // Error handling is done by the mutation
+        toast.error("Failed to delete employee");
       }
+    }
+  };
+
+  const handleResendInvite = async (employee: Employee) => {
+    try {
+      await resendInvite.mutateAsync(employee.id);
+      toast.success(`Invite email sent to ${employee.email}`);
+    } catch {
+      toast.error("Failed to send invite email");
     }
   };
 
@@ -182,21 +202,35 @@ export default function EmployeesPage() {
       className: "text-right",
       render: (employee) => (
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/employees/${employee.id}/edit`}>Edit</Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(employee.id);
-            }}
-            disabled={deleteEmployee.isPending}
-          >
-            Delete
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/admin/employees/${employee.id}/edit`}>Edit</Link>
+              </DropdownMenuItem>
+              {employee.hasUserAccount && (
+                <DropdownMenuItem
+                  onClick={() => handleResendInvite(employee)}
+                  disabled={resendInvite.isPending}
+                >
+                  Resend Invite
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => handleDelete(employee.id)}
+                disabled={deleteEmployee.isPending}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },

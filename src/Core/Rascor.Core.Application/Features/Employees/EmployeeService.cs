@@ -223,13 +223,24 @@ public class EmployeeService : IEmployeeService
                 }
             }
 
-            // Check for duplicate EmployeeCode within the same tenant
-            var duplicateCode = await _context.Employees
-                .AnyAsync(e => e.EmployeeCode == dto.EmployeeCode);
+            // Check for duplicate EmployeeCode within the same tenant (including soft-deleted records)
+            // The database has a unique constraint that covers ALL records, including soft-deleted ones
+            var duplicateCodeEmployee = await _context.Employees
+                .IgnoreQueryFilters()
+                .Where(e => e.TenantId == tenantId && e.EmployeeCode == dto.EmployeeCode)
+                .Select(e => new { e.Id, e.FirstName, e.LastName, e.IsDeleted })
+                .FirstOrDefaultAsync();
 
-            if (duplicateCode)
+            if (duplicateCodeEmployee != null)
             {
-                return Result.Fail<EmployeeDto>($"Employee with code '{dto.EmployeeCode}' already exists");
+                if (duplicateCodeEmployee.IsDeleted)
+                {
+                    return Result.Fail<EmployeeDto>(
+                        $"Employee code '{dto.EmployeeCode}' was previously assigned to deleted employee " +
+                        $"{duplicateCodeEmployee.FirstName} {duplicateCodeEmployee.LastName}. " +
+                        "Please choose a different code or permanently delete the former employee record first.");
+                }
+                return Result.Fail<EmployeeDto>($"Employee code '{dto.EmployeeCode}' is already in use by an active employee.");
             }
 
             // Validate email uniqueness if creating a user account
@@ -463,13 +474,24 @@ public class EmployeeService : IEmployeeService
                 }
             }
 
-            // Check for duplicate EmployeeCode (excluding current employee)
-            var duplicateCode = await _context.Employees
-                .AnyAsync(e => e.EmployeeCode == dto.EmployeeCode && e.Id != id);
+            // Check for duplicate EmployeeCode (excluding current employee, including soft-deleted records)
+            // The database has a unique constraint that covers ALL records, including soft-deleted ones
+            var duplicateCodeEmployee = await _context.Employees
+                .IgnoreQueryFilters()
+                .Where(e => e.TenantId == employee.TenantId && e.EmployeeCode == dto.EmployeeCode && e.Id != id)
+                .Select(e => new { e.Id, e.FirstName, e.LastName, e.IsDeleted })
+                .FirstOrDefaultAsync();
 
-            if (duplicateCode)
+            if (duplicateCodeEmployee != null)
             {
-                return Result.Fail<EmployeeDto>($"Employee with code '{dto.EmployeeCode}' already exists");
+                if (duplicateCodeEmployee.IsDeleted)
+                {
+                    return Result.Fail<EmployeeDto>(
+                        $"Employee code '{dto.EmployeeCode}' was previously assigned to deleted employee " +
+                        $"{duplicateCodeEmployee.FirstName} {duplicateCodeEmployee.LastName}. " +
+                        "Please choose a different code or permanently delete the former employee record first.");
+                }
+                return Result.Fail<EmployeeDto>($"Employee code '{dto.EmployeeCode}' is already in use by an active employee.");
             }
 
             var emailChanged = employee.Email != dto.Email;
@@ -761,6 +783,57 @@ public class EmployeeService : IEmployeeService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error deactivating User {UserId}", userId);
+        }
+    }
+
+    public async Task<Result> ResendInviteAsync(Guid employeeId)
+    {
+        try
+        {
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (employee == null)
+            {
+                return Result.Fail($"Employee with ID {employeeId} not found");
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                return Result.Fail("This employee does not have a linked user account. Cannot resend invite.");
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.Email))
+            {
+                return Result.Fail("This employee does not have an email address. Cannot send invite.");
+            }
+
+            var user = await _userManager.FindByIdAsync(employee.UserId);
+            if (user == null)
+            {
+                return Result.Fail("The linked user account could not be found. The account may have been deleted.");
+            }
+
+            if (!user.IsActive)
+            {
+                return Result.Fail("The user account is deactivated. Please reactivate the account first.");
+            }
+
+            // Generate a new password reset token and send the setup email
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _emailService.SendPasswordSetupEmailAsync(employee.Email, employee.FirstName, token);
+
+            _logger.LogInformation(
+                "Resent password setup email to {Email} for Employee {EmployeeId}",
+                employee.Email,
+                employee.Id);
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resending invite for employee {EmployeeId}", employeeId);
+            return Result.Fail($"Error resending invite: {ex.Message}");
         }
     }
 }

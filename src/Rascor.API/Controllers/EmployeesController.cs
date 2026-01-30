@@ -155,4 +155,23 @@ public class EmployeesController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Resend the welcome/password setup email to an employee with a linked user account
+    /// </summary>
+    /// <param name="id">Employee ID</param>
+    /// <returns>Success message or error</returns>
+    [HttpPost("{id:guid}/resend-invite")]
+    [Authorize(Policy = "Core.ManageEmployees")]
+    public async Task<IActionResult> ResendInvite(Guid id)
+    {
+        var result = await _employeeService.ResendInviteAsync(id);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }
