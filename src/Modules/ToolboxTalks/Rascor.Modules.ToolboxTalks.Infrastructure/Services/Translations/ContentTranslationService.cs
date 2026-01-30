@@ -108,6 +108,13 @@ public class ContentTranslationService : IContentTranslationService
     /// </summary>
     private async Task<string> CallClaudeApiAsync(string prompt, CancellationToken cancellationToken)
     {
+        // Validate API key is configured
+        if (string.IsNullOrWhiteSpace(_settings.Claude.ApiKey))
+        {
+            _logger.LogError("Claude API key is not configured. Set SubtitleProcessing__Claude__ApiKey environment variable.");
+            throw new InvalidOperationException("Claude API key is not configured. Please set the SubtitleProcessing__Claude__ApiKey environment variable.");
+        }
+
         var requestBody = new
         {
             model = _settings.Claude.Model,
@@ -126,13 +133,15 @@ public class ContentTranslationService : IContentTranslationService
             Encoding.UTF8,
             "application/json");
 
+        _logger.LogDebug("Calling Claude API at {BaseUrl} with model {Model}", _settings.Claude.BaseUrl, _settings.Claude.Model);
+
         var response = await _httpClient.SendAsync(request, cancellationToken);
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Claude API error: {StatusCode} - {Response}", response.StatusCode, responseBody);
-            throw new HttpRequestException($"Claude API error: {response.StatusCode}");
+            throw new HttpRequestException($"Claude API error: {response.StatusCode} - {responseBody}");
         }
 
         return ParseClaudeResponse(responseBody);

@@ -146,7 +146,7 @@ export function useSubtitleProcessing(toolboxTalkId: string) {
     let isActive = true;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_BASE_URL}/api/hubs/subtitle-processing`, {
+      .withUrl(`${API_BASE_URL}/hubs/subtitle-processing`, {
         accessTokenFactory: () => {
           return getStoredToken('accessToken') || '';
         },

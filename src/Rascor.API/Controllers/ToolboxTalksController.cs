@@ -464,6 +464,10 @@ public class ToolboxTalksController : ControllerBase
     {
         try
         {
+            _logger.LogInformation(
+                "Starting translation generation for ToolboxTalk {ToolboxTalkId}, Languages: {Languages}",
+                id, string.Join(", ", request.Languages ?? new List<string>()));
+
             if (request.Languages == null || request.Languages.Count == 0)
             {
                 return BadRequest(new { error = "At least one language is required" });
@@ -480,6 +484,10 @@ public class ToolboxTalksController : ControllerBase
 
             if (!result.Success)
             {
+                _logger.LogWarning(
+                    "Translation generation failed for ToolboxTalk {ToolboxTalkId}: {ErrorMessage}",
+                    id, result.ErrorMessage);
+
                 if (result.ErrorMessage?.Contains("not found") == true)
                 {
                     return NotFound(new { error = result.ErrorMessage });
@@ -487,12 +495,24 @@ public class ToolboxTalksController : ControllerBase
                 return BadRequest(new { error = result.ErrorMessage });
             }
 
+            _logger.LogInformation(
+                "Translation generation completed for ToolboxTalk {ToolboxTalkId}. Results: {ResultCount}",
+                id, result.LanguageResults?.Count ?? 0);
+
             return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating translations for toolbox talk {ToolboxTalkId}", id);
-            return StatusCode(500, new { error = "Error generating translations" });
+            _logger.LogError(ex,
+                "Error generating translations for toolbox talk {ToolboxTalkId}. Exception: {ExceptionType}, Message: {Message}",
+                id, ex.GetType().Name, ex.Message);
+
+            // Include more details in the error response to help diagnose issues
+            return StatusCode(500, new {
+                error = "Error generating translations",
+                details = ex.Message,
+                type = ex.GetType().Name
+            });
         }
     }
 
