@@ -1,25 +1,29 @@
 using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Rascor.Core.Application.Abstractions.Email;
 using Rascor.Core.Application.Interfaces;
 
 namespace Rascor.Core.Infrastructure.Services;
 
 /// <summary>
 /// Email service for sending notifications.
-/// Stub implementation - replace with actual email provider integration (SendGrid, AWS SES, etc.)
+/// Uses the centralized IEmailProvider (MailerSend, SendGrid, SMTP, etc.) for actual email delivery.
 /// </summary>
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly IEmailProvider _emailProvider;
 
     public EmailService(
         IConfiguration configuration,
-        ILogger<EmailService> logger)
+        ILogger<EmailService> logger,
+        IEmailProvider emailProvider)
     {
         _configuration = configuration;
         _logger = logger;
+        _emailProvider = emailProvider;
     }
 
     public async Task SendPasswordSetupEmailAsync(
@@ -83,19 +87,35 @@ public class EmailService : IEmailService
         string htmlBody,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Integrate with actual email provider (SendGrid, AWS SES, SMTP, etc.)
-        // For now, log the email details as a stub implementation
+        // Check if email provider is configured
+        if (!_emailProvider.IsConfigured)
+        {
+            _logger.LogWarning(
+                "Email provider not configured. Email NOT sent - To: {To}, Subject: {Subject}",
+                to, subject);
+            return;
+        }
 
-        _logger.LogInformation(
-            "Email notification stub - To={To}, Subject={Subject}",
-            to,
-            subject);
+        var message = new EmailMessage
+        {
+            ToEmail = to,
+            Subject = subject,
+            HtmlBody = htmlBody
+        };
 
-        _logger.LogDebug(
-            "Email body: {Body}",
-            htmlBody);
+        var result = await _emailProvider.SendAsync(message, cancellationToken);
 
-        // Simulate async operation
-        await Task.CompletedTask;
+        if (result.Success)
+        {
+            _logger.LogInformation(
+                "Email sent successfully via IEmailProvider - To: {To}, Subject: {Subject}, MessageId: {MessageId}",
+                to, subject, result.MessageId);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send email via IEmailProvider - To: {To}, Subject: {Subject}, Error: {Error}",
+                to, subject, result.ErrorMessage);
+        }
     }
 }
