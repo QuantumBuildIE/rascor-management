@@ -16,7 +16,7 @@ import { useLinkEmployeeToUser } from "@/lib/api/admin/use-employees";
 import { useUnlinkedUsers } from "@/lib/api/admin/use-users";
 import { toast } from "sonner";
 import type { Employee } from "@/types/admin";
-import { cn } from "@/lib/utils";
+import { cn, getApiErrorMessage } from "@/lib/utils";
 
 interface LinkEmployeeToUserDialogProps {
   open: boolean;
@@ -72,9 +72,8 @@ export function LinkEmployeeToUserDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to link user", {
-        description: message,
+        description: getApiErrorMessage(error),
       });
     }
   }

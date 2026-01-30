@@ -32,7 +32,7 @@ import { useRoles, type Role } from "@/lib/api/admin/use-roles";
 import { useUnlinkedEmployees } from "@/lib/api/admin/use-employees";
 import { useAllSites } from "@/lib/api/admin/use-sites";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, getApiErrorMessage } from "@/lib/utils";
 import { UserEmployeeRecordSection } from "./user-employee-record-section";
 
 // Password strength calculation
@@ -222,25 +222,8 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       }
       onSuccess?.();
     } catch (error: unknown) {
-      let message = "An error occurred";
-
-      // Extract error message from API response
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response?: { data?: { errors?: string[]; message?: string } } };
-        const apiErrors = axiosError.response?.data?.errors;
-        const apiMessage = axiosError.response?.data?.message;
-
-        if (apiErrors && apiErrors.length > 0) {
-          message = apiErrors.join(". ");
-        } else if (apiMessage) {
-          message = apiMessage;
-        }
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-
       toast.error(isEditing ? "Failed to update user" : "Failed to create user", {
-        description: message,
+        description: getApiErrorMessage(error),
       });
     }
   }

@@ -9,6 +9,7 @@ import { User as UserIcon, Link2, UserPlus, Unlink, Mail } from "lucide-react";
 import { LinkEmployeeToUserDialog } from "./link-employee-to-user-dialog";
 import { CreateUserForEmployeeDialog } from "./create-user-for-employee-dialog";
 import { UnlinkUserDialog } from "./unlink-user-dialog";
+import { getApiErrorMessage } from "@/lib/utils";
 
 interface EmployeeUserAccountSectionProps {
   employee: Employee;
@@ -31,9 +32,8 @@ export function EmployeeUserAccountSection({ employee }: EmployeeUserAccountSect
         description: `Password setup email has been sent to ${employee.email}`,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to send invite", {
-        description: message,
+        description: getApiErrorMessage(error),
       });
     }
   }

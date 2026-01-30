@@ -13,6 +13,7 @@ import {
 import { useUnlinkEmployeeFromUser } from "@/lib/api/admin/use-employees";
 import { toast } from "sonner";
 import type { Employee } from "@/types/admin";
+import { getApiErrorMessage } from "@/lib/utils";
 
 interface UnlinkUserDialogProps {
   open: boolean;
@@ -35,9 +36,8 @@ export function UnlinkUserDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to unlink user", {
-        description: message,
+        description: getApiErrorMessage(error),
       });
     }
   }

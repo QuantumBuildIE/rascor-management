@@ -16,6 +16,7 @@ import { useCreateUserForEmployee } from "@/lib/api/admin/use-employees";
 import { useRoles } from "@/lib/api/admin/use-roles";
 import { toast } from "sonner";
 import type { Employee } from "@/types/admin";
+import { getApiErrorMessage } from "@/lib/utils";
 
 interface CreateUserForEmployeeDialogProps {
   open: boolean;
@@ -64,9 +65,8 @@ export function CreateUserForEmployeeDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to create user account", {
-        description: message,
+        description: getApiErrorMessage(error),
       });
     }
   }
