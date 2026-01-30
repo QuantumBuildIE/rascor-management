@@ -91,6 +91,15 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
 
         builder.Property(t => t.VideoTranscriptExtractedAt);
 
+        // File hash fields for deduplication
+        builder.Property(t => t.PdfFileHash)
+            .HasMaxLength(64); // SHA-256 produces 64 hex characters
+
+        builder.Property(t => t.VideoFileHash)
+            .HasMaxLength(64); // SHA-256 produces 64 hex characters
+
+        builder.Property(t => t.ContentGeneratedAt);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 
@@ -141,6 +150,15 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
 
         builder.HasIndex(t => t.Title)
             .HasDatabaseName("ix_toolbox_talks_title");
+
+        // Indexes for file hash lookups (deduplication)
+        builder.HasIndex(t => new { t.TenantId, t.PdfFileHash })
+            .HasDatabaseName("ix_toolbox_talks_tenant_pdf_hash")
+            .HasFilter("\"PdfFileHash\" IS NOT NULL");
+
+        builder.HasIndex(t => new { t.TenantId, t.VideoFileHash })
+            .HasDatabaseName("ix_toolbox_talks_tenant_video_hash")
+            .HasFilter("\"VideoFileHash\" IS NOT NULL");
 
         // Query filter for soft delete
         builder.HasQueryFilter(t => !t.IsDeleted);

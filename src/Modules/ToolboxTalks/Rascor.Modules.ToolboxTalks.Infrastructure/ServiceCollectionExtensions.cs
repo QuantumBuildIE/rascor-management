@@ -121,6 +121,9 @@ public static class ServiceCollectionExtensions
         // This service coordinates extraction, section generation, and quiz generation
         services.AddScoped<IContentGenerationService, ContentGenerationService>();
 
+        // Register content deduplication service for detecting and reusing duplicate content
+        services.AddScoped<IContentDeduplicationService, ContentDeduplicationService>();
+
         // Note: SignalR hubs are registered in Program.cs with app.MapHub<>()
         //   - SubtitleProcessingHub: /api/hubs/subtitle-processing
         //   - ContentGenerationHub: /api/hubs/content-generation

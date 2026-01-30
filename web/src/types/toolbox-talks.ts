@@ -753,3 +753,76 @@ export interface SubtitleProgressUpdate {
   errorMessage?: string;
   languages: LanguageStatus[];
 }
+
+// ============================================
+// Content Deduplication DTOs
+// ============================================
+
+/** File type for deduplication checking */
+export type FileHashType = 'PDF' | 'Video';
+
+/** Request to check for duplicate content */
+export interface CheckDuplicateRequest {
+  /** The file hash (SHA-256) to check for duplicates. If not provided, fileUrl must be provided. */
+  fileHash?: string;
+  /** The file URL to calculate hash from. Used if fileHash is not provided. */
+  fileUrl?: string;
+  /** Type of file: "PDF" or "Video" */
+  fileType: FileHashType;
+}
+
+/** Information about a source toolbox talk for content reuse */
+export interface SourceToolboxTalkInfo {
+  /** ID of the source toolbox talk */
+  id: string;
+  /** Title of the source toolbox talk */
+  title: string;
+  /** When the content was originally generated */
+  processedAt: string | null;
+  /** Number of sections in the source */
+  sectionCount: number;
+  /** Number of questions in the source */
+  questionCount: number;
+  /** Languages that have translations available */
+  translationLanguages: string[];
+}
+
+/** Response from duplicate check */
+export interface DuplicateCheckResponse {
+  /** Whether a duplicate was found */
+  isDuplicate: boolean;
+  /** The calculated file hash */
+  fileHash: string;
+  /** Information about the source toolbox talk if a duplicate was found */
+  sourceToolboxTalk: SourceToolboxTalkInfo | null;
+}
+
+/** Request to reuse content from another toolbox talk */
+export interface ReuseContentRequest {
+  /** ID of the source toolbox talk to copy content from */
+  sourceToolboxTalkId: string;
+}
+
+/** Response from content reuse operation */
+export interface ContentReuseResponse {
+  /** Whether the reuse was successful */
+  success: boolean;
+  /** Number of sections copied */
+  sectionsCopied: number;
+  /** Number of questions copied */
+  questionsCopied: number;
+  /** Number of translations copied */
+  translationsCopied: number;
+  /** Status message */
+  message: string;
+}
+
+/** Request to update file hash */
+export interface UpdateFileHashRequest {
+  /** The file hash (SHA-256). If not provided, fileUrl must be provided. */
+  fileHash?: string;
+  /** The file URL to calculate hash from. Used if fileHash is not provided. */
+  fileUrl?: string;
+  /** Type of file: "PDF" or "Video" */
+  fileType: FileHashType;
+}

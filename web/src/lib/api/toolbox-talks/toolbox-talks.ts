@@ -9,6 +9,11 @@ import type {
   UpdateToolboxTalkRequest,
   UpdateToolboxTalkSettingsRequest,
   GetToolboxTalksParams,
+  CheckDuplicateRequest,
+  DuplicateCheckResponse,
+  ReuseContentRequest,
+  ContentReuseResponse,
+  UpdateFileHashRequest,
 } from '@/types/toolbox-talks';
 
 export interface PaginatedResponse<T> {
@@ -324,6 +329,55 @@ export async function getContentTranslations(
 ): Promise<ContentTranslationInfo[]> {
   const response = await apiClient.get<ContentTranslationInfo[]>(
     `/toolbox-talks/${id}/translations`
+  );
+  return response.data;
+}
+
+// ============================================
+// Content Deduplication
+// ============================================
+
+/**
+ * Check if a file has been previously processed in another toolbox talk.
+ * Returns information about the source toolbox talk if a duplicate is found.
+ */
+export async function checkForDuplicate(
+  id: string,
+  request: CheckDuplicateRequest
+): Promise<DuplicateCheckResponse> {
+  const response = await apiClient.post<DuplicateCheckResponse>(
+    `/toolbox-talks/${id}/check-duplicate`,
+    request
+  );
+  return response.data;
+}
+
+/**
+ * Reuse content (sections, questions, translations) from a source toolbox talk.
+ * Call this instead of generate when user chooses to reuse existing content.
+ */
+export async function reuseContent(
+  id: string,
+  request: ReuseContentRequest
+): Promise<ContentReuseResponse> {
+  const response = await apiClient.post<ContentReuseResponse>(
+    `/toolbox-talks/${id}/reuse-content`,
+    request
+  );
+  return response.data;
+}
+
+/**
+ * Update the file hash for a toolbox talk after file upload.
+ * Should be called after uploading a PDF or setting a video URL.
+ */
+export async function updateFileHash(
+  id: string,
+  request: UpdateFileHashRequest
+): Promise<{ success: boolean; fileHash: string }> {
+  const response = await apiClient.post<{ success: boolean; fileHash: string }>(
+    `/toolbox-talks/${id}/update-file-hash`,
+    request
   );
   return response.data;
 }

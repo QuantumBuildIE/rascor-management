@@ -297,6 +297,7 @@ public class ContentGenerationService : IContentGenerationService
             toolboxTalk.GeneratedFromPdf = options.IncludePdf && extractionResult.PdfContent != null;
             toolboxTalk.RequiresQuiz = questionsGenerated > 0;
             toolboxTalk.PassingScore = options.PassThreshold;
+            toolboxTalk.ContentGeneratedAt = DateTime.UtcNow; // Track when content was generated for deduplication
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 

@@ -21,9 +21,12 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
-import { generateToolboxTalkContent, getToolboxTalk } from '@/lib/api/toolbox-talks/toolbox-talks';
+import { generateToolboxTalkContent, getToolboxTalk, checkForDuplicate, reuseContent } from '@/lib/api/toolbox-talks/toolbox-talks';
 import { getStoredToken } from '@/lib/api/client';
 import { HubConnectionBuilder, HubConnection, LogLevel, HubConnectionState } from '@microsoft/signalr';
+import type { SourceToolboxTalkInfo, FileHashType } from '@/types/toolbox-talks';
+import { DuplicateContentModal } from '@/features/toolbox-talks/components/DuplicateContentModal';
+import { toast } from 'sonner';
 
 interface GenerateStepProps {
   data: ToolboxTalkWizardData;
@@ -64,6 +67,13 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // Duplicate detection state
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [sourceToolboxTalk, setSourceToolboxTalk] = useState<SourceToolboxTalkInfo | null>(null);
+  const [duplicateFileType, setDuplicateFileType] = useState<FileHashType>('PDF');
+  const [cachedFileHash, setCachedFileHash] = useState<string | null>(null);
 
   const connectionRef = useRef<HubConnection | null>(null);
   const hasConnectedRef = useRef(false);
@@ -368,6 +378,142 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
 
     return () => clearInterval(checkInterval);
   }, [isGenerating, result, data.id, includeVideo, includePdf, minimumSections, minimumQuestions, updateData]);
+
+  // Check for duplicate content before generating
+  const handleCheckAndGenerate = async () => {
+    if (!data.id) {
+      setError('Toolbox Talk not found. Please go back and save the basic info first.');
+      return;
+    }
+
+    if (!includeVideo && !includePdf) {
+      setError('Please select at least one content source');
+      return;
+    }
+
+    setIsCheckingDuplicate(true);
+    setError(null);
+
+    try {
+      // Determine which file URL to check for duplicates
+      const fileUrl = includePdf && data.pdfUrl ? data.pdfUrl : data.videoUrl;
+      const fileType: FileHashType = includePdf && data.pdfUrl ? 'PDF' : 'Video';
+
+      if (fileUrl) {
+        // Check for duplicate content
+        const duplicateResult = await checkForDuplicate(data.id, {
+          fileUrl,
+          fileType,
+        });
+
+        if (duplicateResult.isDuplicate && duplicateResult.sourceToolboxTalk) {
+          // Store the file hash and show modal
+          setCachedFileHash(duplicateResult.fileHash);
+          setSourceToolboxTalk(duplicateResult.sourceToolboxTalk);
+          setDuplicateFileType(fileType);
+          setDuplicateModalOpen(true);
+          setIsCheckingDuplicate(false);
+          return;
+        }
+      }
+
+      // No duplicate found, proceed with normal generation
+      setIsCheckingDuplicate(false);
+      await handleStartGeneration();
+    } catch (err) {
+      console.error('Duplicate check error:', err);
+      // If duplicate check fails, proceed with generation anyway
+      setIsCheckingDuplicate(false);
+      await handleStartGeneration();
+    }
+  };
+
+  // Handle reusing content from a duplicate
+  const handleReuseContent = async () => {
+    if (!data.id || !sourceToolboxTalk) return;
+
+    try {
+      const result = await reuseContent(data.id, {
+        sourceToolboxTalkId: sourceToolboxTalk.id,
+      });
+
+      if (result.success) {
+        toast.success('Content reused successfully', {
+          description: result.message,
+        });
+
+        // Fetch the updated toolbox talk to get the copied content
+        const updatedTalk = await getToolboxTalk(data.id);
+
+        // Map and update wizard data with the reused content
+        const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
+          id: s.id,
+          sortOrder: s.sectionNumber,
+          title: s.title,
+          content: s.content,
+          source: s.source || 'Manual',
+          requiresAcknowledgment: s.requiresAcknowledgment,
+        }));
+
+        const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
+          const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
+          const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
+            if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
+            if (src === 'Both') return 'Video';
+            return 'Manual';
+          };
+
+          return {
+            id: q.id,
+            sortOrder: q.questionNumber,
+            questionText: q.questionText,
+            questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
+            options: q.options || [],
+            correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+            source: mapSource(q.source),
+            points: q.points,
+          };
+        });
+
+        updateData({
+          sections,
+          questions,
+          generateFromVideo: includeVideo,
+          generateFromPdf: includePdf,
+          minimumSections,
+          minimumQuestions,
+        });
+
+        // Set result to show success state
+        setResult({
+          success: true,
+          partialSuccess: false,
+          sectionsGenerated: result.sectionsCopied,
+          questionsGenerated: result.questionsCopied,
+          hasFinalPortionQuestion: false,
+          errors: [],
+          warnings: result.translationsCopied > 0
+            ? [`Also copied ${result.translationsCopied} translation(s) from the source.`]
+            : [],
+          totalTokensUsed: 0,
+          message: 'Content reused from existing toolbox talk',
+        });
+      } else {
+        toast.error('Failed to reuse content');
+      }
+    } catch (err) {
+      console.error('Reuse content error:', err);
+      toast.error('Failed to reuse content', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  };
+
+  // Handle generating fresh content (user chose not to reuse)
+  const handleGenerateFresh = async () => {
+    setDuplicateModalOpen(false);
+    await handleStartGeneration();
+  };
 
   const handleStartGeneration = async () => {
     if (!data.id) {
@@ -966,9 +1112,9 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
 
         <div className="flex gap-2">
           {/* Show generate button when ready */}
-          {!isGenerating && !result && hasContent && (
+          {!isGenerating && !isCheckingDuplicate && !result && hasContent && (
             <Button
-              onClick={handleStartGeneration}
+              onClick={handleCheckAndGenerate}
               disabled={!includeVideo && !includePdf}
               className="gap-2"
             >
@@ -985,8 +1131,16 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
             </Button>
           )}
 
+          {/* Show checking duplicate state */}
+          {isCheckingDuplicate && (
+            <Button disabled className="gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking for existing content...
+            </Button>
+          )}
+
           {/* Show generating state */}
-          {isGenerating && (
+          {isGenerating && !isCheckingDuplicate && (
             <Button disabled className="gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Generating...
@@ -1008,6 +1162,18 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           )}
         </div>
       </div>
+
+      {/* Duplicate Content Modal */}
+      {sourceToolboxTalk && (
+        <DuplicateContentModal
+          open={duplicateModalOpen}
+          onOpenChange={setDuplicateModalOpen}
+          sourceToolboxTalk={sourceToolboxTalk}
+          fileType={duplicateFileType}
+          onReuseContent={handleReuseContent}
+          onGenerateFresh={handleGenerateFresh}
+        />
+      )}
     </div>
   );
 }

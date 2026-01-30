@@ -109,6 +109,24 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public DateTime? VideoTranscriptExtractedAt { get; set; }
 
+    /// <summary>
+    /// SHA-256 hash of the PDF file content.
+    /// Used for deduplication to detect identical files across toolbox talks.
+    /// </summary>
+    public string? PdfFileHash { get; set; }
+
+    /// <summary>
+    /// SHA-256 hash of the video file content.
+    /// Used for deduplication to detect identical files across toolbox talks.
+    /// </summary>
+    public string? VideoFileHash { get; set; }
+
+    /// <summary>
+    /// Timestamp when content was generated for this toolbox talk.
+    /// Used for duplicate detection to show when original content was processed.
+    /// </summary>
+    public DateTime? ContentGeneratedAt { get; set; }
+
     // Navigation properties
 
     /// <summary>
