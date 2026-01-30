@@ -374,7 +374,7 @@ export default function MobileAppPage() {
                   <div className="p-4 border rounded-lg bg-muted/30 space-y-2">
                     <p className="font-medium text-sm">Email Details:</p>
                     <ul className="space-y-1 text-sm text-muted-foreground">
-                      <li><strong>To:</strong> <code className="bg-muted px-1.5 py-0.5 rounded text-xs">devicereg@rascor.zohocreatorapp.eu</code></li>
+                      <li><strong>To:</strong> <code className="bg-muted px-1.5 py-0.5 rounded text-xs">devicereg@rascor.ie</code></li>
                       <li><strong>Subject:</strong> Your Device ID (e.g., EVT0001)</li>
                       <li><strong>From:</strong> Your email address (used for identification)</li>
                     </ul>

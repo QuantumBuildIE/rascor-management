@@ -40,7 +40,7 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
             return;
         }
 
-        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://app.rascor.ie";
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
         var talkUrl = $"{baseUrl}/my/toolbox-talks/{scheduledTalk.Id}";
 
         var subject = $"New Toolbox Talk Assigned: {scheduledTalk.ToolboxTalk.Title}";
@@ -119,7 +119,7 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
             return;
         }
 
-        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://app.rascor.ie";
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
         var talkUrl = $"{baseUrl}/my/toolbox-talks/{scheduledTalk.Id}";
 
         var urgency = reminderNumber >= 3 ? "URGENT: " : "";

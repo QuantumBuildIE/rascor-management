@@ -40,7 +40,7 @@ public class RamsNotificationService : IRamsNotificationService
         _dashboardService = dashboardService;
         _configuration = configuration;
         _logger = logger;
-        _baseUrl = configuration["AppSettings:BaseUrl"] ?? "https://app.rascor.ie";
+        _baseUrl = configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
     }
 
     public async Task SendSubmitNotificationAsync(

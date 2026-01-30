@@ -27,7 +27,7 @@ public class EmailSettings
     /// <summary>
     /// Base URL for SPA submission links in emails
     /// </summary>
-    public string SpaSubmissionBaseUrl { get; set; } = "https://app.rascor.ie/site-attendance/spa/submit";
+    public string SpaSubmissionBaseUrl { get; set; } = "https://rascorweb-production.up.railway.app/site-attendance/spa/submit";
 
     /// <summary>
     /// SendGrid-specific settings

@@ -14,7 +14,7 @@ public class RamsEmailTemplateService : IRamsEmailTemplateService
 
     public RamsEmailTemplateService(IConfiguration configuration)
     {
-        _baseUrl = configuration["AppSettings:BaseUrl"] ?? "https://app.rascor.ie";
+        _baseUrl = configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
         _companyName = configuration["AppSettings:CompanyName"] ?? "RASCOR";
     }
 
