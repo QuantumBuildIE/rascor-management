@@ -93,6 +93,21 @@ public class GeofenceMobileDbContext : DbContext
 
             entity.Property(e => e.IsActive)
                 .HasColumnName("is_active");
+
+            entity.Property(e => e.LastLatitude)
+                .HasColumnName("last_latitude")
+                .HasPrecision(10, 8);
+
+            entity.Property(e => e.LastLongitude)
+                .HasColumnName("last_longitude")
+                .HasPrecision(11, 8);
+
+            entity.Property(e => e.LastAccuracy)
+                .HasColumnName("last_accuracy")
+                .HasPrecision(10, 2);
+
+            entity.Property(e => e.LastBatteryLevel)
+                .HasColumnName("last_battery_level");
         });
     }
 

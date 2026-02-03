@@ -19,6 +19,7 @@ public class SiteAttendanceDbContext : DbContext
     public DbSet<AttendanceSettings> AttendanceSettings => Set<AttendanceSettings>();
     public DbSet<AttendanceNotification> AttendanceNotifications => Set<AttendanceNotification>();
     public DbSet<GeofenceSyncLog> GeofenceSyncLogs => Set<GeofenceSyncLog>();
+    public DbSet<DeviceStatusCache> DeviceStatusCaches => Set<DeviceStatusCache>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

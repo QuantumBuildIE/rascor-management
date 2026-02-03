@@ -55,4 +55,24 @@ public class MobileDevice
     /// Whether the device is currently active
     /// </summary>
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Last known GPS latitude from heartbeat
+    /// </summary>
+    public double? LastLatitude { get; set; }
+
+    /// <summary>
+    /// Last known GPS longitude from heartbeat
+    /// </summary>
+    public double? LastLongitude { get; set; }
+
+    /// <summary>
+    /// GPS accuracy in meters from heartbeat
+    /// </summary>
+    public double? LastAccuracy { get; set; }
+
+    /// <summary>
+    /// Last known battery level (0-100) from heartbeat
+    /// </summary>
+    public int? LastBatteryLevel { get; set; }
 }

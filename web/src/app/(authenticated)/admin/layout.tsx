@@ -12,6 +12,7 @@ const adminNavItems = [
   { href: "/admin/companies", label: "Companies" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/devices", label: "Devices" },
+  { href: "/admin/device-monitor", label: "Device Monitor" },
   { href: "/admin/toolbox-talks", label: "Toolbox Talks" },
   { href: "/admin/rams-library", label: "RAMS Library" },
   { href: "/admin/float", label: "Float" },

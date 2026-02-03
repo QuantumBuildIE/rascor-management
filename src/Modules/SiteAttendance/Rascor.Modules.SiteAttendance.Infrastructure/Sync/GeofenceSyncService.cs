@@ -293,6 +293,13 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
             syncLog.Complete();
             await rascorDb.SaveChangesAsync(cancellationToken);
 
+            // Sync device status from mobile DB to local cache
+            var (devicesSynced, devicesOnline) = await SyncDeviceStatusAsync(mobileDb, rascorDb, cancellationToken);
+            _logger.LogInformation(
+                "Device status sync: {Count} devices, {OnlineCount} online",
+                devicesSynced,
+                devicesOnline);
+
             // Process summaries for affected dates if enabled
             var datesProcessedList = uniqueDates.OrderBy(d => d).ToList();
             var totalSummariesCreated = 0;
@@ -609,5 +616,92 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                 eventCountDict.GetValueOrDefault(d.Id, 0)))
             .OrderByDescending(d => d.EventCount)
             .ToList();
+    }
+
+    /// <summary>
+    /// Syncs device status from the mobile database to the local DeviceStatusCache table.
+    /// Returns the count of devices synced and count of online devices.
+    /// </summary>
+    private async Task<(int DevicesSynced, int DevicesOnline)> SyncDeviceStatusAsync(
+        GeofenceMobileDbContext mobileDb,
+        SiteAttendanceDbContext rascorDb,
+        CancellationToken cancellationToken)
+    {
+        // A device is "online" if LastSeenAt is within the last 90 minutes
+        var onlineThreshold = DateTime.UtcNow.AddMinutes(-90);
+
+        try
+        {
+            // Read all active devices from geofence DB
+            var mobileDevices = await mobileDb.Devices
+                .Where(d => d.IsActive)
+                .ToListAsync(cancellationToken);
+
+            if (!mobileDevices.Any())
+            {
+                _logger.LogDebug("No active devices found in mobile database");
+                return (0, 0);
+            }
+
+            var syncedAt = DateTime.UtcNow;
+            var deviceIds = mobileDevices.Select(d => d.Id).ToList();
+
+            // Get existing cache entries
+            var existingCache = await rascorDb.DeviceStatusCaches
+                .Where(d => deviceIds.Contains(d.DeviceId))
+                .ToDictionaryAsync(d => d.DeviceId, cancellationToken);
+
+            var onlineCount = 0;
+
+            foreach (var device in mobileDevices)
+            {
+                if (existingCache.TryGetValue(device.Id, out var existing))
+                {
+                    // Update existing entry
+                    existing.Model = device.Model;
+                    existing.Platform = device.Platform;
+                    existing.IsActive = device.IsActive;
+                    existing.LastSeenAt = device.LastSeenAt;
+                    existing.LastLatitude = (decimal?)device.LastLatitude;
+                    existing.LastLongitude = (decimal?)device.LastLongitude;
+                    existing.LastAccuracy = (decimal?)device.LastAccuracy;
+                    existing.LastBatteryLevel = device.LastBatteryLevel;
+                    existing.SyncedAt = syncedAt;
+                }
+                else
+                {
+                    // Insert new entry
+                    var cacheEntry = new DeviceStatusCache
+                    {
+                        DeviceId = device.Id,
+                        Model = device.Model,
+                        Platform = device.Platform,
+                        IsActive = device.IsActive,
+                        LastSeenAt = device.LastSeenAt,
+                        LastLatitude = (decimal?)device.LastLatitude,
+                        LastLongitude = (decimal?)device.LastLongitude,
+                        LastAccuracy = (decimal?)device.LastAccuracy,
+                        LastBatteryLevel = device.LastBatteryLevel,
+                        SyncedAt = syncedAt
+                    };
+                    rascorDb.DeviceStatusCaches.Add(cacheEntry);
+                }
+
+                // Count online devices
+                if (device.LastSeenAt.HasValue && device.LastSeenAt.Value > onlineThreshold)
+                {
+                    onlineCount++;
+                }
+            }
+
+            await rascorDb.SaveChangesAsync(cancellationToken);
+
+            return (mobileDevices.Count, onlineCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to sync device status from mobile database");
+            return (0, 0);
+        }
     }
 }
