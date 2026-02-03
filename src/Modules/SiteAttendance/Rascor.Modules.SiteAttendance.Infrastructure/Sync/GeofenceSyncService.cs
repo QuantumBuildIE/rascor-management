@@ -661,7 +661,9 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                     existing.Model = device.Model;
                     existing.Platform = device.Platform;
                     existing.IsActive = device.IsActive;
-                    existing.LastSeenAt = device.LastSeenAt;
+                    existing.LastSeenAt = device.LastSeenAt.HasValue
+                        ? DateTime.SpecifyKind(device.LastSeenAt.Value, DateTimeKind.Utc)
+                        : null;
                     existing.LastLatitude = (decimal?)device.LastLatitude;
                     existing.LastLongitude = (decimal?)device.LastLongitude;
                     existing.LastAccuracy = (decimal?)device.LastAccuracy;
@@ -677,7 +679,9 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                         Model = device.Model,
                         Platform = device.Platform,
                         IsActive = device.IsActive,
-                        LastSeenAt = device.LastSeenAt,
+                        LastSeenAt = device.LastSeenAt.HasValue
+                            ? DateTime.SpecifyKind(device.LastSeenAt.Value, DateTimeKind.Utc)
+                            : null,
                         LastLatitude = (decimal?)device.LastLatitude,
                         LastLongitude = (decimal?)device.LastLongitude,
                         LastAccuracy = (decimal?)device.LastAccuracy,
