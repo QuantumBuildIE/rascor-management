@@ -73,7 +73,7 @@ export default function MobileAppPage() {
             className="h-14 px-8 text-lg gap-3"
             asChild
           >
-            <a href="https://pub-cb8b7507e2a34ca2a366caa3bca24d08.r2.dev/Downloads/com.yourorg.Rascor-Signed.apk" download="RASCOR-Geofence.apk">
+            <a href="https://pub-584beafa6be94acb845714667dedcc1d.r2.dev/11111111-1111-1111-1111-111111111111/downloads/com.yourorg.Rascor-Signed.apk" download="RASCOR-Geofence.apk">
               <Download className="h-6 w-6" />
               Download APK
             </a>

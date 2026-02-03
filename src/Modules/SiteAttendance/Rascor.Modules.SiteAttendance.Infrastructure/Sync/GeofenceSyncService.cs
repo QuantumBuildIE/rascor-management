@@ -145,6 +145,13 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
                 return new GeofenceSyncResult(false, 0, 0, 0, error);
             }
 
+            // Sync device status from mobile DB to local cache (runs regardless of new events)
+            var (devicesSynced, devicesOnline) = await SyncDeviceStatusAsync(mobileDb, rascorDb, cancellationToken);
+            _logger.LogInformation(
+                "Device status sync: {Count} devices, {OnlineCount} online",
+                devicesSynced,
+                devicesOnline);
+
             // Get last successful sync timestamp
             var lastSync = await GetLastSuccessfulSyncAsync(rascorDb, tenantId, cancellationToken);
             var syncFromTimestamp = lastSync?.LastEventTimestamp
@@ -292,13 +299,6 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
             syncLog.UpdateProgress(processed, created, skipped, lastEventId, lastEventTimestamp);
             syncLog.Complete();
             await rascorDb.SaveChangesAsync(cancellationToken);
-
-            // Sync device status from mobile DB to local cache
-            var (devicesSynced, devicesOnline) = await SyncDeviceStatusAsync(mobileDb, rascorDb, cancellationToken);
-            _logger.LogInformation(
-                "Device status sync: {Count} devices, {OnlineCount} online",
-                devicesSynced,
-                devicesOnline);
 
             // Process summaries for affected dates if enabled
             var datesProcessedList = uniqueDates.OrderBy(d => d).ToList();
@@ -700,7 +700,7 @@ public class GeofenceSyncService : BackgroundService, IGeofenceSyncService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to sync device status from mobile database");
+            _logger.LogError(ex, "Failed to sync device status from mobile database");
             return (0, 0);
         }
     }
