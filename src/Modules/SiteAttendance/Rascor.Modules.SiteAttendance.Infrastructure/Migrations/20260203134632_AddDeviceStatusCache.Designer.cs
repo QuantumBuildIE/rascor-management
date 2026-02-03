@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
 namespace Rascor.Modules.SiteAttendance.Infrastructure.Migrations
 {
     [DbContext(typeof(SiteAttendanceDbContext))]
-    partial class SiteAttendanceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260203134632_AddDeviceStatusCache")]
+    partial class AddDeviceStatusCache
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
