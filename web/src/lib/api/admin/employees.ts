@@ -24,6 +24,8 @@ export interface CreateEmployeeDto {
   userRole?: string;
   /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
   preferredLanguage?: string;
+  /** Float person ID - links this employee to a Float person record for schedule integration */
+  floatPersonId?: number;
 }
 
 export interface UpdateEmployeeDto {
@@ -44,6 +46,8 @@ export interface UpdateEmployeeDto {
   geoTrackerId?: string;
   /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
   preferredLanguage?: string;
+  /** Float person ID - links this employee to a Float person record for schedule integration */
+  floatPersonId?: number | null;
 }
 
 export interface GetEmployeesParams {

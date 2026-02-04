@@ -21,5 +21,11 @@ public record UpdateEmployeeDto(
     /// <summary>
     /// Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code).
     /// </summary>
-    string? PreferredLanguage = null
+    string? PreferredLanguage = null,
+    /// <summary>
+    /// Float person ID - links this employee to a Float person record for schedule integration.
+    /// When set manually, FloatLinkMethod will be set to "Manual".
+    /// When cleared (set to null), FloatLinkedAt and FloatLinkMethod will also be cleared.
+    /// </summary>
+    int? FloatPersonId = null
 );

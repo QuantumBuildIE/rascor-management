@@ -92,6 +92,7 @@ const employeeFormSchema = z.object({
   userRole: z.string().optional().nullable(),
   geoTrackerId: z.string().max(50).optional().nullable(),
   preferredLanguage: z.string().default("en"),
+  floatPersonId: z.string().optional().nullable(),
 }).refine((data) => {
   if (data.startDate && data.endDate) {
     return new Date(data.endDate) > new Date(data.startDate);
@@ -137,6 +138,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
       userRole: "SiteManager", // Default role
       geoTrackerId: employee?.geoTrackerId ?? "",
       preferredLanguage: employee?.preferredLanguage ?? "en",
+      floatPersonId: employee?.floatPersonId?.toString() ?? "",
     },
   });
 
@@ -149,6 +151,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
   async function onSubmit(values: EmployeeFormValues) {
     try {
       // Clean up empty strings to null/undefined for optional fields
+      const floatPersonIdValue = values.floatPersonId ? parseInt(values.floatPersonId, 10) : undefined;
       const cleanedValues = {
         ...values,
         email: values.email || undefined,
@@ -161,6 +164,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         endDate: values.endDate || undefined,
         notes: values.notes || undefined,
         geoTrackerId: values.geoTrackerId || undefined,
+        floatPersonId: floatPersonIdValue,
       };
 
       if (isEditing) {
@@ -182,6 +186,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             isActive: cleanedValues.isActive,
             geoTrackerId: cleanedValues.geoTrackerId,
             preferredLanguage: values.preferredLanguage,
+            floatPersonId: cleanedValues.floatPersonId ?? null,
           },
         });
         toast.success("Employee updated successfully");
@@ -207,6 +212,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
           userRole: values.userRole || undefined,
           geoTrackerId: cleanedValues.geoTrackerId,
           preferredLanguage: values.preferredLanguage,
+          floatPersonId: cleanedValues.floatPersonId,
         });
 
         if (willCreateUser) {
@@ -261,6 +267,29 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="floatPersonId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Float Person ID</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="e.g., 12345"
+                  {...field}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter the Float Person ID to link this employee to their Float schedule. This can be found in Float&apos;s People section.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid gap-6 sm:grid-cols-2">
           <FormField

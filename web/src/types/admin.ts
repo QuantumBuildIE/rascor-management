@@ -40,6 +40,12 @@ export interface Employee {
   geoTrackerId?: string;
   /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
   preferredLanguage: string;
+  /** Float person ID - links this employee to a Float person record for schedule integration */
+  floatPersonId?: number;
+  /** When this employee was linked to Float */
+  floatLinkedAt?: string;
+  /** How this employee was linked to Float (Auto-Email, Auto-Name, Manual) */
+  floatLinkMethod?: string;
 }
 
 export interface CreateEmployeeRequest {
@@ -64,6 +70,8 @@ export interface CreateEmployeeRequest {
   geoTrackerId?: string;
   /** Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code) */
   preferredLanguage?: string;
+  /** Float person ID - links this employee to a Float person record for schedule integration */
+  floatPersonId?: number;
 }
 
 export interface Company {

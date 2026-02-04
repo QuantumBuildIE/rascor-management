@@ -33,5 +33,10 @@ public record CreateEmployeeDto(
     /// Preferred language for Toolbox Talk subtitles and notifications (ISO 639-1 code).
     /// Defaults to "en" (English) if not specified.
     /// </summary>
-    string PreferredLanguage = "en"
+    string PreferredLanguage = "en",
+    /// <summary>
+    /// Float person ID - links this employee to a Float person record for schedule integration.
+    /// When set manually, FloatLinkMethod will be set to "Manual".
+    /// </summary>
+    int? FloatPersonId = null
 );

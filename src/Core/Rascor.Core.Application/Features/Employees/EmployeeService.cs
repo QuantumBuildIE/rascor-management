@@ -62,7 +62,10 @@ public class EmployeeService : IEmployeeService
                     e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null,
-                    e.PreferredLanguage
+                    e.PreferredLanguage,
+                    e.FloatPersonId,
+                    e.FloatLinkedAt,
+                    e.FloatLinkMethod
                 ))
                 .ToListAsync();
 
@@ -126,7 +129,10 @@ public class EmployeeService : IEmployeeService
                     e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null,
-                    e.PreferredLanguage
+                    e.PreferredLanguage,
+                    e.FloatPersonId,
+                    e.FloatLinkedAt,
+                    e.FloatLinkMethod
                 ))
                 .ToListAsync();
 
@@ -188,7 +194,10 @@ public class EmployeeService : IEmployeeService
                     e.GeoTrackerID,
                     e.UserId != null,
                     e.UserId != null ? Guid.Parse(e.UserId) : null,
-                    e.PreferredLanguage
+                    e.PreferredLanguage,
+                    e.FloatPersonId,
+                    e.FloatLinkedAt,
+                    e.FloatLinkMethod
                 ))
                 .FirstOrDefaultAsync();
 
@@ -287,6 +296,14 @@ public class EmployeeService : IEmployeeService
 
             employee.SetGeoTrackerID(dto.GeoTrackerID);
 
+            // Set Float linkage if provided
+            if (dto.FloatPersonId.HasValue)
+            {
+                employee.FloatPersonId = dto.FloatPersonId;
+                employee.FloatLinkMethod = "Manual";
+                employee.FloatLinkedAt = DateTime.UtcNow;
+            }
+
             _context.Employees.Add(employee);
 
             User? createdUser = null;
@@ -359,7 +376,10 @@ public class EmployeeService : IEmployeeService
                 createdEmployee.GeoTrackerID,
                 createdEmployee.UserId != null,
                 createdUser?.Id,
-                createdEmployee.PreferredLanguage
+                createdEmployee.PreferredLanguage,
+                createdEmployee.FloatPersonId,
+                createdEmployee.FloatLinkedAt,
+                createdEmployee.FloatLinkMethod
             );
 
             return Result.Ok(employeeDto);
@@ -529,6 +549,25 @@ public class EmployeeService : IEmployeeService
                 employee.PreferredLanguage = dto.PreferredLanguage;
             }
 
+            // Handle Float linkage changes
+            if (dto.FloatPersonId != employee.FloatPersonId)
+            {
+                if (dto.FloatPersonId.HasValue)
+                {
+                    // Setting or changing Float Person ID - set manual linkage
+                    employee.FloatPersonId = dto.FloatPersonId;
+                    employee.FloatLinkMethod = "Manual";
+                    employee.FloatLinkedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Clearing Float Person ID - clear linkage fields
+                    employee.FloatPersonId = null;
+                    employee.FloatLinkMethod = null;
+                    employee.FloatLinkedAt = null;
+                }
+            }
+
             // Sync User account if email changed and employee has a linked user
             if (emailChanged && !string.IsNullOrWhiteSpace(employee.UserId))
             {
@@ -576,7 +615,10 @@ public class EmployeeService : IEmployeeService
                 employee.GeoTrackerID,
                 employee.UserId != null,
                 employee.UserId != null ? Guid.Parse(employee.UserId) : null,
-                employee.PreferredLanguage
+                employee.PreferredLanguage,
+                employee.FloatPersonId,
+                employee.FloatLinkedAt,
+                employee.FloatLinkMethod
             );
 
             return Result.Ok(employeeDto);
@@ -737,7 +779,10 @@ public class EmployeeService : IEmployeeService
                     e.GeoTrackerID,
                     false,
                     null,
-                    e.PreferredLanguage
+                    e.PreferredLanguage,
+                    e.FloatPersonId,
+                    e.FloatLinkedAt,
+                    e.FloatLinkMethod
                 ))
                 .ToListAsync();
 
@@ -906,7 +951,10 @@ public class EmployeeService : IEmployeeService
                 employee.GeoTrackerID,
                 true,
                 user.Id,
-                employee.PreferredLanguage
+                employee.PreferredLanguage,
+                employee.FloatPersonId,
+                employee.FloatLinkedAt,
+                employee.FloatLinkMethod
             );
 
             return Result.Ok(employeeDto);
@@ -1029,7 +1077,10 @@ public class EmployeeService : IEmployeeService
                 employee.GeoTrackerID,
                 true,
                 user.Id,
-                employee.PreferredLanguage
+                employee.PreferredLanguage,
+                employee.FloatPersonId,
+                employee.FloatLinkedAt,
+                employee.FloatLinkMethod
             );
 
             return Result.Ok(employeeDto);
