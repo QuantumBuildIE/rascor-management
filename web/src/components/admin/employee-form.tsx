@@ -172,7 +172,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         await updateEmployee.mutateAsync({
           id: employee.id,
           data: {
-            employeeCode: cleanedValues.employeeCode,
+            employeeCode: cleanedValues.employeeCode ?? '',
             firstName: cleanedValues.firstName,
             lastName: cleanedValues.lastName,
             email: cleanedValues.email,
