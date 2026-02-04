@@ -275,6 +275,31 @@ export interface GetSpaParams {
   pageSize?: number;
 }
 
+// Attendance Report Types
+export type AttendanceReportStatus = 'Planned' | 'Arrived' | 'Unplanned';
+
+export interface AttendanceReportEntry {
+  status: AttendanceReportStatus | number;
+  employeeId: string;
+  employeeName: string;
+  siteId: string;
+  siteName: string;
+  siteCode: string | null;
+  plannedArrival: string | null;
+  actualArrival: string | null;
+  spaCompleted: boolean;
+  spaId: string | null;
+  spaImageUrl: string | null;
+}
+
+export interface AttendanceReport {
+  date: string;
+  entries: AttendanceReportEntry[];
+  totalPlanned: number;
+  totalArrived: number;
+  totalUnplanned: number;
+}
+
 // SPA API Functions
 export async function createSpa(data: CreateSpaRequest): Promise<SitePhotoAttendance> {
   const response = await apiClient.post<SitePhotoAttendance>('/site-attendance/spa', data);
@@ -364,5 +389,13 @@ export async function uploadSpaSignature(
     }
   );
 
+  return response.data;
+}
+
+// Attendance Report API
+export async function getAttendanceReport(date: string): Promise<AttendanceReport> {
+  const response = await apiClient.get<AttendanceReport>(
+    `/site-attendance/reports/attendance?date=${date}`
+  );
   return response.data;
 }

@@ -15,6 +15,7 @@ import {
   updateSpa,
   uploadSpaImage,
   uploadSpaSignature,
+  getAttendanceReport,
   type GetEventsParams,
   type GetSummariesParams,
   type GetKpisParams,
@@ -36,6 +37,7 @@ export const ATTENDANCE_KEYS = {
   bankHolidays: () => [...ATTENDANCE_KEYS.all, 'bank-holidays'] as const,
   spa: (params?: GetSpaParams) => [...ATTENDANCE_KEYS.all, 'spa', params] as const,
   spaDetail: (id: string) => [...ATTENDANCE_KEYS.all, 'spa', id] as const,
+  attendanceReport: (date: string) => [...ATTENDANCE_KEYS.all, 'attendance-report', date] as const,
 };
 
 // Dashboard hooks
@@ -180,6 +182,15 @@ export function useUploadSpaSignature() {
   });
 }
 
+// Attendance Report hook
+export function useAttendanceReport(date: string) {
+  return useQuery({
+    queryKey: ATTENDANCE_KEYS.attendanceReport(date),
+    queryFn: () => getAttendanceReport(date),
+    refetchInterval: 60000, // Refetch every 60 seconds for real-time updates
+  });
+}
+
 // Re-export types for convenience
 export type {
   AttendanceEvent,
@@ -197,4 +208,7 @@ export type {
   CreateSpaRequest,
   UpdateSpaRequest,
   GetSpaParams,
+  AttendanceReport,
+  AttendanceReportEntry,
+  AttendanceReportStatus,
 } from '../api/siteAttendanceApi';
