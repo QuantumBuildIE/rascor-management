@@ -1,7 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Rascor.Core.Application.Interfaces;
+using Rascor.Core.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
@@ -11,13 +14,19 @@ public class ProcessToolboxTalkScheduleCommandHandler : IRequestHandler<ProcessT
 {
     private readonly IToolboxTalksDbContext _dbContext;
     private readonly ICoreDbContext _coreDbContext;
+    private readonly IToolboxTalkEmailService _emailService;
+    private readonly ILogger<ProcessToolboxTalkScheduleCommandHandler> _logger;
 
     public ProcessToolboxTalkScheduleCommandHandler(
         IToolboxTalksDbContext dbContext,
-        ICoreDbContext coreDbContext)
+        ICoreDbContext coreDbContext,
+        IToolboxTalkEmailService emailService,
+        ILogger<ProcessToolboxTalkScheduleCommandHandler> logger)
     {
         _dbContext = dbContext;
         _coreDbContext = coreDbContext;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<ProcessToolboxTalkScheduleResult> Handle(ProcessToolboxTalkScheduleCommand request, CancellationToken cancellationToken)
@@ -51,10 +60,11 @@ public class ProcessToolboxTalkScheduleCommandHandler : IRequestHandler<ProcessT
 
         var defaultDueDays = settings?.DefaultDueDays ?? 7;
 
-        // Get employee preferred languages for language code assignment
-        var employeeLanguages = await _coreDbContext.Employees
-            .Where(e => e.TenantId == request.TenantId && !e.IsDeleted)
-            .ToDictionaryAsync(e => e.Id, e => e.PreferredLanguage, cancellationToken);
+        // Get employee data for language code assignment and email sending
+        var employeeIds = schedule.Assignments.Select(a => a.EmployeeId).ToList();
+        var employees = await _coreDbContext.Employees
+            .Where(e => e.TenantId == request.TenantId && !e.IsDeleted && employeeIds.Contains(e.Id))
+            .ToDictionaryAsync(e => e.Id, e => e, cancellationToken);
 
         // Get unprocessed assignments
         var unprocessedAssignments = schedule.Assignments
@@ -90,7 +100,7 @@ public class ProcessToolboxTalkScheduleCommandHandler : IRequestHandler<ProcessT
                 Status = ScheduledTalkStatus.Pending,
                 RemindersSent = 0,
                 LastReminderAt = null,
-                LanguageCode = employeeLanguages.GetValueOrDefault(assignment.EmployeeId, "en")
+                LanguageCode = employees.TryGetValue(assignment.EmployeeId, out var emp) ? emp.PreferredLanguage ?? "en" : "en"
             };
 
             // Create ScheduledTalkSectionProgress records for each section
@@ -116,8 +126,24 @@ public class ProcessToolboxTalkScheduleCommandHandler : IRequestHandler<ProcessT
 
             talksCreated++;
 
-            // TODO: Queue notification email for the employee
-            // This could be done via a notification service or event
+            // Send assignment notification email to the employee
+            if (employees.TryGetValue(assignment.EmployeeId, out var employee))
+            {
+                // Set the ToolboxTalk reference for email template
+                scheduledTalk.ToolboxTalk = schedule.ToolboxTalk;
+
+                try
+                {
+                    await _emailService.SendTalkAssignmentEmailAsync(scheduledTalk, employee, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to send assignment email for ScheduledTalk {TalkId} to Employee {EmployeeId}",
+                        scheduledTalk.Id, employee.Id);
+                    // Continue processing - don't fail the entire operation due to email failure
+                }
+            }
         }
 
         // Handle schedule status and recurring logic

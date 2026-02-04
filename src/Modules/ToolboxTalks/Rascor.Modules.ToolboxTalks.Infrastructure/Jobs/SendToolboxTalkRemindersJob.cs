@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
@@ -16,17 +17,20 @@ public class SendToolboxTalkRemindersJob
     private readonly IToolboxTalksDbContext _dbContext;
     private readonly ICoreDbContext _coreDbContext;
     private readonly ITenantRepository _tenantRepository;
+    private readonly IToolboxTalkEmailService _emailService;
     private readonly ILogger<SendToolboxTalkRemindersJob> _logger;
 
     public SendToolboxTalkRemindersJob(
         IToolboxTalksDbContext dbContext,
         ICoreDbContext coreDbContext,
         ITenantRepository tenantRepository,
+        IToolboxTalkEmailService emailService,
         ILogger<SendToolboxTalkRemindersJob> logger)
     {
         _dbContext = dbContext;
         _coreDbContext = coreDbContext;
         _tenantRepository = tenantRepository;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -88,13 +92,23 @@ public class SendToolboxTalkRemindersJob
                             talk.Status = ScheduledTalkStatus.Overdue;
                         }
 
-                        // TODO: Send reminder email to employee
-                        // await _emailService.SendReminderEmailAsync(talk, talk.Employee, talk.RemindersSent);
-                        _logger.LogInformation(
-                            "Reminder {ReminderNum} queued for ScheduledTalk {TalkId}, Employee: {EmployeeId}",
-                            talk.RemindersSent,
-                            talk.Id,
-                            talk.EmployeeId);
+                        // Send reminder email to employee
+                        if (talk.Employee != null)
+                        {
+                            await _emailService.SendReminderEmailAsync(talk, talk.Employee, talk.RemindersSent, cancellationToken);
+                            _logger.LogInformation(
+                                "Reminder {ReminderNum} sent for ScheduledTalk {TalkId}, Employee: {EmployeeId}",
+                                talk.RemindersSent,
+                                talk.Id,
+                                talk.EmployeeId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "Cannot send reminder for ScheduledTalk {TalkId}: Employee {EmployeeId} not found",
+                                talk.Id,
+                                talk.EmployeeId);
+                        }
 
                         remindersSent++;
 
