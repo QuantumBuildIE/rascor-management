@@ -17,5 +17,8 @@ public record SiteDto(
     string? Notes,
     decimal? Latitude,
     decimal? Longitude,
-    int? GeofenceRadiusMeters
+    int? GeofenceRadiusMeters,
+    int? FloatProjectId = null,
+    DateTime? FloatLinkedAt = null,
+    string? FloatLinkMethod = null
 );

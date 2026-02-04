@@ -13,6 +13,12 @@ export interface Site {
   email?: string;
   isActive: boolean;
   notes?: string;
+  /** Float project ID - links this site to a Float project record for schedule integration */
+  floatProjectId?: number;
+  /** When this site was linked to Float */
+  floatLinkedAt?: string;
+  /** How this site was linked to Float (Auto-Name, Manual) */
+  floatLinkMethod?: string;
 }
 
 export interface Employee {

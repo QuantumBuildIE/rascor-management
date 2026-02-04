@@ -31,6 +31,7 @@ const siteFormSchema = z.object({
   email: z.string().email("Invalid email").max(200).optional().nullable().or(z.literal("")),
   notes: z.string().max(2000).optional().nullable(),
   isActive: z.boolean(),
+  floatProjectId: z.string().optional().nullable(),
 });
 
 type SiteFormValues = z.infer<typeof siteFormSchema>;
@@ -59,6 +60,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
       email: site?.email ?? "",
       notes: site?.notes ?? "",
       isActive: site?.isActive ?? true,
+      floatProjectId: site?.floatProjectId?.toString() ?? "",
     },
   });
 
@@ -67,6 +69,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
   async function onSubmit(values: SiteFormValues) {
     try {
       // Clean up empty strings to null for optional fields
+      const floatProjectIdValue = values.floatProjectId ? parseInt(values.floatProjectId, 10) : undefined;
       const cleanedValues = {
         ...values,
         address: values.address || undefined,
@@ -75,6 +78,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
         phone: values.phone || undefined,
         email: values.email || undefined,
         notes: values.notes || undefined,
+        floatProjectId: floatProjectIdValue,
       };
 
       if (isEditing) {
@@ -90,6 +94,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
             email: cleanedValues.email,
             notes: cleanedValues.notes,
             isActive: cleanedValues.isActive,
+            floatProjectId: cleanedValues.floatProjectId,
           },
         });
         toast.success("Site updated successfully");
@@ -104,6 +109,7 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
           email: cleanedValues.email,
           notes: cleanedValues.notes,
           isActive: cleanedValues.isActive,
+          floatProjectId: cleanedValues.floatProjectId,
         });
         toast.success("Site created successfully");
       }
@@ -249,6 +255,30 @@ export function SiteForm({ site, onSuccess, onCancel }: SiteFormProps) {
                 />
               </FormControl>
               <FormDescription>Optional notes or additional information</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="floatProjectId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Float Project ID</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="e.g., 12345"
+                  {...field}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter the Float Project ID to link this site to its Float schedule.
+                This can be found in Float&apos;s Projects section.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

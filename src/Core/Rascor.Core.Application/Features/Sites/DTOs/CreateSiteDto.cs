@@ -14,5 +14,6 @@ public record CreateSiteDto(
     string? Notes,
     decimal? Latitude,
     decimal? Longitude,
-    int? GeofenceRadiusMeters
+    int? GeofenceRadiusMeters,
+    int? FloatProjectId = null
 );

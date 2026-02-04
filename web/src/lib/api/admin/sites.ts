@@ -14,6 +14,8 @@ export interface CreateSiteDto {
   email?: string;
   isActive?: boolean;
   notes?: string;
+  /** Float project ID - links this site to a Float project record for schedule integration */
+  floatProjectId?: number;
 }
 
 export interface UpdateSiteDto {
@@ -28,6 +30,8 @@ export interface UpdateSiteDto {
   email?: string;
   isActive?: boolean;
   notes?: string;
+  /** Float project ID - links this site to a Float project record for schedule integration */
+  floatProjectId?: number;
 }
 
 export interface GetSitesParams {

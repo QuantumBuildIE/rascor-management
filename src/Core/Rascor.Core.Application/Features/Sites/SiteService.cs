@@ -40,7 +40,10 @@ public class SiteService : ISiteService
                     s.Notes,
                     s.Latitude,
                     s.Longitude,
-                    s.GeofenceRadiusMeters
+                    s.GeofenceRadiusMeters,
+                    s.FloatProjectId,
+                    s.FloatLinkedAt,
+                    s.FloatLinkMethod
                 ))
                 .ToListAsync();
 
@@ -100,7 +103,10 @@ public class SiteService : ISiteService
                     s.Notes,
                     s.Latitude,
                     s.Longitude,
-                    s.GeofenceRadiusMeters
+                    s.GeofenceRadiusMeters,
+                    s.FloatProjectId,
+                    s.FloatLinkedAt,
+                    s.FloatLinkMethod
                 ))
                 .ToListAsync();
 
@@ -158,7 +164,10 @@ public class SiteService : ISiteService
                     s.Notes,
                     s.Latitude,
                     s.Longitude,
-                    s.GeofenceRadiusMeters
+                    s.GeofenceRadiusMeters,
+                    s.FloatProjectId,
+                    s.FloatLinkedAt,
+                    s.FloatLinkMethod
                 ))
                 .FirstOrDefaultAsync();
 
@@ -228,7 +237,10 @@ public class SiteService : ISiteService
                 Notes = dto.Notes,
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
-                GeofenceRadiusMeters = dto.GeofenceRadiusMeters
+                GeofenceRadiusMeters = dto.GeofenceRadiusMeters,
+                FloatProjectId = dto.FloatProjectId,
+                FloatLinkedAt = dto.FloatProjectId.HasValue ? DateTime.UtcNow : null,
+                FloatLinkMethod = dto.FloatProjectId.HasValue ? "Manual" : null
             };
 
             _context.Sites.Add(site);
@@ -257,7 +269,10 @@ public class SiteService : ISiteService
                 createdSite.Notes,
                 createdSite.Latitude,
                 createdSite.Longitude,
-                createdSite.GeofenceRadiusMeters
+                createdSite.GeofenceRadiusMeters,
+                createdSite.FloatProjectId,
+                createdSite.FloatLinkedAt,
+                createdSite.FloatLinkMethod
             );
 
             return Result.Ok(siteDto);
@@ -330,6 +345,25 @@ public class SiteService : ISiteService
             site.Longitude = dto.Longitude;
             site.GeofenceRadiusMeters = dto.GeofenceRadiusMeters;
 
+            // Handle FloatProjectId changes
+            if (dto.FloatProjectId != site.FloatProjectId)
+            {
+                if (dto.FloatProjectId.HasValue)
+                {
+                    // Setting or changing FloatProjectId
+                    site.FloatProjectId = dto.FloatProjectId;
+                    site.FloatLinkedAt = DateTime.UtcNow;
+                    site.FloatLinkMethod = "Manual";
+                }
+                else
+                {
+                    // Clearing FloatProjectId
+                    site.FloatProjectId = null;
+                    site.FloatLinkedAt = null;
+                    site.FloatLinkMethod = null;
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             // Reload to get updated related entity names
@@ -360,7 +394,10 @@ public class SiteService : ISiteService
                 site.Notes,
                 site.Latitude,
                 site.Longitude,
-                site.GeofenceRadiusMeters
+                site.GeofenceRadiusMeters,
+                site.FloatProjectId,
+                site.FloatLinkedAt,
+                site.FloatLinkMethod
             );
 
             return Result.Ok(siteDto);
