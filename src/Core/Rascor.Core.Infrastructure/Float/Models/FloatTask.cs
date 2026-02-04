@@ -39,10 +39,11 @@ public class FloatTask
     public string EndDate { get; set; } = string.Empty;
 
     /// <summary>
-    /// Scheduled hours for the task (as string, may contain decimal).
+    /// Scheduled hours for the task.
     /// </summary>
     [JsonPropertyName("hours")]
-    public string Hours { get; set; } = "0";
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public double Hours { get; set; }
 
     /// <summary>
     /// Name/title of the task (optional).
@@ -77,9 +78,8 @@ public class FloatTask
         DateOnly.TryParse(EndDate, out var date) ? date : null;
 
     /// <summary>
-    /// Parses the Hours string to a decimal value.
+    /// Gets the hours as a decimal value (for backward compatibility).
     /// </summary>
     [JsonIgnore]
-    public decimal HoursParsed =>
-        decimal.TryParse(Hours, out var hours) ? hours : 0;
+    public decimal HoursParsed => (decimal)Hours;
 }
