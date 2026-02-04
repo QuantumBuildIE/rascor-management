@@ -18,13 +18,13 @@ public class FloatTask
     /// ID of the project this task belongs to.
     /// </summary>
     [JsonPropertyName("project_id")]
-    public int ProjectId { get; set; }
+    public int? ProjectId { get; set; }
 
     /// <summary>
     /// ID of the person assigned to this task.
     /// </summary>
     [JsonPropertyName("people_id")]
-    public int PeopleId { get; set; }
+    public int? PeopleId { get; set; }
 
     /// <summary>
     /// Start date of the task (YYYY-MM-DD format).
@@ -43,7 +43,7 @@ public class FloatTask
     /// </summary>
     [JsonPropertyName("hours")]
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-    public double Hours { get; set; }
+    public double? Hours { get; set; }
 
     /// <summary>
     /// Name/title of the task (optional).
@@ -81,5 +81,5 @@ public class FloatTask
     /// Gets the hours as a decimal value (for backward compatibility).
     /// </summary>
     [JsonIgnore]
-    public decimal HoursParsed => (decimal)Hours;
+    public decimal? HoursParsed => Hours.HasValue ? (decimal)Hours.Value : null;
 }
