@@ -103,11 +103,28 @@ public class DeviceMonitorController : ControllerBase
 
             var sitesByFloatProjectId = sites.ToDictionary(s => s.FloatProjectId!.Value);
 
-            // Build task-to-site lookup by FloatPersonId (exclude tasks without PeopleId)
-            var tasksByPersonId = floatTasks
-                .Where(t => t.PeopleId.HasValue)
-                .GroupBy(t => t.PeopleId!.Value)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            // Build task-to-person lookup supporting both PeopleId (singular) and PeopleIds (plural)
+            var tasksByPersonId = new Dictionary<int, List<FloatTask>>();
+            foreach (var task in floatTasks)
+            {
+                // Collect all person IDs from both fields
+                var personIds = new List<int>();
+                if (task.PeopleId.HasValue)
+                    personIds.Add(task.PeopleId.Value);
+                if (task.PeopleIds != null)
+                    personIds.AddRange(task.PeopleIds);
+
+                // Add task to dictionary for each person
+                foreach (var personId in personIds.Distinct())
+                {
+                    if (!tasksByPersonId.TryGetValue(personId, out var tasks))
+                    {
+                        tasks = new List<FloatTask>();
+                        tasksByPersonId[personId] = tasks;
+                    }
+                    tasks.Add(task);
+                }
+            }
 
             // 5. Build the result DTOs
             var results = new List<DeviceMonitorDto>();
@@ -248,10 +265,26 @@ public class DeviceMonitorController : ControllerBase
                 }
             }
 
-            var tasksByPersonId = floatTasks
-                .Where(t => t.PeopleId.HasValue)
-                .GroupBy(t => t.PeopleId!.Value)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            // Build task-to-person lookup supporting both PeopleId (singular) and PeopleIds (plural)
+            var tasksByPersonId = new Dictionary<int, List<FloatTask>>();
+            foreach (var task in floatTasks)
+            {
+                var personIds = new List<int>();
+                if (task.PeopleId.HasValue)
+                    personIds.Add(task.PeopleId.Value);
+                if (task.PeopleIds != null)
+                    personIds.AddRange(task.PeopleIds);
+
+                foreach (var personId in personIds.Distinct())
+                {
+                    if (!tasksByPersonId.TryGetValue(personId, out var tasks))
+                    {
+                        tasks = new List<FloatTask>();
+                        tasksByPersonId[personId] = tasks;
+                    }
+                    tasks.Add(task);
+                }
+            }
 
             var sites = await _appDbContext.Sites
                 .IgnoreQueryFilters()

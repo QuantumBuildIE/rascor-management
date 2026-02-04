@@ -24,11 +24,18 @@ public class FloatTask
     public int? ProjectId { get; set; }
 
     /// <summary>
-    /// ID of the person assigned to this task.
+    /// ID of the person assigned to this task (singular assignment).
     /// </summary>
     [JsonPropertyName("people_id")]
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int? PeopleId { get; set; }
+
+    /// <summary>
+    /// IDs of people assigned to this task (multiple assignment).
+    /// Float uses this when a task is assigned to multiple people.
+    /// </summary>
+    [JsonPropertyName("people_ids")]
+    public List<int>? PeopleIds { get; set; }
 
     /// <summary>
     /// Start date of the task (YYYY-MM-DD format).

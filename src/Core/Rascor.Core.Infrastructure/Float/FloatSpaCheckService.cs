@@ -176,22 +176,60 @@ public class FloatSpaCheckService : IFloatSpaCheckService
         SpaCheckResult result,
         CancellationToken ct)
     {
-        // Skip tasks without required IDs
-        if (task.PeopleId is null || task.ProjectId is null)
+        // Skip tasks without ProjectId
+        if (task.ProjectId is null)
         {
-            _logger.LogDebug("Skipping task {TaskId} - missing PeopleId or ProjectId", task.TaskId);
+            _logger.LogDebug("Skipping task {TaskId} - missing ProjectId", task.TaskId);
             return;
         }
 
-        // 1. Find matched employee
-        if (!employeesByFloatId.TryGetValue(task.PeopleId.Value, out var employee))
+        // Collect all person IDs from both PeopleId (singular) and PeopleIds (plural)
+        var personIds = new List<int>();
+        if (task.PeopleId.HasValue)
+            personIds.Add(task.PeopleId.Value);
+        if (task.PeopleIds != null)
+            personIds.AddRange(task.PeopleIds);
+
+        if (personIds.Count == 0)
         {
-            // Try to get Float person name for logging
-            var personName = peopleDict.TryGetValue(task.PeopleId.Value, out var fp) ? fp.Name : $"ID:{task.PeopleId}";
-            _logger.LogDebug("Skipping task - Float person {PersonName} not linked to any employee", personName);
-            result.SkippedUnmatchedPeople++;
+            _logger.LogDebug("Skipping task {TaskId} - no PeopleId or PeopleIds", task.TaskId);
             return;
         }
+
+        // Process each person assigned to this task
+        foreach (var personId in personIds.Distinct())
+        {
+            // 1. Find matched employee
+            if (!employeesByFloatId.TryGetValue(personId, out var employee))
+            {
+                // Try to get Float person name for logging
+                var personName = peopleDict.TryGetValue(personId, out var fp) ? fp.Name : $"ID:{personId}";
+                _logger.LogDebug("Skipping task - Float person {PersonName} not linked to any employee", personName);
+                result.SkippedUnmatchedPeople++;
+                continue;
+            }
+
+            // Process this employee for the task
+            await ProcessEmployeeForTaskAsync(
+                tenantId, task, employee, checkDate, projectsDict,
+                sitesByFloatId, employeesChecked, result, ct);
+        }
+    }
+
+    /// <summary>
+    /// Process a single employee for a Float task and send reminder if SPA is missing.
+    /// </summary>
+    private async Task ProcessEmployeeForTaskAsync(
+        Guid tenantId,
+        FloatTask task,
+        Employee employee,
+        DateOnly checkDate,
+        Dictionary<int, FloatProject> projectsDict,
+        Dictionary<int, Site> sitesByFloatId,
+        HashSet<Guid> employeesChecked,
+        SpaCheckResult result,
+        CancellationToken ct)
+    {
 
         // 2. Find matched site
         if (!sitesByFloatId.TryGetValue(task.ProjectId.Value, out var site))
