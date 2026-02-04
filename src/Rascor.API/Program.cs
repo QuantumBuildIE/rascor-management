@@ -76,6 +76,10 @@ builder.Services.AddScoped<Rascor.Modules.Rams.Application.Common.Interfaces.IRa
 // Register SiteAttendance module (separate DbContext with own schema)
 builder.Services.AddSiteAttendanceInfrastructure(builder.Configuration);
 
+// Register Site Attendance report service (requires access to both Float API and SiteAttendanceDbContext)
+builder.Services.AddScoped<Rascor.Modules.SiteAttendance.Application.Services.ISiteAttendanceReportDataService,
+    Rascor.API.Services.SiteAttendanceReportDataService>();
+
 // Register ToolboxTalks module services
 builder.Services.AddToolboxTalksInfrastructure(builder.Configuration);
 
