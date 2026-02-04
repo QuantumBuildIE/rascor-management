@@ -455,32 +455,44 @@ public class EmployeeService : IEmployeeService
 
     private async Task<string> GenerateNextEmployeeCodeAsync(Guid tenantId)
     {
-        // Get the highest existing EmployeeCode for this tenant (including soft-deleted records)
-        // to ensure we never reuse a code
-        var maxCode = await _context.Employees
+        // Get ALL existing employee codes for this tenant (including soft-deleted, to avoid reuse)
+        var existingCodes = await _context.Employees
             .IgnoreQueryFilters()
             .Where(e => e.TenantId == tenantId && e.EmployeeCode != null)
-            .Select(e => e.EmployeeCode)
-            .OrderByDescending(c => c!.Length)
-            .ThenByDescending(c => c)
-            .FirstOrDefaultAsync();
+            .Select(e => e.EmployeeCode!)
+            .ToListAsync();
 
-        int nextNumber = 1;
-        if (maxCode != null)
+        var existingCodeSet = new HashSet<string>(existingCodes, StringComparer.OrdinalIgnoreCase);
+
+        // Find the highest numeric portion from EMP-prefixed codes
+        int maxNumber = 0;
+        foreach (var code in existingCodes)
         {
-            // Extract numeric portion from the end of the code (e.g., "EMP022" -> 22)
-            var numericPart = Regex.Match(maxCode, @"\d+$");
-            if (numericPart.Success && int.TryParse(numericPart.Value, out var currentNumber))
+            // Only consider codes that start with "EMP" followed by digits
+            var match = Regex.Match(code, @"^EMP(\d+)$", RegexOptions.IgnoreCase);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var num) && num > maxNumber)
             {
-                nextNumber = currentNumber + 1;
+                maxNumber = num;
             }
         }
 
-        // Format as EMP + 3-digit zero-padded number (e.g., EMP001, EMP022)
-        // If number exceeds 999, use more digits (e.g., EMP1000)
-        return nextNumber <= 999
-            ? $"EMP{nextNumber:D3}"
-            : $"EMP{nextNumber}";
+        // Find next available code (with safety limit to avoid infinite loops)
+        const int maxAttempts = 100;
+        for (int i = maxNumber + 1; i <= maxNumber + maxAttempts; i++)
+        {
+            // Format as EMP + 3-digit zero-padded number (e.g., EMP001, EMP022)
+            // If number exceeds 999, use more digits (e.g., EMP1000)
+            var candidate = i <= 999 ? $"EMP{i:D3}" : $"EMP{i}";
+
+            if (!existingCodeSet.Contains(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Unable to generate a unique employee code after {maxAttempts} attempts. " +
+            $"Highest existing number was {maxNumber}.");
     }
 
     public async Task<Result<EmployeeDto>> UpdateAsync(Guid id, UpdateEmployeeDto dto)
