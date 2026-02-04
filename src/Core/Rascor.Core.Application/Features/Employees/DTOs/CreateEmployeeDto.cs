@@ -1,7 +1,11 @@
 namespace Rascor.Core.Application.Features.Employees.DTOs;
 
 public record CreateEmployeeDto(
-    string EmployeeCode,
+    /// <summary>
+    /// Employee code is auto-generated on the backend (format: EMP001, EMP002, etc.).
+    /// Any value sent from the frontend will be ignored.
+    /// </summary>
+    string? EmployeeCode,
     string FirstName,
     string LastName,
     string? Email,

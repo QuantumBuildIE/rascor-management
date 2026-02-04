@@ -75,7 +75,8 @@ const SUPPORTED_LANGUAGES: Array<{ code: string; name: string; nativeName?: stri
 ];
 
 const employeeFormSchema = z.object({
-  employeeCode: z.string().min(1, "Employee code is required").max(50),
+  // Employee code is auto-generated on create, read-only on edit
+  employeeCode: z.string().max(50).optional().nullable(),
   firstName: z.string().min(1, "First name is required").max(100),
   lastName: z.string().min(1, "Last name is required").max(100),
   email: z.string().email("Invalid email").max(200).optional().nullable().or(z.literal("")),
@@ -194,8 +195,8 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         const hasEmail = !!cleanedValues.email;
         const willCreateUser = values.createUserAccount && hasEmail;
 
+        // Note: employeeCode is auto-generated on the backend, so we don't send it
         await createEmployee.mutateAsync({
-          employeeCode: cleanedValues.employeeCode,
           firstName: cleanedValues.firstName,
           lastName: cleanedValues.lastName,
           email: cleanedValues.email,
@@ -235,21 +236,33 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-6 sm:grid-cols-2">
+        {/* Employee Code - only show in edit mode, read-only */}
+        {isEditing && (
           <FormField
             control={form.control}
             name="employeeCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Employee Code *</FormLabel>
+                <FormLabel>Employee Code</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., EMP-001" {...field} />
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    disabled
+                    className="bg-muted"
+                  />
                 </FormControl>
+                <FormDescription>
+                  Auto-generated employee identifier (read-only)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+        )}
 
+        {/* Integration fields - side by side */}
+        <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="geoTrackerId"
@@ -266,30 +279,30 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
               </FormItem>
             )}
           />
-        </div>
 
-        <FormField
-          control={form.control}
-          name="floatPersonId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Float Person ID</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="e.g., 12345"
-                  {...field}
-                  value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormDescription>
-                Enter the Float Person ID to link this employee to their Float schedule. This can be found in Float&apos;s People section.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="floatPersonId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Float Person ID</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 12345"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Link to Float schedule (from Float&apos;s People section)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
           <FormField

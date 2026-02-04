@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -232,25 +233,8 @@ public class EmployeeService : IEmployeeService
                 }
             }
 
-            // Check for duplicate EmployeeCode within the same tenant (including soft-deleted records)
-            // The database has a unique constraint that covers ALL records, including soft-deleted ones
-            var duplicateCodeEmployee = await _context.Employees
-                .IgnoreQueryFilters()
-                .Where(e => e.TenantId == tenantId && e.EmployeeCode == dto.EmployeeCode)
-                .Select(e => new { e.Id, e.FirstName, e.LastName, e.IsDeleted })
-                .FirstOrDefaultAsync();
-
-            if (duplicateCodeEmployee != null)
-            {
-                if (duplicateCodeEmployee.IsDeleted)
-                {
-                    return Result.Fail<EmployeeDto>(
-                        $"Employee code '{dto.EmployeeCode}' was previously assigned to deleted employee " +
-                        $"{duplicateCodeEmployee.FirstName} {duplicateCodeEmployee.LastName}. " +
-                        "Please choose a different code or permanently delete the former employee record first.");
-                }
-                return Result.Fail<EmployeeDto>($"Employee code '{dto.EmployeeCode}' is already in use by an active employee.");
-            }
+            // Auto-generate EmployeeCode (EMP001, EMP002, etc.) - ignore any value from frontend
+            var employeeCode = await GenerateNextEmployeeCodeAsync(tenantId);
 
             // Validate email uniqueness if creating a user account
             if (dto.CreateUserAccount && !string.IsNullOrWhiteSpace(dto.Email))
@@ -278,7 +262,7 @@ public class EmployeeService : IEmployeeService
             var employee = new Employee
             {
                 Id = Guid.NewGuid(),
-                EmployeeCode = dto.EmployeeCode,
+                EmployeeCode = employeeCode,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Email = dto.Email,
@@ -467,6 +451,36 @@ public class EmployeeService : IEmployeeService
         // Generate a secure temporary password that meets ASP.NET Identity requirements
         // This password will never be used - user will reset via email link
         return $"Temp{Guid.NewGuid():N}!Aa1";
+    }
+
+    private async Task<string> GenerateNextEmployeeCodeAsync(Guid tenantId)
+    {
+        // Get the highest existing EmployeeCode for this tenant (including soft-deleted records)
+        // to ensure we never reuse a code
+        var maxCode = await _context.Employees
+            .IgnoreQueryFilters()
+            .Where(e => e.TenantId == tenantId && e.EmployeeCode != null)
+            .Select(e => e.EmployeeCode)
+            .OrderByDescending(c => c!.Length)
+            .ThenByDescending(c => c)
+            .FirstOrDefaultAsync();
+
+        int nextNumber = 1;
+        if (maxCode != null)
+        {
+            // Extract numeric portion from the end of the code (e.g., "EMP022" -> 22)
+            var numericPart = Regex.Match(maxCode, @"\d+$");
+            if (numericPart.Success && int.TryParse(numericPart.Value, out var currentNumber))
+            {
+                nextNumber = currentNumber + 1;
+            }
+        }
+
+        // Format as EMP + 3-digit zero-padded number (e.g., EMP001, EMP022)
+        // If number exceeds 999, use more digits (e.g., EMP1000)
+        return nextNumber <= 999
+            ? $"EMP{nextNumber:D3}"
+            : $"EMP{nextNumber}";
     }
 
     public async Task<Result<EmployeeDto>> UpdateAsync(Guid id, UpdateEmployeeDto dto)

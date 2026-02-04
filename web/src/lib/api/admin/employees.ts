@@ -3,7 +3,8 @@ import type { ApiResponse } from "@/types/auth";
 import type { Employee } from "@/types/admin";
 
 export interface CreateEmployeeDto {
-  employeeCode: string;
+  /** Employee code is auto-generated on the backend - any value sent will be ignored */
+  employeeCode?: string;
   firstName: string;
   lastName: string;
   email?: string;
