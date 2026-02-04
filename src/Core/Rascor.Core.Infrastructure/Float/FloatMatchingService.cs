@@ -71,9 +71,9 @@ public class FloatMatchingService : IFloatMatchingService
                 !string.IsNullOrWhiteSpace(e.Email) &&
                 e.Email.Equals(floatPerson.Email, StringComparison.OrdinalIgnoreCase));
 
-            if (emailMatch != null)
+            if (emailMatch != null && floatPerson.PeopleId.HasValue)
             {
-                LinkEmployeeToFloatPerson(emailMatch, floatPerson.PeopleId, "Auto-Email");
+                LinkEmployeeToFloatPerson(emailMatch, floatPerson.PeopleId.Value, "Auto-Email");
 
                 return new FloatMatchResult<Employee>
                 {
@@ -92,9 +92,9 @@ public class FloatMatchingService : IFloatMatchingService
         var nameMatch = employees.FirstOrDefault(e =>
             e.FullName.Equals(floatPerson.Name, StringComparison.OrdinalIgnoreCase));
 
-        if (nameMatch != null)
+        if (nameMatch != null && floatPerson.PeopleId.HasValue)
         {
-            LinkEmployeeToFloatPerson(nameMatch, floatPerson.PeopleId, "Auto-Name");
+            LinkEmployeeToFloatPerson(nameMatch, floatPerson.PeopleId.Value, "Auto-Name");
 
             return new FloatMatchResult<Employee>
             {
@@ -111,10 +111,10 @@ public class FloatMatchingService : IFloatMatchingService
         // 4. Try fuzzy name match
         var fuzzyMatch = FindBestFuzzyMatch(floatPerson.Name, employees);
 
-        if (fuzzyMatch.Match != null && fuzzyMatch.Score >= AutoLinkThreshold)
+        if (fuzzyMatch.Match != null && fuzzyMatch.Score >= AutoLinkThreshold && floatPerson.PeopleId.HasValue)
         {
             // High confidence fuzzy match - auto-link but flag for review
-            LinkEmployeeToFloatPerson(fuzzyMatch.Match, floatPerson.PeopleId, "Auto-Fuzzy");
+            LinkEmployeeToFloatPerson(fuzzyMatch.Match, floatPerson.PeopleId.Value, "Auto-Fuzzy");
 
             return new FloatMatchResult<Employee>
             {
@@ -186,9 +186,9 @@ public class FloatMatchingService : IFloatMatchingService
         var nameMatch = sites.FirstOrDefault(s =>
             s.SiteName.Equals(floatProject.Name, StringComparison.OrdinalIgnoreCase));
 
-        if (nameMatch != null)
+        if (nameMatch != null && floatProject.ProjectId.HasValue)
         {
-            LinkSiteToFloatProject(nameMatch, floatProject.ProjectId, "Auto-Name");
+            LinkSiteToFloatProject(nameMatch, floatProject.ProjectId.Value, "Auto-Name");
 
             return new FloatMatchResult<Site>
             {
@@ -209,9 +209,9 @@ public class FloatMatchingService : IFloatMatchingService
                 !string.IsNullOrWhiteSpace(s.SiteCode) &&
                 s.SiteCode.Equals(floatProject.ProjectCode, StringComparison.OrdinalIgnoreCase));
 
-            if (codeMatch != null)
+            if (codeMatch != null && floatProject.ProjectId.HasValue)
             {
-                LinkSiteToFloatProject(codeMatch, floatProject.ProjectId, "Auto-Code");
+                LinkSiteToFloatProject(codeMatch, floatProject.ProjectId.Value, "Auto-Code");
 
                 return new FloatMatchResult<Site>
                 {
@@ -229,9 +229,9 @@ public class FloatMatchingService : IFloatMatchingService
         // 4. Try fuzzy name match
         var fuzzyMatch = FindBestFuzzyMatchSite(floatProject.Name, sites);
 
-        if (fuzzyMatch.Match != null && fuzzyMatch.Score >= AutoLinkThreshold)
+        if (fuzzyMatch.Match != null && fuzzyMatch.Score >= AutoLinkThreshold && floatProject.ProjectId.HasValue)
         {
-            LinkSiteToFloatProject(fuzzyMatch.Match, floatProject.ProjectId, "Auto-Fuzzy");
+            LinkSiteToFloatProject(fuzzyMatch.Match, floatProject.ProjectId.Value, "Auto-Fuzzy");
 
             return new FloatMatchResult<Site>
             {
@@ -298,11 +298,11 @@ public class FloatMatchingService : IFloatMatchingService
                     {
                         result.PeopleMatched++;
                     }
-                    else
+                    else if (person.PeopleId.HasValue)
                     {
                         result.PeopleUnmatched++;
                         var isNew = await CreateOrUpdateUnmatchedItemAsync(
-                            tenantId, "Person", person.PeopleId,
+                            tenantId, "Person", person.PeopleId.Value,
                             person.Name, person.Email, matchResult, ct);
                         if (isNew) result.NewUnmatchedItems++;
                     }
@@ -326,11 +326,11 @@ public class FloatMatchingService : IFloatMatchingService
                     {
                         result.ProjectsMatched++;
                     }
-                    else
+                    else if (project.ProjectId.HasValue)
                     {
                         result.ProjectsUnmatched++;
                         var isNew = await CreateOrUpdateUnmatchedItemAsync(
-                            tenantId, "Project", project.ProjectId,
+                            tenantId, "Project", project.ProjectId.Value,
                             project.Name, null, matchResult, ct);
                         if (isNew) result.NewUnmatchedItems++;
                     }

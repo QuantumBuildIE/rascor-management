@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Rascor.Core.Infrastructure.Float.Models;
@@ -11,7 +12,8 @@ public class FloatPerson
     /// Unique identifier for the person in Float.
     /// </summary>
     [JsonPropertyName("people_id")]
-    public int PeopleId { get; set; }
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public int? PeopleId { get; set; }
 
     /// <summary>
     /// Full name of the person.
@@ -41,17 +43,27 @@ public class FloatPerson
     /// Whether the person is active (1) or inactive (0).
     /// </summary>
     [JsonPropertyName("active")]
-    public int Active { get; set; }
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public int? Active { get; set; }
 
     /// <summary>
     /// Tags associated with the person.
+    /// Handles both string arrays and object arrays from Float API.
     /// </summary>
     [JsonPropertyName("tags")]
+    [JsonConverter(typeof(FloatTagListConverter))]
     public List<FloatTag> Tags { get; set; } = new();
 
     /// <summary>
     /// Convenience property to check if the person is active.
+    /// Defaults to false if Active is null.
     /// </summary>
     [JsonIgnore]
     public bool IsActive => Active == 1;
+
+    /// <summary>
+    /// Captures any additional properties from the API that aren't explicitly mapped.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 }

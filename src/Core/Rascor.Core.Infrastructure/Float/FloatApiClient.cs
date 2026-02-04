@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rascor.Core.Infrastructure.Float.Models;
@@ -15,6 +17,17 @@ public class FloatApiClient : IFloatApiClient
     private readonly HttpClient _httpClient;
     private readonly FloatSettings _settings;
     private readonly ILogger<FloatApiClient> _logger;
+
+    /// <summary>
+    /// Global JSON serializer options for Float API responses.
+    /// Configured to handle common Float API quirks like numbers-as-strings.
+    /// </summary>
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     /// <summary>
     /// Maximum number of items per page (Float API limit).
@@ -165,7 +178,7 @@ public class FloatApiClient : IFloatApiClient
                 response.EnsureSuccessStatusCode(); // Throw for non-success status
             }
 
-            var items = await response.Content.ReadFromJsonAsync<List<T>>(ct);
+            var items = await response.Content.ReadFromJsonAsync<List<T>>(JsonOptions, ct);
 
             if (items == null || items.Count == 0)
             {

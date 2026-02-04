@@ -89,8 +89,12 @@ public class FloatSpaCheckService : IFloatSpaCheckService
             var floatPeople = await _floatApiClient.GetPeopleAsync(ct);
             var floatProjects = await _floatApiClient.GetProjectsAsync(ct);
 
-            var peopleDict = floatPeople.ToDictionary(p => p.PeopleId);
-            var projectsDict = floatProjects.ToDictionary(p => p.ProjectId);
+            var peopleDict = floatPeople
+                .Where(p => p.PeopleId.HasValue)
+                .ToDictionary(p => p.PeopleId!.Value);
+            var projectsDict = floatProjects
+                .Where(p => p.ProjectId.HasValue)
+                .ToDictionary(p => p.ProjectId!.Value);
 
             // 3. Get employees and sites with Float links for this tenant
             var employees = await _appDbContext.Employees
