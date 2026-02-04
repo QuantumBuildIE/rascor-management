@@ -103,9 +103,10 @@ public class DeviceMonitorController : ControllerBase
 
             var sitesByFloatProjectId = sites.ToDictionary(s => s.FloatProjectId!.Value);
 
-            // Build task-to-site lookup by FloatPersonId
+            // Build task-to-site lookup by FloatPersonId (exclude tasks without PeopleId)
             var tasksByPersonId = floatTasks
-                .GroupBy(t => t.PeopleId)
+                .Where(t => t.PeopleId.HasValue)
+                .GroupBy(t => t.PeopleId!.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             // 5. Build the result DTOs
@@ -137,14 +138,17 @@ public class DeviceMonitorController : ControllerBase
                         // Find the first task that maps to a known site
                         foreach (var task in employeeTasks)
                         {
-                            if (sitesByFloatProjectId.TryGetValue(task.ProjectId, out var site))
+                            if (!task.ProjectId.HasValue)
+                                continue;
+
+                            if (sitesByFloatProjectId.TryGetValue(task.ProjectId.Value, out var site))
                             {
                                 dto.ScheduledSiteName = site.SiteName;
                                 dto.ScheduledSiteLatitude = site.Latitude;
                                 dto.ScheduledSiteLongitude = site.Longitude;
                                 break;
                             }
-                            else if (projectsDict.TryGetValue(task.ProjectId, out var project))
+                            else if (projectsDict.TryGetValue(task.ProjectId.Value, out var project))
                             {
                                 // Site not linked but we have the project name
                                 dto.ScheduledSiteName = project.Name;
@@ -245,7 +249,8 @@ public class DeviceMonitorController : ControllerBase
             }
 
             var tasksByPersonId = floatTasks
-                .GroupBy(t => t.PeopleId)
+                .Where(t => t.PeopleId.HasValue)
+                .GroupBy(t => t.PeopleId!.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var sites = await _appDbContext.Sites
@@ -286,7 +291,8 @@ public class DeviceMonitorController : ControllerBase
                 {
                     foreach (var task in employeeTasks)
                     {
-                        if (sitesByFloatProjectId.TryGetValue(task.ProjectId, out var site) &&
+                        if (task.ProjectId.HasValue &&
+                            sitesByFloatProjectId.TryGetValue(task.ProjectId.Value, out var site) &&
                             site.Latitude.HasValue && site.Longitude.HasValue)
                         {
                             var distance = CalculateHaversineDistance(

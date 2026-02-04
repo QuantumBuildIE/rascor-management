@@ -172,20 +172,27 @@ public class FloatSpaCheckService : IFloatSpaCheckService
         SpaCheckResult result,
         CancellationToken ct)
     {
+        // Skip tasks without required IDs
+        if (task.PeopleId is null || task.ProjectId is null)
+        {
+            _logger.LogDebug("Skipping task {TaskId} - missing PeopleId or ProjectId", task.TaskId);
+            return;
+        }
+
         // 1. Find matched employee
-        if (!employeesByFloatId.TryGetValue(task.PeopleId, out var employee))
+        if (!employeesByFloatId.TryGetValue(task.PeopleId.Value, out var employee))
         {
             // Try to get Float person name for logging
-            var personName = peopleDict.TryGetValue(task.PeopleId, out var fp) ? fp.Name : $"ID:{task.PeopleId}";
+            var personName = peopleDict.TryGetValue(task.PeopleId.Value, out var fp) ? fp.Name : $"ID:{task.PeopleId}";
             _logger.LogDebug("Skipping task - Float person {PersonName} not linked to any employee", personName);
             result.SkippedUnmatchedPeople++;
             return;
         }
 
         // 2. Find matched site
-        if (!sitesByFloatId.TryGetValue(task.ProjectId, out var site))
+        if (!sitesByFloatId.TryGetValue(task.ProjectId.Value, out var site))
         {
-            var projectName = projectsDict.TryGetValue(task.ProjectId, out var proj) ? proj.Name : $"ID:{task.ProjectId}";
+            var projectName = projectsDict.TryGetValue(task.ProjectId.Value, out var proj) ? proj.Name : $"ID:{task.ProjectId}";
             _logger.LogDebug("Skipping task - Float project {ProjectName} not linked to any site", projectName);
             result.SkippedUnmatchedProjects++;
             return;
