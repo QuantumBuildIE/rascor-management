@@ -196,37 +196,61 @@ public class EmployeeTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateEmployee_DuplicateEmployeeCode_ReturnsBadRequest()
+    public async Task CreateEmployee_AutoGeneratesUniqueEmployeeCode()
     {
-        // Arrange - First create an employee
-        var employeeCode = $"DUP-{Guid.NewGuid():N}".Substring(0, 10);
+        // Arrange - Create two employees, both sending the same EmployeeCode in request body
+        // The backend should ignore the sent code and auto-generate unique ones
+        var sameCodeInRequest = "IGNORED";
         var command1 = new
         {
-            EmployeeCode = employeeCode,
+            EmployeeCode = sameCodeInRequest,
             FirstName = "First",
             LastName = "Employee",
             Email = $"first-{Guid.NewGuid():N}@test.rascor.ie",
             IsActive = true
         };
 
-        var createResponse = await AdminClient.PostAsJsonAsync("/api/employees", command1);
-        createResponse.EnsureSuccessStatusCode();
+        // Act - Create first employee
+        var response1 = await AdminClient.PostAsJsonAsync("/api/employees", command1);
+        var result1 = await response1.Content.ReadFromJsonAsync<ResultWrapper<EmployeeDto>>();
 
-        // Try to create another employee with the same code
+        // Assert - First employee created successfully
+        response1.StatusCode.Should().Be(HttpStatusCode.Created);
+        result1.Should().NotBeNull();
+        result1!.Success.Should().BeTrue();
+        result1.Data.Should().NotBeNull();
+
+        // Create second employee with the same code in request body
         var command2 = new
         {
-            EmployeeCode = employeeCode, // Same code
+            EmployeeCode = sameCodeInRequest, // Same code sent - should be ignored
             FirstName = "Second",
             LastName = "Employee",
             Email = $"second-{Guid.NewGuid():N}@test.rascor.ie",
             IsActive = true
         };
 
-        // Act
-        var response = await AdminClient.PostAsJsonAsync("/api/employees", command2);
+        // Act - Create second employee
+        var response2 = await AdminClient.PostAsJsonAsync("/api/employees", command2);
+        var result2 = await response2.Content.ReadFromJsonAsync<ResultWrapper<EmployeeDto>>();
 
-        // Assert - Should fail due to duplicate code
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // Assert - Second employee also created successfully (backend ignores sent code)
+        response2.StatusCode.Should().Be(HttpStatusCode.Created);
+        result2.Should().NotBeNull();
+        result2!.Success.Should().BeTrue();
+        result2.Data.Should().NotBeNull();
+
+        // Assert - Both employees have different auto-generated EmployeeCodes
+        var employeeCode1 = result1.Data!.EmployeeCode;
+        var employeeCode2 = result2.Data!.EmployeeCode;
+
+        employeeCode1.Should().NotBe(sameCodeInRequest, "backend should ignore sent EmployeeCode");
+        employeeCode2.Should().NotBe(sameCodeInRequest, "backend should ignore sent EmployeeCode");
+        employeeCode1.Should().NotBe(employeeCode2, "each employee should have a unique code");
+
+        // Assert - Both codes follow the EMP### pattern
+        employeeCode1.Should().MatchRegex(@"^EMP\d{3}$", "EmployeeCode should follow EMP### pattern");
+        employeeCode2.Should().MatchRegex(@"^EMP\d{3}$", "EmployeeCode should follow EMP### pattern");
     }
 
     [Fact]
