@@ -36,8 +36,12 @@ public class UpdateOverdueToolboxTalksJob
 
         try
         {
-            // Use ExecuteUpdate for efficient bulk update without loading entities
+            // NOTE: We use IgnoreQueryFilters() because this runs in a Hangfire background job
+            // where ICurrentUserService.TenantId is not set. This job processes all tenants,
+            // so we explicitly filter by IsDeleted only.
             var count = await _dbContext.ScheduledTalks
+                .IgnoreQueryFilters()
+                .Where(st => !st.IsDeleted)
                 .Where(st => st.Status == ScheduledTalkStatus.Pending ||
                              st.Status == ScheduledTalkStatus.InProgress)
                 .Where(st => st.DueDate.Date < today)

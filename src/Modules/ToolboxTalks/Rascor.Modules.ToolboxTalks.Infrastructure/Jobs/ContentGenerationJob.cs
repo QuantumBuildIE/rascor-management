@@ -250,8 +250,11 @@ public class ContentGenerationJob
     {
         try
         {
-            // Get distinct non-English languages used by employees in this tenant
+            // NOTE: We use IgnoreQueryFilters() because this method runs in a background job context
+            // where ICurrentUserService.TenantId may not be set correctly for the global tenant filter.
+            // Since we explicitly filter by tenantId and IsDeleted, this is safe.
             var employeeLanguageCodes = await _coreDbContext.Employees
+                .IgnoreQueryFilters()
                 .Where(e => e.TenantId == tenantId && !e.IsDeleted
                     && e.PreferredLanguage != null && e.PreferredLanguage != "en")
                 .Select(e => e.PreferredLanguage!)

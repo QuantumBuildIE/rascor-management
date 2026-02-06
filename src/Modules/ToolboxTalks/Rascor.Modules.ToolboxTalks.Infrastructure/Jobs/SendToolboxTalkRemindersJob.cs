@@ -55,18 +55,23 @@ public class SendToolboxTalkRemindersJob
         {
             try
             {
+                // NOTE: We use IgnoreQueryFilters() because this runs in a Hangfire background job
+                // where ICurrentUserService.TenantId is not set. We explicitly filter by TenantId and IsDeleted.
+
                 // Get tenant settings
                 var settings = await _dbContext.ToolboxTalkSettings
-                    .FirstOrDefaultAsync(s => s.TenantId == tenant.Id, cancellationToken);
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(s => s.TenantId == tenant.Id && !s.IsDeleted, cancellationToken);
 
                 var maxReminders = settings?.MaxReminders ?? 5;
                 var escalateAfterReminders = settings?.EscalateAfterReminders ?? 3;
 
                 // Find overdue incomplete talks that haven't reached max reminders
                 var overdueTalks = await _dbContext.ScheduledTalks
+                    .IgnoreQueryFilters()
                     .Include(st => st.Employee)
                     .Include(st => st.ToolboxTalk)
-                    .Where(st => st.TenantId == tenant.Id)
+                    .Where(st => st.TenantId == tenant.Id && !st.IsDeleted)
                     .Where(st => st.Status != ScheduledTalkStatus.Completed &&
                                  st.Status != ScheduledTalkStatus.Cancelled)
                     .Where(st => st.DueDate.Date < today)

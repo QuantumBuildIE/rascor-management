@@ -52,9 +52,11 @@ public class ProcessToolboxTalkSchedulesJob
         {
             try
             {
-                // Get active schedules where ScheduledDate <= today or NextRunDate <= today
+                // NOTE: We use IgnoreQueryFilters() because this runs in a Hangfire background job
+                // where ICurrentUserService.TenantId is not set. We explicitly filter by TenantId and IsDeleted.
                 var schedulesToProcess = await _dbContext.ToolboxTalkSchedules
-                    .Where(s => s.TenantId == tenant.Id)
+                    .IgnoreQueryFilters()
+                    .Where(s => s.TenantId == tenant.Id && !s.IsDeleted)
                     .Where(s => s.Status == ToolboxTalkScheduleStatus.Active)
                     .Where(s => s.ScheduledDate.Date <= today ||
                                (s.NextRunDate.HasValue && s.NextRunDate.Value.Date <= today))
