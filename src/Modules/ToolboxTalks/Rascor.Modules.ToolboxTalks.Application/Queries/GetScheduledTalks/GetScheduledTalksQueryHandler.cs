@@ -19,10 +19,6 @@ public class GetScheduledTalksQueryHandler : IRequestHandler<GetScheduledTalksQu
     public async Task<PaginatedList<ScheduledTalkListDto>> Handle(GetScheduledTalksQuery request, CancellationToken cancellationToken)
     {
         var query = _context.ScheduledTalks
-            .Include(st => st.ToolboxTalk)
-                .ThenInclude(t => t.Sections)
-            .Include(st => st.Employee)
-            .Include(st => st.SectionProgress)
             .Where(st => st.TenantId == request.TenantId && !st.IsDeleted)
             .AsQueryable();
 
@@ -60,8 +56,7 @@ public class GetScheduledTalksQueryHandler : IRequestHandler<GetScheduledTalksQu
 
         // Apply ordering and pagination
         var items = await query
-            .OrderBy(st => st.DueDate)
-            .ThenBy(st => st.Status)
+            .OrderByDescending(st => st.CreatedAt)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(st => new ScheduledTalkListDto
