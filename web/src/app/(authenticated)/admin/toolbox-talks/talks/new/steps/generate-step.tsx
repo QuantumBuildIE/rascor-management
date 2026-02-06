@@ -151,6 +151,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         totalTokensUsed: number;
         message?: string;
       }) => {
+        console.log('[DEBUG] ContentGenerationComplete received (initial connection):', payload);
         if (payload.toolboxTalkId === data.id) {
           setResult({
             success: payload.success,
@@ -167,7 +168,21 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           // Always try to fetch content, even on failure (partial content may exist)
           if (data.id) {
             try {
+              console.log('[DEBUG] Fetching updated toolbox talk from API after generation complete...');
               const updatedTalk = await getToolboxTalk(data.id);
+
+              console.log('[DEBUG] API response - sections:', updatedTalk.sections?.map(s => ({
+                id: s.id,
+                sectionNumber: s.sectionNumber,
+                source: s.source,
+                title: s.title?.substring(0, 30),
+              })));
+              console.log('[DEBUG] API response - questions:', updatedTalk.questions?.map(q => ({
+                id: q.id,
+                questionNumber: q.questionNumber,
+                source: q.source,
+                questionType: q.questionType,
+              })));
 
               // Check if any content was actually created
               const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
@@ -208,6 +223,18 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                   };
                 });
 
+                console.log('[DEBUG] Mapped sections for wizard state:', sections.map(s => ({
+                  id: s.id,
+                  sortOrder: s.sortOrder,
+                  source: s.source,
+                  title: s.title?.substring(0, 30),
+                })));
+                console.log('[DEBUG] Mapped questions for wizard state:', questions.map(q => ({
+                  id: q.id,
+                  sortOrder: q.sortOrder,
+                  source: q.source,
+                })));
+
                 // Update wizard state with the fetched content
                 updateData({
                   sections,
@@ -218,14 +245,16 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                   minimumQuestions,
                 });
 
-                console.log('✅ Loaded generated content:', {
+                console.log('[DEBUG] Loaded generated content:', {
                   sections: sections.length,
                   questions: questions.length,
                   wasSuccessful: payload.success
                 });
+              } else {
+                console.log('[DEBUG] No content found in API response after generation');
               }
             } catch (error) {
-              console.error('Failed to fetch generated content:', error);
+              console.error('[DEBUG] Failed to fetch generated content:', error);
               // Still show result, but user may need to refresh
             }
           }
@@ -592,6 +621,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           totalTokensUsed: number;
           message?: string;
         }) => {
+          console.log('[DEBUG] ContentGenerationComplete received (new connection):', payload);
           if (payload.toolboxTalkId === data.id) {
             setResult({
               success: payload.success,
@@ -608,7 +638,20 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
             // Always try to fetch content, even on failure (partial content may exist)
             if (data.id) {
               try {
+                console.log('[DEBUG] Fetching updated toolbox talk from API (new connection handler)...');
                 const updatedTalk = await getToolboxTalk(data.id);
+
+                console.log('[DEBUG] API response (new connection) - sections:', updatedTalk.sections?.map(s => ({
+                  id: s.id,
+                  sectionNumber: s.sectionNumber,
+                  source: s.source,
+                  title: s.title?.substring(0, 30),
+                })));
+                console.log('[DEBUG] API response (new connection) - questions:', updatedTalk.questions?.map(q => ({
+                  id: q.id,
+                  questionNumber: q.questionNumber,
+                  source: q.source,
+                })));
 
                 // Check if any content was actually created
                 const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
@@ -644,6 +687,12 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                     };
                   });
 
+                  console.log('[DEBUG] Mapped sections (new connection):', sections.map(s => ({
+                    id: s.id,
+                    sortOrder: s.sortOrder,
+                    source: s.source,
+                  })));
+
                   updateData({
                     sections,
                     questions,
@@ -653,14 +702,16 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                     minimumQuestions,
                   });
 
-                  console.log('Loaded generated content:', {
+                  console.log('[DEBUG] Loaded generated content (new connection):', {
                     sections: sections.length,
                     questions: questions.length,
                     wasSuccessful: payload.success
                   });
+                } else {
+                  console.log('[DEBUG] No content found in API response (new connection)');
                 }
               } catch (error) {
-                console.error('Failed to fetch generated content:', error);
+                console.error('[DEBUG] Failed to fetch generated content (new connection):', error);
               }
             }
 

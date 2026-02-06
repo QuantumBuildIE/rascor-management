@@ -112,7 +112,20 @@ public class ContentGenerationJob
             // Auto-generate translations for employee languages if content generation succeeded
             if (result.Success)
             {
+                _logger.LogInformation(
+                    "[DEBUG] Content generation complete for ToolboxTalk {ToolboxTalkId}. " +
+                    "Sections created: {SectionCount}, Questions created: {QuestionCount}, " +
+                    "HasFinalPortionQuestion: {HasFinalQuestion}. Now starting auto-translation...",
+                    toolboxTalkId, result.SectionsGenerated, result.QuestionsGenerated, result.HasFinalPortionQuestion);
+
                 await AutoGenerateTranslationsAsync(toolboxTalkId, tenantId, connectionId, cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "[DEBUG] Content generation FAILED for ToolboxTalk {ToolboxTalkId}. " +
+                    "Skipping auto-translation. Errors: {Errors}",
+                    toolboxTalkId, string.Join("; ", result.Errors));
             }
 
             // Send completion notification
@@ -250,6 +263,10 @@ public class ContentGenerationJob
     {
         try
         {
+            _logger.LogInformation(
+                "[DEBUG] AutoGenerateTranslationsAsync called for ToolboxTalk {ToolboxTalkId}, TenantId {TenantId}",
+                toolboxTalkId, tenantId);
+
             // NOTE: We use IgnoreQueryFilters() because this method runs in a background job context
             // where ICurrentUserService.TenantId may not be set correctly for the global tenant filter.
             // Since we explicitly filter by tenantId and IsDeleted, this is safe.
@@ -261,10 +278,14 @@ public class ContentGenerationJob
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
+            _logger.LogInformation(
+                "[DEBUG] Employee languages query returned {Count} languages: {Languages}",
+                employeeLanguageCodes.Count, string.Join(", ", employeeLanguageCodes));
+
             if (employeeLanguageCodes.Count == 0)
             {
                 _logger.LogInformation(
-                    "No non-English employee languages found for tenant {TenantId}. Skipping auto-translation.",
+                    "[DEBUG] No non-English employee languages found for tenant {TenantId}. Skipping auto-translation.",
                     tenantId);
                 return;
             }
@@ -276,6 +297,10 @@ public class ContentGenerationJob
                 .ToList();
 
             _logger.LogInformation(
+                "[DEBUG] Converted to language names: {Names} (from codes: {Codes})",
+                string.Join(", ", languageNames), string.Join(", ", employeeLanguageCodes));
+
+            _logger.LogInformation(
                 "Auto-generating translations for ToolboxTalk {ToolboxTalkId} in {Count} languages: {Languages}",
                 toolboxTalkId, languageNames.Count, string.Join(", ", languageNames));
 
@@ -283,6 +308,10 @@ public class ContentGenerationJob
                 new ContentGenerationProgress(
                     "Translating", 92,
                     $"Generating translations for {languageNames.Count} language(s)..."));
+
+            _logger.LogInformation(
+                "[DEBUG] Dispatching GenerateContentTranslationsCommand for {Count} languages: {Languages}",
+                languageNames.Count, string.Join(", ", languageNames));
 
             var command = new GenerateContentTranslationsCommand
             {
@@ -292,6 +321,12 @@ public class ContentGenerationJob
             };
 
             var translationResult = await _sender.Send(command, cancellationToken);
+
+            _logger.LogInformation(
+                "[DEBUG] GenerateContentTranslationsCommand completed. Success: {Success}, " +
+                "LanguageResults count: {Count}, Error: {Error}",
+                translationResult.Success, translationResult.LanguageResults.Count,
+                translationResult.ErrorMessage ?? "none");
 
             if (translationResult.Success)
             {

@@ -28,6 +28,35 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
 
     public async Task<ToolboxTalkDto> Handle(UpdateToolboxTalkCommand request, CancellationToken cancellationToken)
     {
+        _logger.LogInformation(
+            "[DEBUG] UpdateToolboxTalk received. Id: {Id}, TenantId: {TenantId}, " +
+            "SectionCount: {SectionCount}, SectionsWithIds: {WithIds}, SectionsWithoutIds: {WithoutIds}, " +
+            "QuestionCount: {QuestionCount}, QuestionsWithIds: {QWithIds}, QuestionsWithoutIds: {QWithoutIds}",
+            request.Id, request.TenantId,
+            request.Sections?.Count ?? 0,
+            request.Sections?.Count(s => s.Id.HasValue) ?? 0,
+            request.Sections?.Count(s => !s.Id.HasValue) ?? 0,
+            request.Questions?.Count ?? 0,
+            request.Questions?.Count(q => q.Id.HasValue) ?? 0,
+            request.Questions?.Count(q => !q.Id.HasValue) ?? 0);
+
+        // Log each section's ID and source
+        foreach (var section in request.Sections ?? Enumerable.Empty<UpdateToolboxTalkSectionDto>())
+        {
+            _logger.LogInformation(
+                "[DEBUG] Section received: Id={Id}, SectionNumber={Num}, Source={Source}, Title={Title}",
+                section.Id?.ToString() ?? "NULL", section.SectionNumber, section.Source,
+                section.Title?.Length > 40 ? section.Title.Substring(0, 40) + "..." : section.Title);
+        }
+
+        // Log each question's ID and source
+        foreach (var question in request.Questions ?? Enumerable.Empty<UpdateToolboxTalkQuestionDto>())
+        {
+            _logger.LogInformation(
+                "[DEBUG] Question received: Id={Id}, QuestionNumber={Num}, Source={Source}, Type={Type}",
+                question.Id?.ToString() ?? "NULL", question.QuestionNumber, question.Source, question.QuestionType);
+        }
+
         // Find the toolbox talk (without sections and questions - we'll query those separately)
         var toolboxTalk = await _dbContext.ToolboxTalks
             .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
@@ -77,7 +106,9 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         // Handle questions update - query from DbContext directly to avoid concurrency issues
         await UpdateQuestionsAsync(toolboxTalk, request.Questions, cancellationToken);
 
+        _logger.LogInformation("[DEBUG] Calling SaveChangesAsync for UpdateToolboxTalk {Id}...", toolboxTalk.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("[DEBUG] SaveChangesAsync completed for UpdateToolboxTalk {Id}", toolboxTalk.Id);
 
         // Reload sections and questions for the response
         var sections = await _dbContext.ToolboxTalkSections
@@ -89,6 +120,17 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             .Where(q => q.ToolboxTalkId == toolboxTalk.Id && !q.IsDeleted)
             .OrderBy(q => q.QuestionNumber)
             .ToListAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "[DEBUG] After save - Sections in DB (non-deleted): {SectionCount}, Questions in DB (non-deleted): {QuestionCount}",
+            sections.Count, questions.Count);
+
+        foreach (var s in sections)
+        {
+            _logger.LogInformation(
+                "[DEBUG] Final section: Id={Id}, Num={Num}, Source={Source}, Title={Title}",
+                s.Id, s.SectionNumber, s.Source, s.Title?.Length > 40 ? s.Title.Substring(0, 40) + "..." : s.Title);
+        }
 
         return MapToDto(toolboxTalk, sections, questions);
     }
@@ -105,6 +147,17 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             .Where(s => s.Id.HasValue)
             .Select(s => s.Id!.Value)
             .ToHashSet();
+
+        _logger.LogInformation(
+            "[DEBUG] UpdateSectionsAsync: ExistingSections={ExistingCount} (IDs: {ExistingIds}), " +
+            "IncomingSections={IncomingCount} (IDs with value: {IncomingIds}), " +
+            "Sections to soft-delete: {DeleteCount}, New sections (no ID): {NewCount}",
+            existingSections.Count,
+            string.Join(", ", existingSectionIds),
+            sectionDtos.Count,
+            string.Join(", ", incomingSectionIds),
+            existingSectionIds.Except(incomingSectionIds).Count(),
+            sectionDtos.Count(s => !s.Id.HasValue));
 
         // Soft-delete sections that are in DB but not in request
         foreach (var section in existingSections)

@@ -37,8 +37,9 @@ public class GenerateContentTranslationsCommandHandler
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Generating content translations for ToolboxTalk {ToolboxTalkId} in {LanguageCount} languages",
-            request.ToolboxTalkId, request.TargetLanguages.Count);
+            "[DEBUG] GenerateContentTranslationsCommandHandler started. " +
+            "ToolboxTalkId: {ToolboxTalkId}, TenantId: {TenantId}, Languages: {Languages}",
+            request.ToolboxTalkId, request.TenantId, string.Join(", ", request.TargetLanguages));
 
         // Load the toolbox talk with sections and questions
         var toolboxTalk = await _context.ToolboxTalks
@@ -49,20 +50,54 @@ public class GenerateContentTranslationsCommandHandler
 
         if (toolboxTalk == null)
         {
+            _logger.LogWarning(
+                "[DEBUG] ToolboxTalk {ToolboxTalkId} not found for TenantId {TenantId}",
+                request.ToolboxTalkId, request.TenantId);
             return GenerateContentTranslationsResult.FailureResult("Toolbox talk not found");
+        }
+
+        _logger.LogInformation(
+            "[DEBUG] Loaded ToolboxTalk. Title: {Title}, Sections: {SectionCount}, Questions: {QuestionCount}, " +
+            "Existing translations: {TranslationCount}",
+            toolboxTalk.Title, toolboxTalk.Sections.Count, toolboxTalk.Questions.Count, toolboxTalk.Translations.Count);
+
+        _logger.LogInformation(
+            "[DEBUG] Section IDs: {Ids}",
+            string.Join(", ", toolboxTalk.Sections.Select(s => $"{s.Id} (#{s.SectionNumber}: {s.Title?.Substring(0, Math.Min(30, s.Title?.Length ?? 0))})")));
+
+        _logger.LogInformation(
+            "[DEBUG] Question IDs: {Ids}",
+            string.Join(", ", toolboxTalk.Questions.Select(q => $"{q.Id} (#{q.QuestionNumber})")));
+
+        if (toolboxTalk.Translations.Count > 0)
+        {
+            _logger.LogInformation(
+                "[DEBUG] Existing translation languages: {Languages}",
+                string.Join(", ", toolboxTalk.Translations.Select(t => $"{t.LanguageCode} (Id: {t.Id})")));
         }
 
         var results = new List<LanguageTranslationResult>();
 
         foreach (var language in request.TargetLanguages)
         {
+            _logger.LogInformation("[DEBUG] Starting translation for language: {Language}", language);
             var result = await TranslateForLanguageAsync(toolboxTalk, language, cancellationToken);
+            _logger.LogInformation(
+                "[DEBUG] Translation result for {Language}: Success={Success}, " +
+                "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, Error={Error}",
+                language, result.Success, result.SectionsTranslated, result.QuestionsTranslated,
+                result.ErrorMessage ?? "none");
             results.Add(result);
         }
+
+        _logger.LogInformation(
+            "[DEBUG] All translations done. Saving {TranslationCount} translation entities to database...",
+            toolboxTalk.Translations.Count);
 
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
+            "[DEBUG] SaveChangesAsync completed for translations. " +
             "Content translation completed for ToolboxTalk {ToolboxTalkId}. Success: {SuccessCount}/{TotalCount}",
             request.ToolboxTalkId,
             results.Count(r => r.Success),

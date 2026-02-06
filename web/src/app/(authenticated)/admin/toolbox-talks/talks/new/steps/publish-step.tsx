@@ -44,7 +44,14 @@ interface PublishStepProps {
 
 // Transform wizard section to API format
 function transformSection(section: GeneratedSection): CreateToolboxTalkSectionRequest {
-  return {
+  console.log('[DEBUG] transformSection input:', {
+    id: section.id,
+    sortOrder: section.sortOrder,
+    source: section.source,
+    title: section.title?.substring(0, 40),
+  });
+
+  const result = {
     id: section.id,
     sectionNumber: section.sortOrder,
     title: section.title,
@@ -52,11 +59,26 @@ function transformSection(section: GeneratedSection): CreateToolboxTalkSectionRe
     requiresAcknowledgment: section.requiresAcknowledgment,
     source: section.source,
   };
+
+  console.log('[DEBUG] transformSection output:', {
+    id: result.id,
+    sectionNumber: result.sectionNumber,
+    source: result.source,
+  });
+
+  return result;
 }
 
 // Transform wizard question to API format
 function transformQuestion(question: GeneratedQuestion): CreateToolboxTalkQuestionRequest {
-  return {
+  console.log('[DEBUG] transformQuestion input:', {
+    id: question.id,
+    sortOrder: question.sortOrder,
+    source: question.source,
+    questionType: question.questionType,
+  });
+
+  const result = {
     id: question.id,
     questionNumber: question.sortOrder,
     questionText: question.questionText,
@@ -66,6 +88,14 @@ function transformQuestion(question: GeneratedQuestion): CreateToolboxTalkQuesti
     points: question.points,
     source: question.source,
   };
+
+  console.log('[DEBUG] transformQuestion output:', {
+    id: result.id,
+    questionNumber: result.questionNumber,
+    source: result.source,
+  });
+
+  return result;
 }
 
 // Map wizard video source to API video source
@@ -163,6 +193,34 @@ export function PublishStep({
       return;
     }
 
+    console.log('[DEBUG] saveToolboxTalk called with status:', status);
+    console.log('[DEBUG] Sections in wizard state:', data.sections.map(s => ({
+      id: s.id,
+      sortOrder: s.sortOrder,
+      source: s.source,
+      title: s.title?.substring(0, 30),
+    })));
+    console.log('[DEBUG] Questions in wizard state:', data.questions.map(q => ({
+      id: q.id,
+      sortOrder: q.sortOrder,
+      source: q.source,
+      questionType: q.questionType,
+    })));
+
+    const transformedSections = data.sections.map(transformSection);
+    const transformedQuestions = data.requiresQuiz ? data.questions.map(transformQuestion) : [];
+
+    console.log('[DEBUG] Transformed sections to send:', transformedSections.map(s => ({
+      id: s.id,
+      sectionNumber: s.sectionNumber,
+      source: s.source,
+    })));
+    console.log('[DEBUG] Transformed questions to send:', transformedQuestions.map(q => ({
+      id: q.id,
+      questionNumber: q.questionNumber,
+      source: q.source,
+    })));
+
     try {
       await updateToolboxTalk(data.id, {
         id: data.id,
@@ -175,8 +233,8 @@ export function PublishStep({
         requiresQuiz: data.requiresQuiz,
         passingScore: data.requiresQuiz ? data.passThreshold : undefined,
         isActive: status === 'Published' ? data.isActive : false,
-        sections: data.sections.map(transformSection),
-        questions: data.requiresQuiz ? data.questions.map(transformQuestion) : [],
+        sections: transformedSections,
+        questions: transformedQuestions,
       });
 
       return true;

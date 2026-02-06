@@ -36,38 +36,53 @@ public class ContentTranslationService : IContentTranslationService
     {
         if (string.IsNullOrWhiteSpace(text))
         {
+            _logger.LogInformation(
+                "[DEBUG] ContentTranslationService.TranslateTextAsync called with empty/null text for {Language}. Returning empty success.",
+                targetLanguage);
             return ContentTranslationResult.SuccessResult(string.Empty);
         }
 
         try
         {
-            _logger.LogInformation("Translating content to {Language}, HTML: {IsHtml}", targetLanguage, isHtml);
+            _logger.LogInformation(
+                "[DEBUG] ContentTranslationService.TranslateTextAsync called. " +
+                "TargetLanguage: {Language}, IsHtml: {IsHtml}, TextLength: {TextLength}, TextPreview: {Preview}",
+                targetLanguage, isHtml, text.Length,
+                text.Length > 80 ? text.Substring(0, 80) + "..." : text);
 
             var prompt = BuildTranslationPrompt(text, targetLanguage, isHtml);
             var translatedText = await CallClaudeApiAsync(prompt, cancellationToken);
 
             if (string.IsNullOrWhiteSpace(translatedText))
             {
-                _logger.LogWarning("Translation returned empty content for {Language}", targetLanguage);
+                _logger.LogWarning(
+                    "[DEBUG] Claude API returned empty/whitespace translation for {Language}. Input length was {InputLength}",
+                    targetLanguage, text.Length);
                 return ContentTranslationResult.FailureResult($"Translation to {targetLanguage} returned empty content");
             }
 
-            _logger.LogInformation("Translation to {Language} completed successfully", targetLanguage);
+            _logger.LogInformation(
+                "[DEBUG] Translation to {Language} completed successfully. " +
+                "InputLength: {InputLength}, OutputLength: {OutputLength}",
+                targetLanguage, text.Length, translatedText.Length);
             return ContentTranslationResult.SuccessResult(translatedText);
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP request failed during translation to {Language}", targetLanguage);
+            _logger.LogError(ex,
+                "[DEBUG] HTTP request failed during translation to {Language}. StatusCode: {StatusCode}",
+                targetLanguage, ex.StatusCode);
             return ContentTranslationResult.FailureResult($"HTTP request failed: {ex.Message}");
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to parse translation response for {Language}", targetLanguage);
+            _logger.LogError(ex, "[DEBUG] Failed to parse translation response for {Language}", targetLanguage);
             return ContentTranslationResult.FailureResult($"Failed to parse translation response: {ex.Message}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Translation to {Language} failed", targetLanguage);
+            _logger.LogError(ex, "[DEBUG] Translation to {Language} failed with {ExceptionType}: {Message}",
+                targetLanguage, ex.GetType().Name, ex.Message);
             return ContentTranslationResult.FailureResult($"Translation failed: {ex.Message}");
         }
     }
@@ -133,18 +148,31 @@ public class ContentTranslationService : IContentTranslationService
             Encoding.UTF8,
             "application/json");
 
-        _logger.LogDebug("Calling Claude API at {BaseUrl} with model {Model}", _settings.Claude.BaseUrl, _settings.Claude.Model);
+        _logger.LogInformation(
+            "[DEBUG] Calling Claude API at {BaseUrl} with model {Model}",
+            _settings.Claude.BaseUrl, _settings.Claude.Model);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
+        _logger.LogInformation(
+            "[DEBUG] Claude API response received. StatusCode: {StatusCode}, ResponseBodyLength: {Length}",
+            response.StatusCode, responseBody?.Length ?? 0);
+
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Claude API error: {StatusCode} - {Response}", response.StatusCode, responseBody);
+            _logger.LogError(
+                "[DEBUG] Claude API error: {StatusCode} - {Response}",
+                response.StatusCode, responseBody);
             throw new HttpRequestException($"Claude API error: {response.StatusCode} - {responseBody}");
         }
 
-        return ParseClaudeResponse(responseBody);
+        var parsedResult = ParseClaudeResponse(responseBody);
+        _logger.LogInformation(
+            "[DEBUG] Parsed Claude response. IsEmpty: {IsEmpty}, ResultLength: {Length}",
+            string.IsNullOrWhiteSpace(parsedResult), parsedResult?.Length ?? 0);
+
+        return parsedResult;
     }
 
     /// <summary>
