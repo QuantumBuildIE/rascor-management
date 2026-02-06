@@ -22,9 +22,10 @@ export default function ToolboxTalksLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
+      const returnUrl = encodeURIComponent(pathname);
+      router.replace(`/login?returnUrl=${returnUrl}`);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   if (isLoading) {
     return (

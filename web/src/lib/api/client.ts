@@ -90,7 +90,8 @@ apiClient.interceptors.response.use(
       // Don't try to refresh if this is already a refresh token request
       if (originalRequest.url?.includes("/auth/refresh-token")) {
         clearStoredTokens();
-        window.location.href = "/login";
+        const returnUrl = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
         return Promise.reject(error);
       }
 
@@ -116,7 +117,8 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken || !accessToken) {
         clearStoredTokens();
-        window.location.href = "/login";
+        const returnUrl = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
         return Promise.reject(error);
       }
 
@@ -140,13 +142,15 @@ apiClient.interceptors.response.use(
         } else {
           processQueue(new Error("Refresh failed"), null);
           clearStoredTokens();
-          window.location.href = "/login";
+          const returnUrl = encodeURIComponent(window.location.pathname);
+          window.location.href = `/login?returnUrl=${returnUrl}`;
           return Promise.reject(error);
         }
       } catch (refreshError) {
         processQueue(refreshError as Error, null);
         clearStoredTokens();
-        window.location.href = "/login";
+        const returnUrl = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
