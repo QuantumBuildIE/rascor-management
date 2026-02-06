@@ -94,14 +94,27 @@ public class GenerateContentTranslationsCommandHandler
             "[DEBUG] All translations done. Saving {TranslationCount} translation entities to database...",
             toolboxTalk.Translations.Count);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation(
-            "[DEBUG] SaveChangesAsync completed for translations. " +
-            "Content translation completed for ToolboxTalk {ToolboxTalkId}. Success: {SuccessCount}/{TotalCount}",
-            request.ToolboxTalkId,
-            results.Count(r => r.Success),
-            results.Count);
+            _logger.LogInformation(
+                "[DEBUG] SaveChangesAsync completed for translations. " +
+                "Content translation completed for ToolboxTalk {ToolboxTalkId}. Success: {SuccessCount}/{TotalCount}",
+                request.ToolboxTalkId,
+                results.Count(r => r.Success),
+                results.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "[DEBUG] SaveChangesAsync FAILED for translations. " +
+                "ToolboxTalkId: {ToolboxTalkId}, TenantId: {TenantId}, " +
+                "TranslationCount: {TranslationCount}, Error: {Error}",
+                request.ToolboxTalkId, request.TenantId,
+                toolboxTalk.Translations.Count, ex.Message);
+            throw;
+        }
 
         return GenerateContentTranslationsResult.SuccessResult(results);
     }

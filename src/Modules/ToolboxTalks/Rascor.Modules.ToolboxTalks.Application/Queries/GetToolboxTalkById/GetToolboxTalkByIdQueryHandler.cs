@@ -77,7 +77,10 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
                 SectionNumber = s.SectionNumber,
                 Title = s.Title,
                 Content = s.Content,
-                RequiresAcknowledgment = s.RequiresAcknowledgment
+                RequiresAcknowledgment = s.RequiresAcknowledgment,
+                Source = s.Source,
+                SourceDisplay = GetContentSourceDisplay(s.Source),
+                VideoTimestamp = s.VideoTimestamp
             }).ToList(),
             Questions = talk.Questions.Select(q => new ToolboxTalkQuestionDto
             {
@@ -89,7 +92,11 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
                 QuestionTypeDisplay = GetQuestionTypeDisplay(q.QuestionType),
                 Options = ParseOptions(q.Options),
                 CorrectAnswer = q.CorrectAnswer,
-                Points = q.Points
+                Points = q.Points,
+                Source = q.Source,
+                SourceDisplay = GetContentSourceDisplay(q.Source),
+                VideoTimestamp = q.VideoTimestamp,
+                IsFromVideoFinalPortion = q.IsFromVideoFinalPortion
             }).ToList(),
             Translations = talk.Translations.Select(t => new ToolboxTalkTranslationDto
             {
@@ -149,6 +156,15 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
         QuestionType.TrueFalse => "True/False",
         QuestionType.ShortAnswer => "Short Answer",
         _ => type.ToString()
+    };
+
+    private static string GetContentSourceDisplay(ContentSource source) => source switch
+    {
+        ContentSource.Manual => "Manual",
+        ContentSource.Video => "Video",
+        ContentSource.Pdf => "PDF",
+        ContentSource.Both => "Video & PDF",
+        _ => source.ToString()
     };
 
     private static List<string>? ParseOptions(string? optionsJson)

@@ -45,7 +45,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     /// <summary>
     /// Current user ID for audit fields
     /// </summary>
-    public string CurrentUserId => _currentUserService?.UserId ?? "system";
+    public string CurrentUserId => string.IsNullOrEmpty(_currentUserService?.UserId) ? "system" : _currentUserService.UserId;
 
     // Core DbSets
     public DbSet<Tenant> Tenants => Set<Tenant>();
