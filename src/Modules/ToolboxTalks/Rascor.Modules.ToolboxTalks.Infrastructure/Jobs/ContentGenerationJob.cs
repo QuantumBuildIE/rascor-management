@@ -1,8 +1,13 @@
 using System.Diagnostics;
 using Hangfire;
+using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Rascor.Core.Application.Interfaces;
+using Rascor.Modules.ToolboxTalks.Application.Commands.GenerateContentTranslations;
 using Rascor.Modules.ToolboxTalks.Application.Services;
+using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Hubs;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
@@ -11,20 +16,31 @@ namespace Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 /// Hangfire background job for orchestrating AI content generation for toolbox talks.
 /// This job extracts content from video/PDF, generates sections and quiz questions using AI,
 /// and reports real-time progress via SignalR.
+/// After successful content generation, automatically generates translations for all
+/// languages used by employees in the tenant.
 /// </summary>
 public class ContentGenerationJob
 {
     private readonly IContentGenerationService _generationService;
     private readonly IHubContext<ContentGenerationHub> _hubContext;
+    private readonly ICoreDbContext _coreDbContext;
+    private readonly ISender _sender;
+    private readonly ILanguageCodeService _languageCodeService;
     private readonly ILogger<ContentGenerationJob> _logger;
 
     public ContentGenerationJob(
         IContentGenerationService generationService,
         IHubContext<ContentGenerationHub> hubContext,
+        ICoreDbContext coreDbContext,
+        ISender sender,
+        ILanguageCodeService languageCodeService,
         ILogger<ContentGenerationJob> logger)
     {
         _generationService = generationService;
         _hubContext = hubContext;
+        _coreDbContext = coreDbContext;
+        _sender = sender;
+        _languageCodeService = languageCodeService;
         _logger = logger;
     }
 
@@ -92,6 +108,12 @@ public class ContentGenerationJob
                 cancellationToken);
 
             stopwatch.Stop();
+
+            // Auto-generate translations for employee languages if content generation succeeded
+            if (result.Success)
+            {
+                await AutoGenerateTranslationsAsync(toolboxTalkId, tenantId, connectionId, cancellationToken);
+            }
 
             // Send completion notification
             await SendCompletionNotificationAsync(toolboxTalkId, connectionId, result);
@@ -213,6 +235,115 @@ public class ContentGenerationJob
         }
 
         return $"Content generated successfully ({result.SectionsGenerated} sections, {result.QuestionsGenerated} questions)";
+    }
+
+    /// <summary>
+    /// Automatically generates content translations for all non-English languages
+    /// used by employees in the tenant. Failures are logged but do not affect
+    /// the overall content generation result.
+    /// </summary>
+    private async Task AutoGenerateTranslationsAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        string? connectionId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get distinct non-English languages used by employees in this tenant
+            var employeeLanguageCodes = await _coreDbContext.Employees
+                .Where(e => e.TenantId == tenantId && !e.IsDeleted
+                    && e.PreferredLanguage != null && e.PreferredLanguage != "en")
+                .Select(e => e.PreferredLanguage!)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            if (employeeLanguageCodes.Count == 0)
+            {
+                _logger.LogInformation(
+                    "No non-English employee languages found for tenant {TenantId}. Skipping auto-translation.",
+                    tenantId);
+                return;
+            }
+
+            // Convert language codes (e.g. "pl") to language names (e.g. "Polish")
+            // as the translation command expects language names
+            var languageNames = employeeLanguageCodes
+                .Select(code => _languageCodeService.GetLanguageName(code))
+                .ToList();
+
+            _logger.LogInformation(
+                "Auto-generating translations for ToolboxTalk {ToolboxTalkId} in {Count} languages: {Languages}",
+                toolboxTalkId, languageNames.Count, string.Join(", ", languageNames));
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                new ContentGenerationProgress(
+                    "Translating", 92,
+                    $"Generating translations for {languageNames.Count} language(s)..."));
+
+            var command = new GenerateContentTranslationsCommand
+            {
+                ToolboxTalkId = toolboxTalkId,
+                TenantId = tenantId,
+                TargetLanguages = languageNames
+            };
+
+            var translationResult = await _sender.Send(command, cancellationToken);
+
+            if (translationResult.Success)
+            {
+                var successCount = translationResult.LanguageResults.Count(r => r.Success);
+                var totalCount = translationResult.LanguageResults.Count;
+
+                _logger.LogInformation(
+                    "Auto-translation completed for ToolboxTalk {ToolboxTalkId}. " +
+                    "Success: {SuccessCount}/{TotalCount} languages",
+                    toolboxTalkId, successCount, totalCount);
+
+                foreach (var langResult in translationResult.LanguageResults.Where(r => !r.Success))
+                {
+                    _logger.LogWarning(
+                        "Auto-translation failed for language {Language} ({Code}): {Error}",
+                        langResult.Language, langResult.LanguageCode, langResult.ErrorMessage);
+                }
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "Translating", 98,
+                        $"Translations complete ({successCount}/{totalCount} languages)."));
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Auto-translation failed for ToolboxTalk {ToolboxTalkId}: {Error}",
+                    toolboxTalkId, translationResult.ErrorMessage);
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "Translating", 98,
+                        "Translation generation encountered errors. Translations can be generated manually."));
+            }
+        }
+        catch (Exception ex)
+        {
+            // Translation failure should never fail the content generation job
+            _logger.LogError(ex,
+                "Auto-translation failed unexpectedly for ToolboxTalk {ToolboxTalkId}. " +
+                "Content generation was successful. Translations can be generated manually.",
+                toolboxTalkId);
+
+            try
+            {
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "Translating", 98,
+                        "Auto-translation skipped due to an error. Translations can be generated manually."));
+            }
+            catch
+            {
+                // Swallow - we're already in error handling
+            }
+        }
     }
 
     /// <summary>
