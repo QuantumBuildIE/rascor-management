@@ -45,22 +45,26 @@ interface PublishStepProps {
 // Transform wizard section to API format
 function transformSection(section: GeneratedSection): CreateToolboxTalkSectionRequest {
   return {
+    id: section.id,
     sectionNumber: section.sortOrder,
     title: section.title,
     content: section.content,
     requiresAcknowledgment: section.requiresAcknowledgment,
+    source: section.source,
   };
 }
 
 // Transform wizard question to API format
 function transformQuestion(question: GeneratedQuestion): CreateToolboxTalkQuestionRequest {
   return {
+    id: question.id,
     questionNumber: question.sortOrder,
     questionText: question.questionText,
     questionType: question.questionType as QuestionType,
     options: question.questionType === 'TrueFalse' ? undefined : question.options,
     correctAnswer: question.options[question.correctAnswerIndex],
     points: question.points,
+    source: question.source,
   };
 }
 

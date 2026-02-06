@@ -477,19 +477,23 @@ export interface ProcessScheduleResult {
 // ============================================
 
 export interface CreateToolboxTalkSectionRequest {
+  id?: string;
   sectionNumber: number;
   title: string;
   content: string;
   requiresAcknowledgment?: boolean;
+  source?: ContentSource;
 }
 
 export interface CreateToolboxTalkQuestionRequest {
+  id?: string;
   questionNumber: number;
   questionText: string;
   questionType: QuestionType;
   options?: string[];
   correctAnswer: string;
   points?: number;
+  source?: ContentSource;
 }
 
 export interface CreateToolboxTalkRequest {
