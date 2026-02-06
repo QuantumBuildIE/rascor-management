@@ -21,9 +21,6 @@ public class GetMyToolboxTalksQueryHandler : IRequestHandler<GetMyToolboxTalksQu
         var now = DateTime.UtcNow;
 
         var query = _context.ScheduledTalks
-            .Include(st => st.ToolboxTalk)
-                .ThenInclude(t => t.Sections)
-            .Include(st => st.SectionProgress)
             .Where(st => st.TenantId == request.TenantId &&
                         st.EmployeeId == request.EmployeeId &&
                         !st.IsDeleted &&

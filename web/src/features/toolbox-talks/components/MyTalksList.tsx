@@ -119,10 +119,27 @@ interface TabContentProps {
   tab: TabConfig;
   data: MyToolboxTalkListItem[] | undefined;
   isLoading: boolean;
+  error: Error | null;
   onAction: (id: string) => void;
 }
 
-function TabContent({ tab, data, isLoading, onAction }: TabContentProps) {
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="rounded-full bg-destructive/10 p-4 mb-4">
+        <Inbox className="h-8 w-8 text-destructive" />
+      </div>
+      <h3 className="text-lg font-medium mb-1">Something went wrong</h3>
+      <p className="text-sm text-muted-foreground max-w-sm">{message}</p>
+    </div>
+  );
+}
+
+function TabContent({ tab, data, isLoading, error, onAction }: TabContentProps) {
+  if (error) {
+    return <ErrorState message="Failed to load toolbox talks. Please try again." />;
+  }
+
   if (!isLoading && (!data || data.length === 0)) {
     return <EmptyState title={tab.emptyTitle} description={tab.emptyDescription} />;
   }
@@ -213,6 +230,7 @@ export function MyTalksList() {
                 tab={tab}
                 data={query.data?.items}
                 isLoading={query.isLoading}
+                error={query.error}
                 onAction={handleAction}
               />
             </TabsContent>
