@@ -120,7 +120,7 @@ public class ClaudeTranslationServiceTests
     }
 
     [Fact]
-    public async Task TranslateSrtBatchAsync_WithEmptyTranslation_ReturnsOriginalContent()
+    public async Task TranslateSrtBatchAsync_WithEmptyTranslation_ReturnsFailure()
     {
         // Arrange
         var originalSrt = """
@@ -145,12 +145,13 @@ public class ClaudeTranslationServiceTests
         var result = await sut.TranslateSrtBatchAsync(originalSrt, "Spanish");
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.TranslatedContent.Should().Be(originalSrt);
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("empty content");
+        result.TranslatedContent.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task TranslateSrtBatchAsync_WithWhitespaceOnlyTranslation_ReturnsOriginalContent()
+    public async Task TranslateSrtBatchAsync_WithWhitespaceOnlyTranslation_ReturnsFailure()
     {
         // Arrange
         var originalSrt = """
@@ -175,8 +176,9 @@ public class ClaudeTranslationServiceTests
         var result = await sut.TranslateSrtBatchAsync(originalSrt, "Spanish");
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.TranslatedContent.Should().Be(originalSrt);
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("empty content");
+        result.TranslatedContent.Should().BeEmpty();
     }
 
     [Fact]
@@ -283,7 +285,7 @@ public class ClaudeTranslationServiceTests
     }
 
     [Fact]
-    public async Task TranslateSrtBatchAsync_WithMissingContentProperty_ReturnsEmptyTranslation()
+    public async Task TranslateSrtBatchAsync_WithMissingContentProperty_ReturnsFailure()
     {
         // Arrange
         var responseJson = new { usage = new { input_tokens = 100, output_tokens = 50 } };
@@ -296,8 +298,8 @@ public class ClaudeTranslationServiceTests
         var result = await sut.TranslateSrtBatchAsync("1\n00:00:00,000 --> 00:00:02,000\nHello", "Spanish");
 
         // Assert
-        // Should return original since translation is empty
-        result.Success.Should().BeTrue();
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("empty content");
     }
 
     [Fact]

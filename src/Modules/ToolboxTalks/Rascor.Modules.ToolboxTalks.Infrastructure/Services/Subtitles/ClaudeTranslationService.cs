@@ -72,8 +72,8 @@ public class ClaudeTranslationService : ITranslationService
 
             if (string.IsNullOrWhiteSpace(translatedText))
             {
-                _logger.LogWarning("Translation returned empty content for {Language}, returning original", targetLanguage);
-                return TranslationResult.SuccessResult(srtContent);
+                _logger.LogWarning("Translation returned empty content for {Language}", targetLanguage);
+                return TranslationResult.FailureResult($"Translation to {targetLanguage} returned empty content");
             }
 
             _logger.LogInformation("Translation to {Language} completed", targetLanguage);
