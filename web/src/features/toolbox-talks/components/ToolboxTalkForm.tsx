@@ -42,19 +42,23 @@ import { toast } from 'sonner';
 // ============================================
 
 const sectionSchema = z.object({
+  id: z.string().uuid().optional(),
   sectionNumber: z.number().min(1),
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
   requiresAcknowledgment: z.boolean(),
+  source: z.string().optional(),
 });
 
 const questionSchema = z.object({
+  id: z.string().uuid().optional(),
   questionNumber: z.number().min(1),
   questionText: z.string().min(1, 'Question text is required'),
   questionType: z.enum(['MultipleChoice', 'TrueFalse', 'ShortAnswer'] as const),
   options: z.array(z.string()).nullable(),
   correctAnswer: z.string().min(1, 'Correct answer is required'),
   points: z.number().min(1),
+  source: z.string().optional(),
 });
 
 const toolboxTalkFormSchema = z.object({
@@ -132,18 +136,22 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       passingScore: talk?.passingScore ?? 70,
       isActive: talk?.isActive ?? true,
       sections: talk?.sections?.map((s) => ({
+        id: s.id,
         sectionNumber: s.sectionNumber,
         title: s.title,
         content: s.content,
         requiresAcknowledgment: s.requiresAcknowledgment,
+        source: s.source,
       })) ?? [],
       questions: talk?.questions?.map((q) => ({
+        id: q.id,
         questionNumber: q.questionNumber,
         questionText: q.questionText,
         questionType: q.questionType as QuestionType,
         options: q.options,
         correctAnswer: q.correctAnswer ?? '',
         points: q.points,
+        source: q.source,
       })) ?? [],
     },
   });
@@ -178,20 +186,24 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
     try {
       // Transform form values to API request format
       const sections = values.sections.map((s) => ({
+        id: s.id,
         sectionNumber: s.sectionNumber,
         title: s.title,
         content: s.content,
         requiresAcknowledgment: s.requiresAcknowledgment,
+        source: s.source,
       }));
 
       const questions = values.requiresQuiz && values.questions
         ? values.questions.map((q) => ({
+            id: q.id,
             questionNumber: q.questionNumber,
             questionText: q.questionText,
             questionType: q.questionType,
             options: q.options?.filter(Boolean) ?? undefined,
             correctAnswer: q.correctAnswer,
             points: q.points,
+            source: q.source,
           }))
         : undefined;
 
