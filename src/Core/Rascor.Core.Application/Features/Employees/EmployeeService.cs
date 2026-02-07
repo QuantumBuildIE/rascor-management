@@ -271,8 +271,8 @@ public class EmployeeService : IEmployeeService
                 JobTitle = dto.JobTitle,
                 Department = dto.Department,
                 PrimarySiteId = dto.PrimarySiteId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
+                StartDate = dto.StartDate.HasValue ? DateTime.SpecifyKind(dto.StartDate.Value, DateTimeKind.Utc) : null,
+                EndDate = dto.EndDate.HasValue ? DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Utc) : null,
                 IsActive = dto.IsActive,
                 Notes = dto.Notes,
                 PreferredLanguage = dto.PreferredLanguage
@@ -563,8 +563,8 @@ public class EmployeeService : IEmployeeService
             employee.JobTitle = dto.JobTitle;
             employee.Department = dto.Department;
             employee.PrimarySiteId = dto.PrimarySiteId;
-            employee.StartDate = dto.StartDate;
-            employee.EndDate = dto.EndDate;
+            employee.StartDate = dto.StartDate.HasValue ? DateTime.SpecifyKind(dto.StartDate.Value, DateTimeKind.Utc) : null;
+            employee.EndDate = dto.EndDate.HasValue ? DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Utc) : null;
             employee.IsActive = dto.IsActive;
             employee.Notes = dto.Notes;
             employee.SetGeoTrackerID(dto.GeoTrackerID);
