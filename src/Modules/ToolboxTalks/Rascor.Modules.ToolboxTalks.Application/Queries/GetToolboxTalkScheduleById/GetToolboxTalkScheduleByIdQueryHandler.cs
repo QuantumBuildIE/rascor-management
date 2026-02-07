@@ -20,18 +20,12 @@ public class GetToolboxTalkScheduleByIdQueryHandler : IRequestHandler<GetToolbox
         var schedule = await _context.ToolboxTalkSchedules
             .Include(s => s.ToolboxTalk)
             .Include(s => s.Assignments)
+                .ThenInclude(a => a.Employee)
             .Where(s => s.Id == request.Id && s.TenantId == request.TenantId && !s.IsDeleted)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (schedule == null)
             return null;
-
-        // Get employee information for assignments
-        var employeeIds = schedule.Assignments.Select(a => a.EmployeeId).ToList();
-
-        // Note: In a real implementation, we would query the employees from Core module
-        // For now, we'll include a placeholder for employee names
-        // This would typically be done via a cross-module service or repository
 
         return new ToolboxTalkScheduleDto
         {
@@ -54,8 +48,8 @@ public class GetToolboxTalkScheduleByIdQueryHandler : IRequestHandler<GetToolbox
                 Id = a.Id,
                 ScheduleId = a.ScheduleId,
                 EmployeeId = a.EmployeeId,
-                EmployeeName = $"Employee {a.EmployeeId}", // Placeholder - would be resolved via employee service
-                EmployeeEmail = null, // Placeholder - would be resolved via employee service
+                EmployeeName = a.Employee != null ? $"{a.Employee.FirstName} {a.Employee.LastName}".Trim() : $"Employee {a.EmployeeId}",
+                EmployeeEmail = a.Employee?.Email,
                 IsProcessed = a.IsProcessed,
                 ProcessedAt = a.ProcessedAt
             }).ToList(),
