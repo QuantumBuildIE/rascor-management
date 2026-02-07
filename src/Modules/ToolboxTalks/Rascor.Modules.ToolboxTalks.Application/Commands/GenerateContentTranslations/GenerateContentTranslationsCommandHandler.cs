@@ -37,53 +37,42 @@ public class GenerateContentTranslationsCommandHandler
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "[DEBUG] GenerateContentTranslationsCommandHandler started. " +
+            "GenerateContentTranslationsCommandHandler started. " +
             "ToolboxTalkId: {ToolboxTalkId}, TenantId: {TenantId}, Languages: {Languages}",
             request.ToolboxTalkId, request.TenantId, string.Join(", ", request.TargetLanguages));
 
-        // Load the toolbox talk with sections and questions
+        // NOTE: IgnoreQueryFilters() because this handler runs in a Hangfire background job context
+        // where the DbContext TenantId may not be set. We filter by TenantId explicitly.
         var toolboxTalk = await _context.ToolboxTalks
-            .Include(t => t.Sections.OrderBy(s => s.SectionNumber))
-            .Include(t => t.Questions.OrderBy(q => q.QuestionNumber))
-            .Include(t => t.Translations)
-            .FirstOrDefaultAsync(t => t.Id == request.ToolboxTalkId && t.TenantId == request.TenantId, cancellationToken);
+            .IgnoreQueryFilters()
+            .Include(t => t.Sections.Where(s => !s.IsDeleted).OrderBy(s => s.SectionNumber))
+            .Include(t => t.Questions.Where(q => !q.IsDeleted).OrderBy(q => q.QuestionNumber))
+            .Include(t => t.Translations.Where(tr => !tr.IsDeleted))
+            .FirstOrDefaultAsync(t => t.Id == request.ToolboxTalkId
+                && t.TenantId == request.TenantId
+                && !t.IsDeleted, cancellationToken);
 
         if (toolboxTalk == null)
         {
             _logger.LogWarning(
-                "[DEBUG] ToolboxTalk {ToolboxTalkId} not found for TenantId {TenantId}",
+                "ToolboxTalk {ToolboxTalkId} not found for TenantId {TenantId}",
                 request.ToolboxTalkId, request.TenantId);
             return GenerateContentTranslationsResult.FailureResult("Toolbox talk not found");
         }
 
         _logger.LogInformation(
-            "[DEBUG] Loaded ToolboxTalk. Title: {Title}, Sections: {SectionCount}, Questions: {QuestionCount}, " +
+            "Loaded ToolboxTalk '{Title}'. Sections: {SectionCount}, Questions: {QuestionCount}, " +
             "Existing translations: {TranslationCount}",
             toolboxTalk.Title, toolboxTalk.Sections.Count, toolboxTalk.Questions.Count, toolboxTalk.Translations.Count);
-
-        _logger.LogInformation(
-            "[DEBUG] Section IDs: {Ids}",
-            string.Join(", ", toolboxTalk.Sections.Select(s => $"{s.Id} (#{s.SectionNumber}: {s.Title?.Substring(0, Math.Min(30, s.Title?.Length ?? 0))})")));
-
-        _logger.LogInformation(
-            "[DEBUG] Question IDs: {Ids}",
-            string.Join(", ", toolboxTalk.Questions.Select(q => $"{q.Id} (#{q.QuestionNumber})")));
-
-        if (toolboxTalk.Translations.Count > 0)
-        {
-            _logger.LogInformation(
-                "[DEBUG] Existing translation languages: {Languages}",
-                string.Join(", ", toolboxTalk.Translations.Select(t => $"{t.LanguageCode} (Id: {t.Id})")));
-        }
 
         var results = new List<LanguageTranslationResult>();
 
         foreach (var language in request.TargetLanguages)
         {
-            _logger.LogInformation("[DEBUG] Starting translation for language: {Language}", language);
+            _logger.LogInformation("Starting translation for language: {Language}", language);
             var result = await TranslateForLanguageAsync(toolboxTalk, language, cancellationToken);
             _logger.LogInformation(
-                "[DEBUG] Translation result for {Language}: Success={Success}, " +
+                "Translation result for {Language}: Success={Success}, " +
                 "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, Error={Error}",
                 language, result.Success, result.SectionsTranslated, result.QuestionsTranslated,
                 result.ErrorMessage ?? "none");
@@ -91,16 +80,16 @@ public class GenerateContentTranslationsCommandHandler
         }
 
         _logger.LogInformation(
-            "[DEBUG] All translations done. Saving {TranslationCount} translation entities to database...",
-            toolboxTalk.Translations.Count);
+            "All translations done. Saving translation entities to database...");
 
         try
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            var rowsAffected = await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "[DEBUG] SaveChangesAsync completed for translations. " +
+                "SaveChangesAsync completed. Rows affected: {RowsAffected}. " +
                 "Content translation completed for ToolboxTalk {ToolboxTalkId}. Success: {SuccessCount}/{TotalCount}",
+                rowsAffected,
                 request.ToolboxTalkId,
                 results.Count(r => r.Success),
                 results.Count);
@@ -108,11 +97,9 @@ public class GenerateContentTranslationsCommandHandler
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "[DEBUG] SaveChangesAsync FAILED for translations. " +
-                "ToolboxTalkId: {ToolboxTalkId}, TenantId: {TenantId}, " +
-                "TranslationCount: {TranslationCount}, Error: {Error}",
-                request.ToolboxTalkId, request.TenantId,
-                toolboxTalk.Translations.Count, ex.Message);
+                "SaveChangesAsync FAILED for translations. " +
+                "ToolboxTalkId: {ToolboxTalkId}, TenantId: {TenantId}, Error: {Error}",
+                request.ToolboxTalkId, request.TenantId, ex.Message);
             throw;
         }
 
@@ -136,24 +123,27 @@ public class GenerateContentTranslationsCommandHandler
             var translation = toolboxTalk.Translations
                 .FirstOrDefault(t => t.LanguageCode == languageCode);
 
-            if (translation == null)
+            var isNew = translation == null;
+            translation ??= new ToolboxTalkTranslation
             {
-                translation = new ToolboxTalkTranslation
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = toolboxTalk.TenantId,
-                    ToolboxTalkId = toolboxTalk.Id,
-                    LanguageCode = languageCode
-                };
-                toolboxTalk.Translations.Add(translation);
-            }
+                Id = Guid.NewGuid(),
+                TenantId = toolboxTalk.TenantId,
+                ToolboxTalkId = toolboxTalk.Id,
+                LanguageCode = languageCode
+            };
 
-            // Translate title
+            // Translate title (required - skip this language entirely if title fails)
             var titleResult = await _translationService.TranslateTextAsync(
                 toolboxTalk.Title, language, false, cancellationToken);
 
             if (!titleResult.Success)
             {
+                _logger.LogWarning(
+                    "Title translation failed for ToolboxTalk {ToolboxTalkId} to {Language}: {Error}. " +
+                    "Skipping this language entirely.",
+                    toolboxTalk.Id, language, titleResult.ErrorMessage);
+
+                // Don't add an entity with empty data - skip this language
                 return new LanguageTranslationResult
                 {
                     Language = language,
@@ -171,8 +161,6 @@ public class GenerateContentTranslationsCommandHandler
                 var descResult = await _translationService.TranslateTextAsync(
                     toolboxTalk.Description, language, false, cancellationToken);
 
-                // Only set translated description if translation succeeded
-                // Null description will cause retrieval to fall back to original English
                 translation.TranslatedDescription = descResult.Success
                     ? descResult.TranslatedContent
                     : null;
@@ -195,10 +183,8 @@ public class GenerateContentTranslationsCommandHandler
                     section.Title, language, false, cancellationToken);
 
                 var sectionContentResult = await _translationService.TranslateTextAsync(
-                    section.Content, language, true, cancellationToken); // Content may contain HTML
+                    section.Content, language, true, cancellationToken);
 
-                // Only add to translated sections if BOTH title and content translated successfully
-                // This ensures retrieval code falls back to English for untranslated sections
                 if (sectionTitleResult.Success && sectionContentResult.Success)
                 {
                     translatedSections.Add(new TranslatedSectionData
@@ -219,8 +205,9 @@ public class GenerateContentTranslationsCommandHandler
 
             translation.TranslatedSections = JsonSerializer.Serialize(translatedSections);
 
-            // Translate questions
+            // Translate questions - save partial results even if some questions fail
             var questionsTranslated = 0;
+            var questionsSkipped = 0;
             var translatedQuestions = new List<TranslatedQuestionData>();
 
             foreach (var question in toolboxTalk.Questions)
@@ -231,9 +218,11 @@ public class GenerateContentTranslationsCommandHandler
                 if (!questionTextResult.Success)
                 {
                     _logger.LogWarning(
-                        "Question {QuestionId} text translation failed for {Language}: {Error}",
+                        "Question {QuestionId} text translation failed for {Language}: {Error}. " +
+                        "Skipping question, will fall back to English.",
                         question.Id, language, questionTextResult.ErrorMessage);
-                    continue; // Skip this question, retrieval will fall back to English
+                    questionsSkipped++;
+                    continue;
                 }
 
                 List<string>? translatedOptions = null;
@@ -258,7 +247,8 @@ public class GenerateContentTranslationsCommandHandler
                                 else
                                 {
                                     _logger.LogWarning(
-                                        "Question {QuestionId} option translation failed for {Language}",
+                                        "Question {QuestionId} option translation failed for {Language}. " +
+                                        "Skipping question, will fall back to English.",
                                         question.Id, language);
                                     allOptionsTranslated = false;
                                     break;
@@ -273,7 +263,6 @@ public class GenerateContentTranslationsCommandHandler
                     }
                 }
 
-                // Only add if question text and all options translated successfully
                 if (allOptionsTranslated)
                 {
                     translatedQuestions.Add(new TranslatedQuestionData
@@ -286,9 +275,7 @@ public class GenerateContentTranslationsCommandHandler
                 }
                 else
                 {
-                    _logger.LogWarning(
-                        "Question {QuestionId} skipped due to option translation failures for {Language}",
-                        question.Id, language);
+                    questionsSkipped++;
                 }
             }
 
@@ -298,7 +285,7 @@ public class GenerateContentTranslationsCommandHandler
             translation.TranslatedAt = DateTime.UtcNow;
             translation.TranslationProvider = "Claude";
 
-            // Generate translated email templates (basic)
+            // Generate translated email templates
             var emailSubjectResult = await _translationService.TranslateTextAsync(
                 $"Action Required: Complete Toolbox Talk - {toolboxTalk.Title}",
                 language, false, cancellationToken);
@@ -313,9 +300,25 @@ public class GenerateContentTranslationsCommandHandler
                 ? emailBodyResult.TranslatedContent
                 : $"You have been assigned a new toolbox talk: {translation.TranslatedTitle}. Please complete it by the due date.";
 
-            _logger.LogInformation(
-                "Successfully translated ToolboxTalk {ToolboxTalkId} to {Language}: {Sections} sections, {Questions} questions",
-                toolboxTalk.Id, language, sectionsTranslated, questionsTranslated);
+            // Explicitly add to DbSet so the change tracker registers it as Added.
+            // Using navigation collection Add alone is unreliable when the parent entity
+            // was already tracked by a previous operation (content generation) on the same
+            // scoped DbContext - DetectChanges() may not pick up the new entity.
+            if (isNew)
+            {
+                _context.ToolboxTalkTranslations.Add(translation);
+                _logger.LogInformation(
+                    "Added new translation entity for {Language} ({LanguageCode}) via DbSet.Add(). " +
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped})",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Updated existing translation entity for {Language} ({LanguageCode}). " +
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped})",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped);
+            }
 
             return new LanguageTranslationResult
             {
