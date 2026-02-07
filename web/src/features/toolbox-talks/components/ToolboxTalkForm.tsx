@@ -47,7 +47,7 @@ const sectionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
   requiresAcknowledgment: z.boolean(),
-  source: z.string().optional(),
+  source: z.enum(['Manual', 'Video', 'Pdf', 'Both'] as const).optional(),
 });
 
 const questionSchema = z.object({
@@ -58,7 +58,7 @@ const questionSchema = z.object({
   options: z.array(z.string()).nullable(),
   correctAnswer: z.string().min(1, 'Correct answer is required'),
   points: z.number().min(1),
-  source: z.string().optional(),
+  source: z.enum(['Manual', 'Video', 'Pdf', 'Both'] as const).optional(),
 });
 
 const toolboxTalkFormSchema = z.object({
