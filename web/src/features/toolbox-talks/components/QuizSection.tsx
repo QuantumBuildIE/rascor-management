@@ -26,6 +26,7 @@ interface QuizSectionProps {
   lastQuizScore: number | null;
   attemptCount: number;
   onSubmit: (answers: Record<string, string>) => Promise<QuizResult>;
+  onContinue: () => void;
   className?: string;
 }
 
@@ -249,6 +250,7 @@ export function QuizSection({
   lastQuizScore,
   attemptCount,
   onSubmit,
+  onContinue,
   className,
 }: QuizSectionProps) {
   const [answers, setAnswers] = React.useState<Record<string, string>>({});
@@ -283,8 +285,8 @@ export function QuizSection({
   };
 
   const handleContinue = () => {
-    // This will trigger parent to move to signature step
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    onContinue();
   };
 
   // Calculate progress

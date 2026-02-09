@@ -525,6 +525,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
               lastQuizScore={talk.lastQuizScore}
               attemptCount={talk.quizAttemptCount}
               onSubmit={handleQuizSubmit}
+              onContinue={() => setCurrentStep('signature')}
             />
           )}
 
