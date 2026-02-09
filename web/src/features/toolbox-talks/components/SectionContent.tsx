@@ -19,6 +19,8 @@ interface SectionContentProps {
   isAcknowledging?: boolean;
 }
 
+const SECTION_TIMER_SECONDS = 5;
+
 export function SectionContent({
   section,
   currentIndex,
@@ -30,6 +32,8 @@ export function SectionContent({
 }: SectionContentProps) {
   const [acknowledged, setAcknowledged] = React.useState(section.isRead);
   const [startTime] = React.useState(Date.now());
+  const [secondsRemaining, setSecondsRemaining] = React.useState(SECTION_TIMER_SECONDS);
+  const [timerComplete, setTimerComplete] = React.useState(false);
 
   // Track if section was already read when mounted
   const wasAlreadyRead = React.useRef(section.isRead);
@@ -38,6 +42,31 @@ export function SectionContent({
   React.useEffect(() => {
     setAcknowledged(section.isRead);
     wasAlreadyRead.current = section.isRead;
+  }, [section.sectionId, section.isRead]);
+
+  // Countdown timer - resets on section change, skips for already-read sections
+  React.useEffect(() => {
+    if (section.isRead) {
+      setTimerComplete(true);
+      setSecondsRemaining(0);
+      return;
+    }
+
+    setSecondsRemaining(SECTION_TIMER_SECONDS);
+    setTimerComplete(false);
+
+    const timer = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setTimerComplete(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [section.sectionId, section.isRead]);
 
   const handleAcknowledge = async () => {
@@ -52,7 +81,7 @@ export function SectionContent({
     }
   };
 
-  const canProceed = !section.requiresAcknowledgment || acknowledged;
+  const canProceed = timerComplete && (!section.requiresAcknowledgment || acknowledged);
   const isLastSection = currentIndex === totalSections - 1;
   const isFirstSection = currentIndex === 0;
 
@@ -91,6 +120,21 @@ export function SectionContent({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4 pt-4 border-t">
+        {/* Countdown timer */}
+        {!timerComplete && !wasAlreadyRead.current && (
+          <div className="w-full space-y-2">
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${((SECTION_TIMER_SECONDS - secondsRemaining) / SECTION_TIMER_SECONDS) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Please read this section ({secondsRemaining}s)
+            </p>
+          </div>
+        )}
+
         {/* Acknowledgment checkbox */}
         {section.requiresAcknowledgment && !wasAlreadyRead.current && (
           <div className="flex items-start gap-3 w-full p-4 bg-muted/50 rounded-lg">
@@ -98,14 +142,14 @@ export function SectionContent({
               id={`acknowledge-${section.sectionId}`}
               checked={acknowledged}
               onCheckedChange={() => handleAcknowledge()}
-              disabled={isAcknowledging || acknowledged}
+              disabled={!timerComplete || isAcknowledging || acknowledged}
               className="mt-0.5"
             />
             <label
               htmlFor={`acknowledge-${section.sectionId}`}
               className={cn(
-                'text-sm font-medium leading-none cursor-pointer',
-                'peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                'text-sm font-medium leading-none',
+                timerComplete && !acknowledged ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'
               )}
             >
               I have read and understood this section
