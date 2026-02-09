@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/use-auth";
-import { getHomeRoute } from "@/lib/auth/get-home-route";
 import { useMyTrainingSummary } from "@/lib/api/toolbox-talks/use-my-toolbox-talks";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +25,6 @@ export function TopNav() {
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
     : "??";
 
-  const homeRoute = getHomeRoute(user);
-
   // Calculate total pending training (pending + in-progress + overdue)
   const pendingTrainingCount = trainingSummary?.totalCount ?? 0;
   const hasOverdue = (trainingSummary?.overdueCount ?? 0) > 0;
@@ -40,7 +37,7 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between px-4">
-        <Link href={homeRoute} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span className="text-xl font-bold tracking-tight">RASCOR</span>
         </Link>
 
