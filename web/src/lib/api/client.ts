@@ -47,6 +47,13 @@ export function setRememberMe(value: boolean): void {
   }
 }
 
+function getLoginRedirectUrl(): string {
+  const currentPath = window.location.pathname;
+  const authPaths = ["/login", "/register", "/forgot-password"];
+  const isAuthPage = authPaths.some((path) => currentPath.startsWith(path));
+  return isAuthPage ? "/login" : `/login?returnUrl=${encodeURIComponent(currentPath)}`;
+}
+
 // Track if we're currently refreshing the token to prevent multiple refresh attempts
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -90,8 +97,7 @@ apiClient.interceptors.response.use(
       // Don't try to refresh if this is already a refresh token request
       if (originalRequest.url?.includes("/auth/refresh-token")) {
         clearStoredTokens();
-        const returnUrl = encodeURIComponent(window.location.pathname);
-        window.location.href = `/login?returnUrl=${returnUrl}`;
+        window.location.href = getLoginRedirectUrl();
         return Promise.reject(error);
       }
 
@@ -117,8 +123,7 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken || !accessToken) {
         clearStoredTokens();
-        const returnUrl = encodeURIComponent(window.location.pathname);
-        window.location.href = `/login?returnUrl=${returnUrl}`;
+        window.location.href = getLoginRedirectUrl();
         return Promise.reject(error);
       }
 
@@ -142,15 +147,13 @@ apiClient.interceptors.response.use(
         } else {
           processQueue(new Error("Refresh failed"), null);
           clearStoredTokens();
-          const returnUrl = encodeURIComponent(window.location.pathname);
-          window.location.href = `/login?returnUrl=${returnUrl}`;
+          window.location.href = getLoginRedirectUrl();
           return Promise.reject(error);
         }
       } catch (refreshError) {
         processQueue(refreshError as Error, null);
         clearStoredTokens();
-        const returnUrl = encodeURIComponent(window.location.pathname);
-        window.location.href = `/login?returnUrl=${returnUrl}`;
+        window.location.href = getLoginRedirectUrl();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

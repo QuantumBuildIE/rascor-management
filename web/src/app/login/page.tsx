@@ -36,7 +36,12 @@ function LoginForm() {
       if (result.success && result.user) {
         toast.success("Login successful");
         const returnUrl = searchParams.get("returnUrl");
-        const destination = returnUrl && returnUrl.startsWith("/") ? returnUrl : getHomeRoute(result.user);
+        const isValidReturnUrl = returnUrl
+          && returnUrl.startsWith("/")
+          && !returnUrl.startsWith("/login")
+          && !returnUrl.startsWith("/register")
+          && !returnUrl.startsWith("/forgot-password");
+        const destination = isValidReturnUrl ? returnUrl : getHomeRoute(result.user);
         router.push(destination);
       } else {
         toast.error(result.error || "Login failed");

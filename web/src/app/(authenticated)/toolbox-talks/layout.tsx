@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth/use-auth";
 
 // Employee-only navigation - simplified view for completing assigned talks
 const myTalksNavItems = [
@@ -16,34 +14,7 @@ export default function ToolboxTalksLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      const returnUrl = encodeURIComponent(pathname);
-      router.replace(`/login?returnUrl=${returnUrl}`);
-    }
-  }, [isAuthenticated, isLoading, router, pathname]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">
-          Please log in to view your toolbox talks.
-        </div>
-      </div>
-    );
-  }
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) {

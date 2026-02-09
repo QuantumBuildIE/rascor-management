@@ -17,8 +17,10 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      const returnUrl = encodeURIComponent(pathname);
-      router.replace(`/login?returnUrl=${returnUrl}`);
+      const authPaths = ["/login", "/register", "/forgot-password"];
+      const isAuthPage = authPaths.some((path) => pathname.startsWith(path));
+      const loginUrl = isAuthPage ? "/login" : `/login?returnUrl=${encodeURIComponent(pathname)}`;
+      router.replace(loginUrl);
     }
   }, [isAuthenticated, isLoading, router, pathname]);
 
