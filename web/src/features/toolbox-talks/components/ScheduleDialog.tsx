@@ -9,6 +9,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
@@ -103,6 +104,7 @@ export function ScheduleDialog({
   embedded = false,
 }: ScheduleDialogProps) {
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [employeeSearch, setEmployeeSearch] = useState('');
 
   // Fetch schedule by ID if not passed directly
   const { data: fetchedSchedule } = useToolboxTalkSchedule(scheduleId ?? '');
@@ -225,14 +227,29 @@ export function ScheduleDialog({
     }
   };
 
+  const filteredEmployees = (employees ?? []).filter((employee) => {
+    if (!employeeSearch.trim()) return true;
+    const search = employeeSearch.toLowerCase();
+    return (
+      employee.firstName?.toLowerCase().includes(search) ||
+      employee.lastName?.toLowerCase().includes(search) ||
+      employee.employeeCode?.toLowerCase().includes(search) ||
+      `${employee.firstName} ${employee.lastName}`.toLowerCase().includes(search)
+    );
+  });
+
   const handleSelectAllEmployees = () => {
-    if (employees) {
-      setSelectedEmployees(employees.map(e => e.id));
-    }
+    const ids = filteredEmployees.map(e => e.id);
+    setSelectedEmployees(prev => [...new Set([...prev, ...ids])]);
   };
 
   const handleClearEmployees = () => {
-    setSelectedEmployees([]);
+    if (employeeSearch.trim()) {
+      const filteredIds = new Set(filteredEmployees.map(e => e.id));
+      setSelectedEmployees(prev => prev.filter(id => !filteredIds.has(id)));
+    } else {
+      setSelectedEmployees([]);
+    }
   };
 
   const formContent = (
@@ -442,14 +459,19 @@ export function ScheduleDialog({
                         </Button>
                       </div>
                     </div>
+                    <Input
+                      placeholder="Search employees..."
+                      value={employeeSearch}
+                      onChange={(e) => setEmployeeSearch(e.target.value)}
+                    />
                     <div className="rounded-md border max-h-[200px] overflow-y-auto">
                       {employeesLoading ? (
                         <div className="p-4 text-center text-muted-foreground">
                           Loading employees...
                         </div>
-                      ) : employees && employees.length > 0 ? (
+                      ) : filteredEmployees.length > 0 ? (
                         <div className="divide-y">
-                          {employees.map((employee) => (
+                          {filteredEmployees.map((employee) => (
                             <label
                               key={employee.id}
                               className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer"
@@ -473,6 +495,10 @@ export function ScheduleDialog({
                             </label>
                           ))}
                         </div>
+                      ) : employeeSearch.trim() ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No employees match &ldquo;{employeeSearch}&rdquo;
+                        </div>
                       ) : (
                         <div className="p-4 text-center text-muted-foreground">
                           No employees found
@@ -481,6 +507,9 @@ export function ScheduleDialog({
                     </div>
                     <FormDescription>
                       {selectedEmployees.length} employee{selectedEmployees.length !== 1 ? 's' : ''} selected
+                      {employeeSearch.trim() && employees && filteredEmployees.length !== employees.length && (
+                        <> &middot; showing {filteredEmployees.length} of {employees.length}</>
+                      )}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
