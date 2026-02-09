@@ -36,11 +36,14 @@ function LoginForm() {
       if (result.success && result.user) {
         toast.success("Login successful");
         const returnUrl = searchParams.get("returnUrl");
+        const isReturnUrlFresh = sessionStorage.getItem("returnUrlFresh") === "true";
+        sessionStorage.removeItem("returnUrlFresh");
         const isValidReturnUrl = returnUrl
           && returnUrl.startsWith("/")
           && !returnUrl.startsWith("/login")
           && !returnUrl.startsWith("/register")
-          && !returnUrl.startsWith("/forgot-password");
+          && !returnUrl.startsWith("/forgot-password")
+          && isReturnUrlFresh;
         const destination = isValidReturnUrl ? returnUrl : getHomeRoute(result.user);
         router.push(destination);
       } else {

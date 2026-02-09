@@ -51,7 +51,13 @@ function getLoginRedirectUrl(): string {
   const currentPath = window.location.pathname;
   const authPaths = ["/login", "/register", "/forgot-password"];
   const isAuthPage = authPaths.some((path) => currentPath.startsWith(path));
-  return isAuthPage ? "/login" : `/login?returnUrl=${encodeURIComponent(currentPath)}`;
+
+  if (isAuthPage) {
+    return "/login";
+  }
+
+  sessionStorage.setItem("returnUrlFresh", "true");
+  return `/login?returnUrl=${encodeURIComponent(currentPath)}`;
 }
 
 // Track if we're currently refreshing the token to prevent multiple refresh attempts

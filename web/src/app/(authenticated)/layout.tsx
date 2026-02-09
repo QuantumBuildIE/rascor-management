@@ -19,6 +19,9 @@ export default function AuthenticatedLayout({
     if (!isLoading && !isAuthenticated) {
       const authPaths = ["/login", "/register", "/forgot-password"];
       const isAuthPage = authPaths.some((path) => pathname.startsWith(path));
+      if (!isAuthPage) {
+        sessionStorage.setItem("returnUrlFresh", "true");
+      }
       const loginUrl = isAuthPage ? "/login" : `/login?returnUrl=${encodeURIComponent(pathname)}`;
       router.replace(loginUrl);
     }

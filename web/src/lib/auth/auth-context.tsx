@@ -117,6 +117,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     clearStoredTokens();
     setUser(null);
     setToken(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("returnUrlFresh");
+    }
   };
 
   return (
