@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/use-auth";
 import { getHomeRoute } from "@/lib/auth/get-home-route";
@@ -11,14 +11,30 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
+function isValidReturnUrl(url: string | null): url is string {
+  return !!url
+    && url.startsWith("/")
+    && !url.startsWith("/login")
+    && !url.startsWith("/register")
+    && !url.startsWith("/forgot-password");
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoading: authLoading } = useAuth();
+  const { user, login, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect already-logged-in users
+  useEffect(() => {
+    if (user && !authLoading) {
+      const returnUrl = searchParams.get("returnUrl");
+      router.push(isValidReturnUrl(returnUrl) ? returnUrl : getHomeRoute(user));
+    }
+  }, [user, authLoading, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,15 +52,7 @@ function LoginForm() {
       if (result.success && result.user) {
         toast.success("Login successful");
         const returnUrl = searchParams.get("returnUrl");
-        const isReturnUrlFresh = sessionStorage.getItem("returnUrlFresh") === "true";
-        sessionStorage.removeItem("returnUrlFresh");
-        const isValidReturnUrl = returnUrl
-          && returnUrl.startsWith("/")
-          && !returnUrl.startsWith("/login")
-          && !returnUrl.startsWith("/register")
-          && !returnUrl.startsWith("/forgot-password")
-          && isReturnUrlFresh;
-        const destination = isValidReturnUrl ? returnUrl : getHomeRoute(result.user);
+        const destination = isValidReturnUrl(returnUrl) ? returnUrl : getHomeRoute(result.user);
         router.push(destination);
       } else {
         toast.error(result.error || "Login failed");
@@ -57,6 +65,11 @@ function LoginForm() {
   };
 
   const loading = isLoading || authLoading;
+
+  // Show nothing while redirecting a logged-in user
+  if (user) {
+    return null;
+  }
 
   return (
     <Card className="w-full max-w-md">

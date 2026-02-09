@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/use-auth";
 import { TopNav } from "@/components/layout/top-nav";
 import { PendingTrainingBanner } from "@/components/shared/pending-training-banner";
@@ -12,20 +12,13 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      const authPaths = ["/login", "/register", "/forgot-password"];
-      const isAuthPage = authPaths.some((path) => pathname.startsWith(path));
-      if (!isAuthPage) {
-        sessionStorage.setItem("returnUrlFresh", "true");
-      }
-      const loginUrl = isAuthPage ? "/login" : `/login?returnUrl=${encodeURIComponent(pathname)}`;
-      router.replace(loginUrl);
+      router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router, pathname]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (

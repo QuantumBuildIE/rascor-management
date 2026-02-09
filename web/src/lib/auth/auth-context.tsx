@@ -113,14 +113,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearStoredTokens();
     setUser(null);
     setToken(null);
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("returnUrlFresh");
-    }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
