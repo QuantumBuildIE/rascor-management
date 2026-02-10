@@ -10,6 +10,8 @@ using Rascor.Modules.ToolboxTalks.Application.Commands.SubmitQuizAnswers;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Subtitles;
+using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.Queries;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalks;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
@@ -688,6 +690,37 @@ public class MyToolboxTalksController : ControllerBase
         }
 
         return string.Join("\n", vttLines);
+    }
+
+    /// <summary>
+    /// Get course assignments for the current employee
+    /// </summary>
+    [HttpGet("courses")]
+    [ProducesResponseType(typeof(Result<List<ToolboxTalkCourseAssignmentDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyCourses()
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var query = new GetEmployeeCourseAssignmentsQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving my course assignments");
+            return StatusCode(500, Result.Fail("Error retrieving my course assignments"));
+        }
     }
 
     /// <summary>

@@ -25,6 +25,7 @@ public interface IToolboxTalksDbContext
     DbSet<ToolboxTalkCourse> ToolboxTalkCourses { get; }
     DbSet<ToolboxTalkCourseItem> ToolboxTalkCourseItems { get; }
     DbSet<ToolboxTalkCourseTranslation> ToolboxTalkCourseTranslations { get; }
+    DbSet<ToolboxTalkCourseAssignment> ToolboxTalkCourseAssignments { get; }
 
     // Subtitle processing entities
     DbSet<SubtitleProcessingJob> SubtitleProcessingJobs { get; }

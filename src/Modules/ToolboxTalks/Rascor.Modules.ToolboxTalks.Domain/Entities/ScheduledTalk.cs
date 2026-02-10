@@ -26,6 +26,16 @@ public class ScheduledTalk : TenantEntity
     public Guid? ScheduleId { get; set; }
 
     /// <summary>
+    /// The course assignment that created this scheduled talk (null if standalone assignment)
+    /// </summary>
+    public Guid? CourseAssignmentId { get; set; }
+
+    /// <summary>
+    /// Order index within the course (for display and sequential enforcement)
+    /// </summary>
+    public int? CourseOrderIndex { get; set; }
+
+    /// <summary>
     /// Date when the talk was assigned/required
     /// </summary>
     public DateTime RequiredDate { get; set; }
@@ -77,6 +87,11 @@ public class ScheduledTalk : TenantEntity
     /// The schedule that created this assignment (if any)
     /// </summary>
     public ToolboxTalkSchedule? Schedule { get; set; }
+
+    /// <summary>
+    /// The course assignment that created this scheduled talk (if any)
+    /// </summary>
+    public ToolboxTalkCourseAssignment? CourseAssignment { get; set; }
 
     /// <summary>
     /// Progress tracking for each section

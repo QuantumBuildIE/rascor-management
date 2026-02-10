@@ -86,6 +86,11 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
             .HasForeignKey(s => s.ScheduleId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasOne(s => s.CourseAssignment)
+            .WithMany(ca => ca.ScheduledTalks)
+            .HasForeignKey(s => s.CourseAssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasMany(s => s.SectionProgress)
             .WithOne(p => p.ScheduledTalk)
             .HasForeignKey(p => p.ScheduledTalkId)
@@ -122,6 +127,9 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
 
         builder.HasIndex(s => s.ScheduleId)
             .HasDatabaseName("ix_scheduled_talks_schedule");
+
+        builder.HasIndex(s => s.CourseAssignmentId)
+            .HasDatabaseName("ix_scheduled_talks_course_assignment");
 
         // Query filter for soft delete
         builder.HasQueryFilter(s => !s.IsDeleted);

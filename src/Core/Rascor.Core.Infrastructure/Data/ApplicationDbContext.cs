@@ -101,6 +101,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkCourse> ToolboxTalkCourses => Set<ToolboxTalkCourse>();
     public DbSet<ToolboxTalkCourseItem> ToolboxTalkCourseItems => Set<ToolboxTalkCourseItem>();
     public DbSet<ToolboxTalkCourseTranslation> ToolboxTalkCourseTranslations => Set<ToolboxTalkCourseTranslation>();
+    public DbSet<ToolboxTalkCourseAssignment> ToolboxTalkCourseAssignments => Set<ToolboxTalkCourseAssignment>();
     public DbSet<SubtitleProcessingJob> SubtitleProcessingJobs => Set<SubtitleProcessingJob>();
     public DbSet<SubtitleTranslation> SubtitleTranslations => Set<SubtitleTranslation>();
 
@@ -255,6 +256,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseItemConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseTranslationConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkCourseAssignmentConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleProcessingJobConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleTranslationConfiguration());
 

@@ -31,6 +31,7 @@ import {
   FileTextIcon,
   HelpCircleIcon,
   ArrowLeftIcon,
+  UsersIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,8 @@ import type {
 } from '@/lib/api/toolbox-talks/courses';
 import type { ToolboxTalkListItem } from '@/types/toolbox-talks';
 import { AddTalksDialog } from './AddTalksDialog';
+import { AssignCourseDialog } from './AssignCourseDialog';
+import { CourseAssignmentsList } from './CourseAssignmentsList';
 import { toast } from 'sonner';
 
 // ============================================
@@ -198,6 +201,7 @@ export function CourseForm({ course }: CourseFormProps) {
   const updateItemsMutation = useUpdateCourseItems();
 
   const [addTalksOpen, setAddTalksOpen] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [courseItems, setCourseItems] = useState<CourseItem[]>(() => {
     if (course?.items) {
       return course.items
@@ -559,6 +563,26 @@ export function CourseForm({ course }: CourseFormProps) {
             )}
           </div>
 
+          {/* Course Assignments (only when editing) */}
+          {isEditing && course && (
+            <div className="space-y-4 rounded-lg border p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-medium">Assignments</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Manage employee assignments for this course.
+                  </p>
+                </div>
+                <Button type="button" variant="outline" onClick={() => setAssignDialogOpen(true)}>
+                  <UsersIcon className="mr-2 h-4 w-4" />
+                  Assign Employees
+                </Button>
+              </div>
+
+              <CourseAssignmentsList courseId={course.id} />
+            </div>
+          )}
+
           {/* Form Actions */}
           <div className="flex items-center gap-4">
             <Button type="submit" disabled={isSaving}>
@@ -588,6 +612,14 @@ export function CourseForm({ course }: CourseFormProps) {
         excludeTalkIds={courseItems.map((i) => i.toolboxTalkId)}
         onAdd={handleAddTalks}
       />
+
+      {isEditing && course && (
+        <AssignCourseDialog
+          course={{ id: course.id, title: course.title }}
+          open={assignDialogOpen}
+          onOpenChange={setAssignDialogOpen}
+        />
+      )}
     </div>
   );
 }
