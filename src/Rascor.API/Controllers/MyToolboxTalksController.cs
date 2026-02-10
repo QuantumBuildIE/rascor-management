@@ -5,6 +5,7 @@ using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
 using Rascor.Modules.ToolboxTalks.Application.Commands.CompleteToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.MarkSectionRead;
+using Rascor.Modules.ToolboxTalks.Application.Commands.ResetVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.Commands.SubmitQuizAnswers;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
@@ -251,6 +252,43 @@ public class MyToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error updating video progress for talk {ScheduledTalkId}", id);
             return StatusCode(500, new { message = "Error updating video progress" });
+        }
+    }
+
+    /// <summary>
+    /// Reset video watch progress (e.g., when rewatching after a failed quiz)
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <returns>Reset progress status</returns>
+    [HttpPost("{id:guid}/reset-video-progress")]
+    [ProducesResponseType(typeof(VideoProgressDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetVideoProgress(Guid id)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var command = new ResetVideoProgressCommand
+            {
+                ScheduledTalkId = id
+            };
+
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting video progress for talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error resetting video progress" });
         }
     }
 

@@ -248,6 +248,15 @@ export async function updateVideoProgress(
   return response.data;
 }
 
+export async function resetVideoProgress(
+  scheduledTalkId: string
+): Promise<VideoProgress> {
+  const response = await apiClient.post<VideoProgress>(
+    `/my/toolbox-talks/${scheduledTalkId}/reset-video-progress`
+  );
+  return response.data;
+}
+
 // ============================================
 // Quiz
 // ============================================

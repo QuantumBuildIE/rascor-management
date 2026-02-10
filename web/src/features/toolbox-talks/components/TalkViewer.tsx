@@ -25,6 +25,7 @@ import {
   useMyToolboxTalk,
   useMarkSectionRead,
   useUpdateVideoProgress,
+  useResetVideoProgress,
   useSubmitQuizAnswers,
   useCompleteToolboxTalk,
 } from '@/lib/api/toolbox-talks/use-my-toolbox-talks';
@@ -184,6 +185,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
   // Mutations
   const markSectionRead = useMarkSectionRead();
   const updateVideoProgress = useUpdateVideoProgress();
+  const resetVideoProgress = useResetVideoProgress();
   const submitQuizAnswers = useSubmitQuizAnswers();
   const completeTalk = useCompleteToolboxTalk();
 
@@ -303,6 +305,16 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
     } catch {
       toast.error('Failed to complete toolbox talk');
       throw new Error('Failed to complete');
+    }
+  };
+
+  const handleRewatchVideo = async () => {
+    try {
+      await resetVideoProgress.mutateAsync({ scheduledTalkId });
+      setCurrentStep('video');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      toast.error('Failed to reset video progress');
     }
   };
 
@@ -526,6 +538,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
               attemptCount={talk.quizAttemptCount}
               onSubmit={handleQuizSubmit}
               onContinue={() => setCurrentStep('signature')}
+              onRewatchVideo={talk.videoUrl && talk.videoSource !== 'None' ? handleRewatchVideo : undefined}
             />
           )}
 

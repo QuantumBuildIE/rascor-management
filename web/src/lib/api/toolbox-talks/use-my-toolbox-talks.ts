@@ -9,6 +9,7 @@ import {
   getMyTrainingSummary,
   markSectionRead,
   updateVideoProgress,
+  resetVideoProgress,
   submitQuizAnswers,
   completeToolboxTalk,
 } from './my-toolbox-talks';
@@ -117,6 +118,18 @@ export function useUpdateVideoProgress() {
       scheduledTalkId: string;
       data: UpdateVideoProgressRequest;
     }) => updateVideoProgress(scheduledTalkId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+    },
+  });
+}
+
+export function useResetVideoProgress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ scheduledTalkId }: { scheduledTalkId: string }) =>
+      resetVideoProgress(scheduledTalkId),
     onSuccess: (_, { scheduledTalkId }) => {
       queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
     },

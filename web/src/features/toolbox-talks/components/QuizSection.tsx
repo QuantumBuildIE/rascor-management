@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Trophy,
   AlertCircle,
+  Video,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface QuizSectionProps {
   attemptCount: number;
   onSubmit: (answers: Record<string, string>) => Promise<QuizResult>;
   onContinue: () => void;
+  onRewatchVideo?: () => void;
   className?: string;
 }
 
@@ -172,9 +174,10 @@ interface QuizResultsProps {
   result: QuizResult;
   onRetry: () => void;
   onContinue: () => void;
+  onRewatchVideo?: () => void;
 }
 
-function QuizResults({ result, onRetry, onContinue }: QuizResultsProps) {
+function QuizResults({ result, onRetry, onContinue, onRewatchVideo }: QuizResultsProps) {
   return (
     <div className="text-center space-y-6 py-6">
       <div
@@ -227,10 +230,18 @@ function QuizResults({ result, onRetry, onContinue }: QuizResultsProps) {
 
       <div className="flex justify-center gap-4">
         {!result.passed && (
-          <Button variant="outline" onClick={onRetry} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Try Again
-          </Button>
+          <>
+            <Button variant="outline" onClick={onRetry} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Try Again
+            </Button>
+            {onRewatchVideo && (
+              <Button variant="outline" onClick={onRewatchVideo} className="gap-2">
+                <Video className="h-4 w-4" />
+                Rewatch Video
+              </Button>
+            )}
+          </>
         )}
         {result.passed && (
           <Button onClick={onContinue} className="gap-2">
@@ -251,6 +262,7 @@ export function QuizSection({
   attemptCount,
   onSubmit,
   onContinue,
+  onRewatchVideo,
   className,
 }: QuizSectionProps) {
   const [answers, setAnswers] = React.useState<Record<string, string>>({});
@@ -347,7 +359,7 @@ export function QuizSection({
       <CardContent className="space-y-6">
         {/* Show results summary if submitted */}
         {showResults && result && (
-          <QuizResults result={result} onRetry={handleRetry} onContinue={handleContinue} />
+          <QuizResults result={result} onRetry={handleRetry} onContinue={handleContinue} onRewatchVideo={onRewatchVideo} />
         )}
 
         {/* Progress indicator */}
