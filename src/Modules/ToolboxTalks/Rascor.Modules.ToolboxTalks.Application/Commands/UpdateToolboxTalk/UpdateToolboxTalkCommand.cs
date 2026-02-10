@@ -22,6 +22,12 @@ public record UpdateToolboxTalkCommand : IRequest<ToolboxTalkDto>
     public int? PassingScore { get; init; } = 80;
     public bool IsActive { get; init; } = true;
 
+    // Quiz randomization settings
+    public int? QuizQuestionCount { get; init; }
+    public bool ShuffleQuestions { get; init; } = false;
+    public bool ShuffleOptions { get; init; } = false;
+    public bool UseQuestionPool { get; init; } = false;
+
     /// <summary>
     /// Content sections for this toolbox talk.
     /// Sections with null Id are created, existing sections are updated,

@@ -27,6 +27,12 @@ public record ToolboxTalkDto
     public bool GeneratedFromVideo { get; init; }
     public bool GeneratedFromPdf { get; init; }
 
+    // Quiz randomization settings
+    public int? QuizQuestionCount { get; init; }
+    public bool ShuffleQuestions { get; init; }
+    public bool ShuffleOptions { get; init; }
+    public bool UseQuestionPool { get; init; }
+
     // Child collections
     public List<ToolboxTalkSectionDto> Sections { get; init; } = new();
     public List<ToolboxTalkQuestionDto> Questions { get; init; } = new();

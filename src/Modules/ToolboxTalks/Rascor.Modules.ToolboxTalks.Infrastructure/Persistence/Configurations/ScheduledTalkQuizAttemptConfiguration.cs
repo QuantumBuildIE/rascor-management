@@ -44,6 +44,9 @@ public class ScheduledTalkQuizAttemptConfiguration : IEntityTypeConfiguration<Sc
         builder.Property(a => a.AttemptedAt)
             .IsRequired();
 
+        builder.Property(a => a.GeneratedQuestionsJson)
+            .HasColumnType("text");
+
         // Audit fields
         builder.Property(a => a.CreatedAt)
             .IsRequired();

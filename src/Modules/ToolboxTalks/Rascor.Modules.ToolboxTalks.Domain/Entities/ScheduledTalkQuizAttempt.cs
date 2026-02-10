@@ -49,6 +49,13 @@ public class ScheduledTalkQuizAttempt : BaseEntity
     /// </summary>
     public DateTime AttemptedAt { get; set; }
 
+    /// <summary>
+    /// JSON storing the generated quiz configuration for this attempt.
+    /// Contains question IDs, display order, and shuffled option indices.
+    /// Used to reconstruct the exact quiz the employee saw.
+    /// </summary>
+    public string? GeneratedQuestionsJson { get; set; }
+
     // Navigation properties
 
     /// <summary>

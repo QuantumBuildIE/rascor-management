@@ -70,6 +70,10 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             PdfFileName = talk.PdfFileName,
             GeneratedFromVideo = talk.GeneratedFromVideo,
             GeneratedFromPdf = talk.GeneratedFromPdf,
+            QuizQuestionCount = talk.QuizQuestionCount,
+            ShuffleQuestions = talk.ShuffleQuestions,
+            ShuffleOptions = talk.ShuffleOptions,
+            UseQuestionPool = talk.UseQuestionPool,
             Sections = talk.Sections.Select(s => new ToolboxTalkSectionDto
             {
                 Id = s.Id,

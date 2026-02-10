@@ -92,13 +92,31 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
         }
 
         // Get all questions for grading
-        var questions = scheduledTalk.ToolboxTalk.Questions
+        var allQuestions = scheduledTalk.ToolboxTalk.Questions
             .OrderBy(q => q.QuestionNumber)
             .ToList();
 
-        if (!questions.Any())
+        if (!allQuestions.Any())
         {
             throw new InvalidOperationException("This toolbox talk has no quiz questions configured.");
+        }
+
+        // Determine which questions to grade:
+        // If using question pool, only grade questions that were presented (those with submitted answers)
+        var submittedQuestionIds = request.Answers.Keys.ToHashSet();
+        var useQuestionPool = scheduledTalk.ToolboxTalk.UseQuestionPool;
+
+        List<ToolboxTalkQuestion> questionsToGrade;
+        if (useQuestionPool && submittedQuestionIds.Count > 0)
+        {
+            // Only grade the questions that were presented to the employee
+            questionsToGrade = allQuestions
+                .Where(q => submittedQuestionIds.Contains(q.Id))
+                .ToList();
+        }
+        else
+        {
+            questionsToGrade = allQuestions;
         }
 
         // Grade each answer
@@ -106,7 +124,7 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
         var totalScore = 0;
         var maxScore = 0;
 
-        foreach (var question in questions)
+        foreach (var question in questionsToGrade)
         {
             var submittedAnswer = request.Answers.GetValueOrDefault(question.Id, string.Empty);
             var isCorrect = IsAnswerCorrect(question, submittedAnswer);
@@ -136,6 +154,19 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
         // Get attempt number
         var attemptNumber = scheduledTalk.QuizAttempts.Count + 1;
 
+        // Build generated questions JSON for audit trail
+        string? generatedQuestionsJson = null;
+        if (useQuestionPool || scheduledTalk.ToolboxTalk.ShuffleQuestions || scheduledTalk.ToolboxTalk.ShuffleOptions)
+        {
+            var generatedInfo = questionsToGrade.Select((q, idx) => new
+            {
+                QuestionId = q.Id,
+                OriginalIndex = q.QuestionNumber,
+                DisplayIndex = idx + 1
+            });
+            generatedQuestionsJson = JsonSerializer.Serialize(generatedInfo);
+        }
+
         // Create quiz attempt record
         var quizAttempt = new ScheduledTalkQuizAttempt
         {
@@ -147,7 +178,8 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
             MaxScore = maxScore,
             Percentage = percentage,
             Passed = passed,
-            AttemptedAt = DateTime.UtcNow
+            AttemptedAt = DateTime.UtcNow,
+            GeneratedQuestionsJson = generatedQuestionsJson
         };
 
         _dbContext.ScheduledTalkQuizAttempts.Add(quizAttempt);

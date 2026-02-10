@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
@@ -10,10 +11,14 @@ namespace Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
 public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalkByIdQuery, MyToolboxTalkDto?>
 {
     private readonly IToolboxTalksDbContext _context;
+    private readonly IQuizGenerationService _quizGenerationService;
 
-    public GetMyToolboxTalkByIdQueryHandler(IToolboxTalksDbContext context)
+    public GetMyToolboxTalkByIdQueryHandler(
+        IToolboxTalksDbContext context,
+        IQuizGenerationService quizGenerationService)
     {
         _context = context;
+        _quizGenerationService = quizGenerationService;
     }
 
     public async Task<MyToolboxTalkDto?> Handle(GetMyToolboxTalkByIdQuery request, CancellationToken cancellationToken)
@@ -76,25 +81,39 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
         }).ToList();
 
         // Build question DTOs (without correct answers for quiz taking)
-        var questions = talk.Questions.Select(question =>
-        {
-            var translatedQuestion = translatedQuestions?
-                .FirstOrDefault(tq => tq.QuestionId == question.Id);
-
-            return new MyToolboxTalkQuestionDto
-            {
-                Id = question.Id,
-                QuestionNumber = question.QuestionNumber,
-                QuestionText = translatedQuestion?.QuestionText ?? question.QuestionText,
-                QuestionType = question.QuestionType,
-                QuestionTypeDisplay = GetQuestionTypeDisplay(question.QuestionType),
-                Options = translatedQuestion?.Options ?? ParseOptions(question.Options),
-                Points = question.Points
-            };
-        }).ToList();
-
-        // Get last quiz attempt
+        // Apply quiz randomization if enabled
+        var hasRandomization = talk.ShuffleQuestions || talk.ShuffleOptions || talk.UseQuestionPool;
         var lastAttempt = scheduledTalk.QuizAttempts.FirstOrDefault();
+        var quizAlreadyPassed = lastAttempt?.Passed == true;
+
+        List<MyToolboxTalkQuestionDto> questions;
+
+        if (hasRandomization && talk.RequiresQuiz && !quizAlreadyPassed)
+        {
+            // Generate a fresh randomized quiz for each view (new attempt)
+            var generatedQuiz = _quizGenerationService.GenerateQuiz(talk);
+            questions = BuildRandomizedQuestions(generatedQuiz, talk, translatedQuestions);
+        }
+        else
+        {
+            // No randomization or quiz already passed - return questions in original order
+            questions = talk.Questions.Select(question =>
+            {
+                var translatedQuestion = translatedQuestions?
+                    .FirstOrDefault(tq => tq.QuestionId == question.Id);
+
+                return new MyToolboxTalkQuestionDto
+                {
+                    Id = question.Id,
+                    QuestionNumber = question.QuestionNumber,
+                    QuestionText = translatedQuestion?.QuestionText ?? question.QuestionText,
+                    QuestionType = question.QuestionType,
+                    QuestionTypeDisplay = GetQuestionTypeDisplay(question.QuestionType),
+                    Options = translatedQuestion?.Options ?? ParseOptions(question.Options),
+                    Points = question.Points
+                };
+            }).ToList();
+        }
 
         return new MyToolboxTalkDto
         {
@@ -132,6 +151,53 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
             IsOverdue = scheduledTalk.Status != ScheduledTalkStatus.Completed && scheduledTalk.DueDate < now,
             DaysUntilDue = (int)Math.Ceiling((scheduledTalk.DueDate - now).TotalDays)
         };
+    }
+
+    private List<MyToolboxTalkQuestionDto> BuildRandomizedQuestions(
+        RandomizedQuiz generatedQuiz,
+        Domain.Entities.ToolboxTalk talk,
+        List<TranslatedQuestionData>? translatedQuestions)
+    {
+        var questionsById = talk.Questions.ToDictionary(q => q.Id);
+        var result = new List<MyToolboxTalkQuestionDto>();
+
+        foreach (var generated in generatedQuiz.Questions)
+        {
+            if (!questionsById.TryGetValue(generated.QuestionId, out var question))
+                continue;
+
+            var translatedQuestion = translatedQuestions?
+                .FirstOrDefault(tq => tq.QuestionId == question.Id);
+
+            var originalOptions = translatedQuestion?.Options ?? ParseOptions(question.Options);
+
+            // Apply option shuffling if there's a non-default order
+            List<string>? displayOptions = null;
+            if (originalOptions != null && generated.OptionOrder.Count > 0)
+            {
+                displayOptions = generated.OptionOrder
+                    .Where(idx => idx < originalOptions.Count)
+                    .Select(idx => originalOptions[idx])
+                    .ToList();
+            }
+            else
+            {
+                displayOptions = originalOptions;
+            }
+
+            result.Add(new MyToolboxTalkQuestionDto
+            {
+                Id = question.Id,
+                QuestionNumber = generated.DisplayIndex,
+                QuestionText = translatedQuestion?.QuestionText ?? question.QuestionText,
+                QuestionType = question.QuestionType,
+                QuestionTypeDisplay = GetQuestionTypeDisplay(question.QuestionType),
+                Options = displayOptions,
+                Points = question.Points
+            });
+        }
+
+        return result;
     }
 
     private static List<TranslatedSectionData>? ParseTranslatedSections(string? json)

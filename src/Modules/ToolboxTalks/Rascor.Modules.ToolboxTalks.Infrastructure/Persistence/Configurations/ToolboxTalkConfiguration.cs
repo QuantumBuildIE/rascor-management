@@ -100,6 +100,21 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
 
         builder.Property(t => t.ContentGeneratedAt);
 
+        // Quiz randomization settings
+        builder.Property(t => t.QuizQuestionCount);
+
+        builder.Property(t => t.ShuffleQuestions)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.ShuffleOptions)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.UseQuestionPool)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 

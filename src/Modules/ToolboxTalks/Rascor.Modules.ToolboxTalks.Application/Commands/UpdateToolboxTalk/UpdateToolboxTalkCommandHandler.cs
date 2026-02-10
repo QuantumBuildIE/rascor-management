@@ -97,6 +97,10 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         toolboxTalk.RequiresQuiz = request.RequiresQuiz;
         toolboxTalk.PassingScore = request.RequiresQuiz ? request.PassingScore : null;
         toolboxTalk.IsActive = request.IsActive;
+        toolboxTalk.QuizQuestionCount = request.RequiresQuiz ? request.QuizQuestionCount : null;
+        toolboxTalk.ShuffleQuestions = request.RequiresQuiz && request.ShuffleQuestions;
+        toolboxTalk.ShuffleOptions = request.RequiresQuiz && request.ShuffleOptions;
+        toolboxTalk.UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool;
         toolboxTalk.UpdatedAt = DateTime.UtcNow;
         toolboxTalk.UpdatedBy = _currentUser.UserId;
 
@@ -344,6 +348,10 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             RequiresQuiz = entity.RequiresQuiz,
             PassingScore = entity.PassingScore,
             IsActive = entity.IsActive,
+            QuizQuestionCount = entity.QuizQuestionCount,
+            ShuffleQuestions = entity.ShuffleQuestions,
+            ShuffleOptions = entity.ShuffleOptions,
+            UseQuestionPool = entity.UseQuestionPool,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = sections

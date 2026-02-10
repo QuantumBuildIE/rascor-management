@@ -42,7 +42,11 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             MinimumVideoWatchPercent = request.MinimumVideoWatchPercent,
             RequiresQuiz = request.RequiresQuiz,
             PassingScore = request.RequiresQuiz ? request.PassingScore : null,
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            QuizQuestionCount = request.RequiresQuiz ? request.QuizQuestionCount : null,
+            ShuffleQuestions = request.RequiresQuiz && request.ShuffleQuestions,
+            ShuffleOptions = request.RequiresQuiz && request.ShuffleOptions,
+            UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool
         };
 
         // Create sections
@@ -101,6 +105,10 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             RequiresQuiz = entity.RequiresQuiz,
             PassingScore = entity.PassingScore,
             IsActive = entity.IsActive,
+            QuizQuestionCount = entity.QuizQuestionCount,
+            ShuffleQuestions = entity.ShuffleQuestions,
+            ShuffleOptions = entity.ShuffleOptions,
+            UseQuestionPool = entity.UseQuestionPool,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = entity.Sections.Select(s => new ToolboxTalkSectionDto

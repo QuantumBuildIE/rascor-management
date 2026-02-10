@@ -37,6 +37,9 @@ public static class ServiceCollectionExtensions
         // Register reports service
         services.AddScoped<IToolboxTalkReportsService, ToolboxTalkReportsService>();
 
+        // Register quiz generation service (question randomization and shuffling)
+        services.AddScoped<IQuizGenerationService, QuizGenerationService>();
+
         // Register export service (stub implementation for Phase 2)
         services.AddScoped<IToolboxTalkExportService, ToolboxTalkExportService>();
 

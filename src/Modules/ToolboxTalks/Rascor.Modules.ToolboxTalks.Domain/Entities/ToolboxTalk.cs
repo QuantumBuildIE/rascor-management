@@ -127,6 +127,32 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public DateTime? ContentGeneratedAt { get; set; }
 
+    // Quiz randomization settings
+
+    /// <summary>
+    /// Number of questions to include in each quiz attempt.
+    /// Null means use all questions. When UseQuestionPool is true,
+    /// a random subset of this size is selected from the full question pool.
+    /// </summary>
+    public int? QuizQuestionCount { get; set; }
+
+    /// <summary>
+    /// Whether to shuffle the order of questions for each quiz attempt
+    /// </summary>
+    public bool ShuffleQuestions { get; set; } = false;
+
+    /// <summary>
+    /// Whether to shuffle the order of answer options within each question
+    /// </summary>
+    public bool ShuffleOptions { get; set; } = false;
+
+    /// <summary>
+    /// Whether to use question pool mode (random subset selection).
+    /// When true, QuizQuestionCount questions are randomly selected from the full pool.
+    /// Requires at least 2x QuizQuestionCount questions in the pool.
+    /// </summary>
+    public bool UseQuestionPool { get; set; } = false;
+
     // Navigation properties
 
     /// <summary>

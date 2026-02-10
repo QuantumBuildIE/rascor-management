@@ -84,6 +84,11 @@ export interface ToolboxTalk {
   pdfFileName: string | null;
   generatedFromVideo: boolean;
   generatedFromPdf: boolean;
+  // Quiz randomization settings
+  quizQuestionCount: number | null;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  useQuestionPool: boolean;
   sections: ToolboxTalkSection[];
   questions: ToolboxTalkQuestion[];
   translations: ToolboxTalkTranslation[];
@@ -507,6 +512,11 @@ export interface CreateToolboxTalkRequest {
   requiresQuiz?: boolean;
   passingScore?: number;
   isActive?: boolean;
+  // Quiz randomization settings
+  quizQuestionCount?: number | null;
+  shuffleQuestions?: boolean;
+  shuffleOptions?: boolean;
+  useQuestionPool?: boolean;
   sections: CreateToolboxTalkSectionRequest[];
   questions?: CreateToolboxTalkQuestionRequest[];
 }

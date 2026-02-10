@@ -71,6 +71,10 @@ const toolboxTalkFormSchema = z.object({
   minimumVideoWatchPercent: z.number().min(0).max(100),
   requiresQuiz: z.boolean(),
   passingScore: z.number().min(0).max(100).optional().nullable(),
+  shuffleQuestions: z.boolean(),
+  shuffleOptions: z.boolean(),
+  useQuestionPool: z.boolean(),
+  quizQuestionCount: z.number().min(1).optional().nullable(),
   isActive: z.boolean(),
   sections: z.array(sectionSchema),
   questions: z.array(questionSchema).optional(),
@@ -134,6 +138,10 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       minimumVideoWatchPercent: talk?.minimumVideoWatchPercent ?? 80,
       requiresQuiz: talk?.requiresQuiz ?? false,
       passingScore: talk?.passingScore ?? 70,
+      shuffleQuestions: talk?.shuffleQuestions ?? false,
+      shuffleOptions: talk?.shuffleOptions ?? false,
+      useQuestionPool: talk?.useQuestionPool ?? false,
+      quizQuestionCount: talk?.quizQuestionCount ?? null,
       isActive: talk?.isActive ?? true,
       sections: talk?.sections?.map((s) => ({
         id: s.id,
@@ -158,15 +166,29 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
 
   const watchRequiresQuiz = form.watch('requiresQuiz');
   const watchVideoSource = form.watch('videoSource');
+  const watchUseQuestionPool = form.watch('useQuestionPool');
+  const watchQuestions = form.watch('questions');
+  const questionCount = watchQuestions?.length ?? 0;
 
-  // Reset passing score when quiz is disabled
+  // Reset quiz settings when quiz is disabled
   useEffect(() => {
     if (!watchRequiresQuiz) {
       form.setValue('passingScore', null);
+      form.setValue('shuffleQuestions', false);
+      form.setValue('shuffleOptions', false);
+      form.setValue('useQuestionPool', false);
+      form.setValue('quizQuestionCount', null);
     } else if (form.getValues('passingScore') === null) {
       form.setValue('passingScore', 70);
     }
   }, [watchRequiresQuiz, form]);
+
+  // Reset question count when question pool is disabled
+  useEffect(() => {
+    if (!watchUseQuestionPool) {
+      form.setValue('quizQuestionCount', null);
+    }
+  }, [watchUseQuestionPool, form]);
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
@@ -217,6 +239,10 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
         minimumVideoWatchPercent: values.minimumVideoWatchPercent,
         requiresQuiz: values.requiresQuiz,
         passingScore: values.requiresQuiz && values.passingScore != null ? values.passingScore : undefined,
+        shuffleQuestions: values.requiresQuiz ? values.shuffleQuestions : false,
+        shuffleOptions: values.requiresQuiz ? values.shuffleOptions : false,
+        useQuestionPool: values.requiresQuiz ? values.useQuestionPool : false,
+        quizQuestionCount: values.requiresQuiz && values.useQuestionPool ? values.quizQuestionCount : undefined,
         isActive: values.isActive,
         sections,
         questions,
@@ -495,29 +521,153 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
             />
 
             {watchRequiresQuiz && (
-              <FormField
-                control={form.control}
-                name="passingScore"
-                render={({ field }) => (
-                  <FormItem className="max-w-xs">
-                    <FormLabel>Passing Score (%) *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        {...field}
-                        value={field.value ?? 70}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+              <>
+                <FormField
+                  control={form.control}
+                  name="passingScore"
+                  render={({ field }) => (
+                    <FormItem className="max-w-xs">
+                      <FormLabel>Passing Score (%) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          {...field}
+                          value={field.value ?? 70}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Minimum percentage required to pass the quiz
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4 rounded-lg border p-4">
+                  <h4 className="text-sm font-medium">Randomization Settings</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Control how quiz questions and answer options are presented to employees.
+                  </p>
+
+                  <FormField
+                    control={form.control}
+                    name="shuffleQuestions"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Shuffle Question Order</FormLabel>
+                          <FormDescription>
+                            Randomize the order questions appear in for each attempt
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="shuffleOptions"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Shuffle Answer Options</FormLabel>
+                          <FormDescription>
+                            Randomize the order of multiple-choice answer options
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="useQuestionPool"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Use Question Pool</FormLabel>
+                          <FormDescription>
+                            Show a random subset of questions per attempt instead of all questions
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchUseQuestionPool && (
+                    <div className="ml-7 space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="quizQuestionCount"
+                        render={({ field }) => (
+                          <FormItem className="max-w-xs">
+                            <FormLabel>Questions Per Attempt *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={questionCount || undefined}
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value ? Number(e.target.value) : null;
+                                  field.onChange(val);
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Number of questions randomly selected for each attempt
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormDescription>
-                      Minimum percentage required to pass the quiz
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      {questionCount > 0 && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">
+                            Total questions in pool: <span className="font-medium text-foreground">{questionCount}</span>
+                          </span>
+                          {form.watch('quizQuestionCount') != null && (
+                            <>
+                              {' '}&middot;{' '}
+                              {questionCount < (form.watch('quizQuestionCount') ?? 0) * 2 ? (
+                                <span className="text-amber-600">
+                                  Pool requires at least {(form.watch('quizQuestionCount') ?? 0) * 2} questions (2x quiz size). Add {(form.watch('quizQuestionCount') ?? 0) * 2 - questionCount} more.
+                                </span>
+                              ) : (
+                                <span className="text-green-600">
+                                  Pool size is sufficient ({questionCount} &ge; {(form.watch('quizQuestionCount') ?? 0) * 2} required)
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
