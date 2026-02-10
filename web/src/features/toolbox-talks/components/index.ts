@@ -8,6 +8,9 @@ export { ScheduleDialog } from './ScheduleDialog';
 export { ScheduleList } from './ScheduleList';
 export { AssignmentsList } from './AssignmentsList';
 export { Dashboard, DashboardSkeleton } from './Dashboard';
+export { CourseList } from './CourseList';
+export { CourseForm } from './CourseForm';
+export { AddTalksDialog } from './AddTalksDialog';
 
 // Employee Portal Components
 export { MyTalksList } from './MyTalksList';

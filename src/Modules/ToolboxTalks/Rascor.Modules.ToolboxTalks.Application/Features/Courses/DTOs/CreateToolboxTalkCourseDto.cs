@@ -1,0 +1,27 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Rascor.Modules.ToolboxTalks.Application.Features.Courses.DTOs;
+
+/// <summary>
+/// Request DTO for creating a new toolbox talk course
+/// </summary>
+public record CreateToolboxTalkCourseDto
+{
+    [Required]
+    [MaxLength(200)]
+    public string Title { get; init; } = string.Empty;
+
+    [MaxLength(2000)]
+    public string? Description { get; init; }
+
+    public bool IsActive { get; init; } = true;
+    public bool RequireSequentialCompletion { get; init; } = true;
+    public bool RequiresRefresher { get; init; } = false;
+    public int RefresherIntervalMonths { get; init; } = 12;
+    public bool GenerateCertificate { get; init; } = false;
+
+    /// <summary>
+    /// Optional: add talks during creation
+    /// </summary>
+    public List<CreateToolboxTalkCourseItemDto>? Items { get; init; }
+}

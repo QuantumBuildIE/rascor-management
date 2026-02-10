@@ -21,6 +21,11 @@ public interface IToolboxTalksDbContext
     DbSet<ScheduledTalkCompletion> ScheduledTalkCompletions { get; }
     DbSet<ToolboxTalkSettings> ToolboxTalkSettings { get; }
 
+    // Course entities
+    DbSet<ToolboxTalkCourse> ToolboxTalkCourses { get; }
+    DbSet<ToolboxTalkCourseItem> ToolboxTalkCourseItems { get; }
+    DbSet<ToolboxTalkCourseTranslation> ToolboxTalkCourseTranslations { get; }
+
     // Subtitle processing entities
     DbSet<SubtitleProcessingJob> SubtitleProcessingJobs { get; }
     DbSet<SubtitleTranslation> SubtitleTranslations { get; }

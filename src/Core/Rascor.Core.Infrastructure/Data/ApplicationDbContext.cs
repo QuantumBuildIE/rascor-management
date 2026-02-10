@@ -98,6 +98,9 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkSettings> ToolboxTalkSettings => Set<ToolboxTalkSettings>();
     public DbSet<ToolboxTalkTranslation> ToolboxTalkTranslations => Set<ToolboxTalkTranslation>();
     public DbSet<ToolboxTalkVideoTranslation> ToolboxTalkVideoTranslations => Set<ToolboxTalkVideoTranslation>();
+    public DbSet<ToolboxTalkCourse> ToolboxTalkCourses => Set<ToolboxTalkCourse>();
+    public DbSet<ToolboxTalkCourseItem> ToolboxTalkCourseItems => Set<ToolboxTalkCourseItem>();
+    public DbSet<ToolboxTalkCourseTranslation> ToolboxTalkCourseTranslations => Set<ToolboxTalkCourseTranslation>();
     public DbSet<SubtitleProcessingJob> SubtitleProcessingJobs => Set<SubtitleProcessingJob>();
     public DbSet<SubtitleTranslation> SubtitleTranslations => Set<SubtitleTranslation>();
 
@@ -249,6 +252,9 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkVideoTranslationConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkCourseConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkCourseItemConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkCourseTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleProcessingJobConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleTranslationConfiguration());
 
@@ -302,9 +308,9 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         // BaseEntity-based (not tenant-scoped): HazardControlLink
 
         // Note: Toolbox Talks query filters are defined in entity configurations
-        // TenantEntity-based: ToolboxTalk, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, SubtitleProcessingJob
-        // BaseEntity-based (not tenant-scoped): ToolboxTalkSection, ToolboxTalkQuestion, ToolboxTalkScheduleAssignment,
-        //   ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings, SubtitleTranslation
+        // TenantEntity-based: ToolboxTalk, ToolboxTalkCourse, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, SubtitleProcessingJob
+        // BaseEntity-based (not tenant-scoped): ToolboxTalkSection, ToolboxTalkQuestion, ToolboxTalkCourseItem, ToolboxTalkCourseTranslation,
+        //   ToolboxTalkScheduleAssignment, ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings, SubtitleTranslation
 
         // Apply query filter for Permission (not tenant-scoped, global)
         modelBuilder.Entity<Permission>().HasQueryFilter(e => !e.IsDeleted);

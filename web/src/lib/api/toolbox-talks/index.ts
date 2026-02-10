@@ -5,6 +5,7 @@ export * from './scheduled-talks';
 export * from './my-toolbox-talks';
 export * from './reports';
 export * from './subtitle-processing';
+export * from './courses';
 
 // Re-export all hooks
 export * from './use-toolbox-talks';
@@ -14,6 +15,7 @@ export * from './use-my-toolbox-talks';
 export * from './use-reports';
 export * from './use-subtitle-processing';
 export * from './use-video-subtitles';
+export * from './use-courses';
 
 // Re-export types for convenience
 export type { PaginatedResponse } from './toolbox-talks';
