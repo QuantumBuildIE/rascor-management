@@ -257,6 +257,16 @@ export function VideoPlayer({
   const [error, setError] = React.useState<string | null>(null);
   const lastReportedPercent = React.useRef(currentWatchPercent || 0);
 
+  // Anti-skip tracking: track unique seconds watched naturally
+  const secondsWatchedRef = React.useRef<Set<number>>(new Set());
+  const lastTimeRef = React.useRef(0);
+
+  // Reset tracking when video URL changes
+  React.useEffect(() => {
+    secondsWatchedRef.current = new Set();
+    lastTimeRef.current = 0;
+  }, [videoUrl]);
+
   // Subtitle state
   const [captionsEnabled, setCaptionsEnabled] = React.useState(true);
   const [activeSubtitle, setActiveSubtitle] = React.useState<AvailableSubtitle | null>(null);
@@ -330,17 +340,28 @@ export function VideoPlayer({
     }
   }, [activeSubtitle, captionsEnabled, isEmbedded]);
 
-  // Handle video progress for direct URLs
+  // Handle video progress for direct URLs with anti-skip tracking
   const handleTimeUpdate = React.useCallback(() => {
     const video = videoRef.current;
     if (!video || video.duration === 0) return;
 
-    const percent = Math.round((video.currentTime / video.duration) * 100);
-    // Only update if percentage increased (prevent going back)
-    if (percent > watchPercent) {
-      setWatchPercent(percent);
+    const currentTime = video.currentTime;
+
+    // Only count natural playback (jumps < 2 seconds prevent seeking to skip)
+    if (Math.abs(currentTime - lastTimeRef.current) < 2) {
+      secondsWatchedRef.current.add(Math.floor(currentTime));
     }
-  }, [watchPercent]);
+    lastTimeRef.current = currentTime;
+
+    // Calculate percentage from unique seconds actually watched
+    const totalSeconds = Math.floor(video.duration);
+    if (totalSeconds > 0) {
+      const percent = Math.round((secondsWatchedRef.current.size / totalSeconds) * 100);
+      // Never go below previously saved progress
+      const effectivePercent = Math.max(percent, currentWatchPercent || 0);
+      setWatchPercent(prev => effectivePercent > prev ? effectivePercent : prev);
+    }
+  }, [currentWatchPercent]);
 
   // Report progress to server periodically
   React.useEffect(() => {
