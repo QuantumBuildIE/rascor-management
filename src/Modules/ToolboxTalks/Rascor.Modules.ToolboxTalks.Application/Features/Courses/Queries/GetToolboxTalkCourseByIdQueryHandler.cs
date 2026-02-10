@@ -40,8 +40,9 @@ public class GetToolboxTalkCourseByIdQueryHandler : IRequestHandler<GetToolboxTa
             RequiresRefresher = course.RequiresRefresher,
             RefresherIntervalMonths = course.RefresherIntervalMonths,
             GenerateCertificate = course.GenerateCertificate,
-            TalkCount = course.CourseItems.Count,
+            TalkCount = course.CourseItems.Count(ci => ci.ToolboxTalk != null),
             Items = course.CourseItems
+                .Where(ci => ci.ToolboxTalk != null)
                 .OrderBy(ci => ci.OrderIndex)
                 .Select(ci => new ToolboxTalkCourseItemDto
                 {
@@ -49,11 +50,11 @@ public class GetToolboxTalkCourseByIdQueryHandler : IRequestHandler<GetToolboxTa
                     ToolboxTalkId = ci.ToolboxTalkId,
                     OrderIndex = ci.OrderIndex,
                     IsRequired = ci.IsRequired,
-                    TalkTitle = ci.ToolboxTalk.Title,
+                    TalkTitle = ci.ToolboxTalk!.Title,
                     TalkDescription = ci.ToolboxTalk.Description,
                     TalkHasVideo = !string.IsNullOrEmpty(ci.ToolboxTalk.VideoUrl),
-                    TalkSectionCount = ci.ToolboxTalk.Sections.Count(s => !s.IsDeleted),
-                    TalkQuestionCount = ci.ToolboxTalk.Questions.Count(q => !q.IsDeleted)
+                    TalkSectionCount = ci.ToolboxTalk.Sections?.Count(s => !s.IsDeleted) ?? 0,
+                    TalkQuestionCount = ci.ToolboxTalk.Questions?.Count(q => !q.IsDeleted) ?? 0
                 })
                 .ToList(),
             Translations = course.Translations
