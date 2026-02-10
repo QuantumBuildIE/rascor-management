@@ -93,6 +93,15 @@ export async function deleteCourseAssignment(id: string): Promise<void> {
   await apiClient.delete(`/toolbox-talks/course-assignments/${id}`);
 }
 
+export async function getMyCourseAssignment(
+  id: string
+): Promise<ToolboxTalkCourseAssignmentDto> {
+  const response = await apiClient.get<ToolboxTalkCourseAssignmentDto>(
+    `/my/toolbox-talks/courses/${id}`
+  );
+  return response.data;
+}
+
 export async function getMyCourseAssignments(): Promise<ToolboxTalkCourseAssignmentDto[]> {
   const response = await apiClient.get<ApiResponse<ToolboxTalkCourseAssignmentDto[]>>(
     '/my/toolbox-talks/courses'

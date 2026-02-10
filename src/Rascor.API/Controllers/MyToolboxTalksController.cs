@@ -724,6 +724,44 @@ public class MyToolboxTalksController : ControllerBase
     }
 
     /// <summary>
+    /// Get a specific course assignment for the current employee
+    /// </summary>
+    [HttpGet("courses/{id:guid}")]
+    [ProducesResponseType(typeof(ToolboxTalkCourseAssignmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyCourseAssignment(Guid id)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var query = new GetMyCourseAssignmentByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                Id = id
+            };
+
+            var result = await _mediator.Send(query);
+            if (result == null)
+            {
+                return NotFound(new { message = "Course assignment not found or not assigned to you" });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving my course assignment {AssignmentId}", id);
+            return StatusCode(500, new { message = "Error retrieving course assignment" });
+        }
+    }
+
+    /// <summary>
     /// Get current employee ID from claims
     /// </summary>
     private Guid? GetCurrentEmployeeId()

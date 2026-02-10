@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCourseAssignment } from '@/lib/api/toolbox-talks/use-course-assignments';
+import { useMyCourseAssignment } from '@/lib/api/toolbox-talks/use-course-assignments';
 import type { CourseScheduledTalkDto } from '@/lib/api/toolbox-talks/course-assignments';
 import { cn } from '@/lib/utils';
 
@@ -130,7 +130,7 @@ function TalkItem({ talk, onNavigate }: TalkItemProps) {
 export default function CourseViewerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { data: assignment, isLoading, error } = useCourseAssignment(id);
+  const { data: assignment, isLoading, error } = useMyCourseAssignment(id);
 
   const handleNavigateToTalk = (scheduledTalkId: string) => {
     router.push(`/toolbox-talks/${scheduledTalkId}`);

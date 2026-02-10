@@ -4,6 +4,7 @@ import {
   getCourseAssignments,
   getCourseAssignment,
   deleteCourseAssignment,
+  getMyCourseAssignment,
   getMyCourseAssignments,
 } from './course-assignments';
 import type { AssignCourseDto } from './course-assignments';
@@ -31,6 +32,14 @@ export function useCourseAssignment(id: string) {
   return useQuery({
     queryKey: [...COURSE_ASSIGNMENTS_KEY, 'detail', id],
     queryFn: () => getCourseAssignment(id),
+    enabled: !!id,
+  });
+}
+
+export function useMyCourseAssignment(id: string) {
+  return useQuery({
+    queryKey: [...COURSE_ASSIGNMENTS_KEY, 'my', 'detail', id],
+    queryFn: () => getMyCourseAssignment(id),
     enabled: !!id,
   });
 }
