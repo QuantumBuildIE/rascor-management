@@ -19,6 +19,7 @@ using Rascor.Core.Infrastructure.Data;
 using Rascor.Core.Infrastructure.Identity;
 using Rascor.Core.Infrastructure.Persistence;
 using Rascor.Modules.SiteAttendance.Infrastructure.Persistence;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Storage;
 using Rascor.Modules.ToolboxTalks.Application.Abstractions.Subtitles;
 using Rascor.Tests.Common.TestTenant;
 using Rascor.Tests.Integration.Setup.Fakes;
@@ -74,6 +75,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     public FakeSrtStorageProvider FakeSrtStorageProvider { get; } = new();
     public FakeVideoSourceProvider FakeVideoSourceProvider { get; } = new();
     public FakeSubtitleProgressReporter FakeSubtitleProgressReporter { get; } = new();
+    public FakeR2StorageService FakeR2StorageService { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -205,6 +207,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddSingleton<ISrtStorageProvider>(FakeSrtStorageProvider);
             services.AddSingleton<IVideoSourceProvider>(FakeVideoSourceProvider);
             services.AddSingleton<ISubtitleProgressReporter>(FakeSubtitleProgressReporter);
+
+            // Replace R2 storage service to avoid requiring AWS/R2 configuration
+            services.RemoveAll<IR2StorageService>();
+            services.AddSingleton<IR2StorageService>(FakeR2StorageService);
         });
 
         builder.UseEnvironment("Testing");
