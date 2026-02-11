@@ -8,6 +8,7 @@ namespace Rascor.Modules.ToolboxTalks.Application.Services;
 public class CourseProgressService(
     IToolboxTalksDbContext dbContext,
     IRefresherSchedulingService refresherSchedulingService,
+    ICertificateGenerationService certificateService,
     ILogger<CourseProgressService> logger) : ICourseProgressService
 {
     public async Task UpdateProgressAsync(Guid courseAssignmentId, CancellationToken cancellationToken = default)
@@ -60,10 +61,39 @@ public class CourseProgressService(
 
         var saved = await dbContext.SaveChangesAsync(cancellationToken);
 
-        // Schedule refresher if course was just completed
+        // Schedule refresher and generate certificate if course was just completed
         if (assignment.Status == CourseAssignmentStatus.Completed)
         {
             await refresherSchedulingService.ScheduleRefresherIfRequired(assignment, cancellationToken);
+
+            // Generate course certificate
+            try
+            {
+                // Get signature from the last completed talk
+                var lastCompletedTalk = assignment.ScheduledTalks
+                    .Where(st => st.Status == ScheduledTalkStatus.Completed && !st.IsDeleted)
+                    .OrderByDescending(st => st.UpdatedAt)
+                    .FirstOrDefault();
+
+                string? signature = null;
+                if (lastCompletedTalk != null)
+                {
+                    // Load the completion record to get the signature
+                    var completion = await dbContext.ScheduledTalkCompletions
+                        .FirstOrDefaultAsync(c => c.ScheduledTalkId == lastCompletedTalk.Id, cancellationToken);
+                    signature = completion?.SignatureData;
+                }
+
+                await certificateService.GenerateCourseCertificateAsync(
+                    assignment,
+                    signature,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to generate certificate for course assignment {AssignmentId}", assignment.Id);
+                // Don't rethrow — completion should still succeed
+            }
         }
         logger.LogDebug("Course progress update saved {RowCount} rows for assignment {CourseAssignmentId}",
             saved, courseAssignmentId);

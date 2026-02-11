@@ -34,6 +34,9 @@ public static class DependencyInjection
         // Register refresher scheduling service
         services.AddScoped<IRefresherSchedulingService, Services.RefresherSchedulingService>();
 
+        // Register certificate generation service
+        services.AddScoped<ICertificateGenerationService, Services.CertificateGenerationService>();
+
         return services;
     }
 }

@@ -8,8 +8,11 @@ using Rascor.Modules.ToolboxTalks.Application.Commands.MarkSectionRead;
 using Rascor.Modules.ToolboxTalks.Application.Commands.ResetVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.Commands.SubmitQuizAnswers;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateVideoProgress;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Storage;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Subtitles;
+using Rascor.Modules.ToolboxTalks.Application.Features.Certificates.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Features.Certificates.Queries;
 using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.Queries;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
@@ -31,17 +34,20 @@ public class MyToolboxTalksController : ControllerBase
     private readonly IMediator _mediator;
     private readonly ICurrentUserService _currentUserService;
     private readonly ISubtitleProcessingOrchestrator _subtitleOrchestrator;
+    private readonly IR2StorageService _r2StorageService;
     private readonly ILogger<MyToolboxTalksController> _logger;
 
     public MyToolboxTalksController(
         IMediator mediator,
         ICurrentUserService currentUserService,
         ISubtitleProcessingOrchestrator subtitleOrchestrator,
+        IR2StorageService r2StorageService,
         ILogger<MyToolboxTalksController> logger)
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
         _subtitleOrchestrator = subtitleOrchestrator;
+        _r2StorageService = r2StorageService;
         _logger = logger;
     }
 
@@ -758,6 +764,84 @@ public class MyToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving my course assignment {AssignmentId}", id);
             return StatusCode(500, new { message = "Error retrieving course assignment" });
+        }
+    }
+
+    /// <summary>
+    /// Get all certificates for the current employee
+    /// </summary>
+    /// <returns>List of certificates ordered by issue date</returns>
+    [HttpGet("certificates")]
+    [ProducesResponseType(typeof(Result<List<CertificateDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyCertificates()
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var query = new GetMyCertificatesQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving my certificates");
+            return StatusCode(500, Result.Fail("Error retrieving my certificates"));
+        }
+    }
+
+    /// <summary>
+    /// Download a certificate PDF
+    /// </summary>
+    /// <param name="id">Certificate ID</param>
+    /// <returns>Certificate PDF file</returns>
+    [HttpGet("certificates/{id:guid}/download")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadCertificate(Guid id)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var query = new GetCertificateDownloadQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                CertificateId = id
+            };
+
+            var result = await _mediator.Send(query);
+            if (result == null)
+            {
+                return NotFound(new { message = "Certificate not found" });
+            }
+
+            var fileBytes = await _r2StorageService.DownloadFileAsync(result.StoragePath);
+            if (fileBytes == null)
+            {
+                return NotFound(new { message = "Certificate file not found in storage" });
+            }
+
+            return File(fileBytes, "application/pdf", result.FileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading certificate {CertificateId}", id);
+            return StatusCode(500, new { message = "Error downloading certificate" });
         }
     }
 

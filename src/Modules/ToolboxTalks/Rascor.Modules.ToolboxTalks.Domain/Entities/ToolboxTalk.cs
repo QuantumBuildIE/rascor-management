@@ -153,6 +153,13 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public bool UseQuestionPool { get; set; } = false;
 
+    // Certificate settings (Phase 5)
+
+    /// <summary>
+    /// Whether to generate a certificate on completion of this talk
+    /// </summary>
+    public bool GenerateCertificate { get; set; } = false;
+
     // Refresher settings (Phase 4)
 
     /// <summary>

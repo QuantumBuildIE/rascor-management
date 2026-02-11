@@ -43,6 +43,22 @@ public interface IR2StorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Uploads a certificate PDF to R2 storage.
+    /// Path: {tenantId}/certificates/{certificateNumber}.pdf
+    /// </summary>
+    Task<R2UploadResult> UploadCertificateAsync(
+        Guid tenantId,
+        string certificateNumber,
+        Stream content,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Downloads a file from R2 storage by its storage key/path.
+    /// Returns null if the file is not found.
+    /// </summary>
+    Task<byte[]?> DownloadFileAsync(string path, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes all files associated with a Toolbox Talk (videos, PDFs, subtitles).
     /// </summary>
     Task DeleteToolboxTalkFilesAsync(

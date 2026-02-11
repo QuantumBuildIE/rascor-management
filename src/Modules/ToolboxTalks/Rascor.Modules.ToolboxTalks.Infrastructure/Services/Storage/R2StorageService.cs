@@ -22,6 +22,7 @@ public class R2StorageService : IR2StorageService, IDisposable
     private const string VideosFolder = "videos";
     private const string PdfsFolder = "pdfs";
     private const string SubsFolder = "subs";
+    private const string CertificatesFolder = "certificates";
 
     public R2StorageService(
         IOptions<R2StorageSettings> settings,
@@ -202,6 +203,80 @@ public class R2StorageService : IR2StorageService, IDisposable
         {
             _logger.LogError(ex, "Failed to upload PDF for ToolboxTalk {TalkId}", toolboxTalkId);
             return R2UploadResult.FailureResult($"PDF upload failed: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Certificates
+
+    public async Task<R2UploadResult> UploadCertificateAsync(
+        Guid tenantId,
+        string certificateNumber,
+        Stream content,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var fileName = $"{certificateNumber}.pdf";
+            var key = BuildKey(tenantId, CertificatesFolder, fileName);
+
+            _logger.LogInformation("Uploading certificate to R2: {Key}", key);
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _settings.BucketName,
+                Key = key,
+                InputStream = content,
+                ContentType = "application/pdf",
+                DisablePayloadSigning = true,
+                UseChunkEncoding = false
+            };
+
+            await _s3Client.PutObjectAsync(request, cancellationToken);
+
+            var publicUrl = GeneratePublicUrl(tenantId, CertificatesFolder, fileName);
+
+            _logger.LogInformation("Successfully uploaded certificate: {Url}", publicUrl);
+
+            return R2UploadResult.SuccessResult(publicUrl, key, content.Length, "application/pdf");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload certificate {CertificateNumber}", certificateNumber);
+            return R2UploadResult.FailureResult($"Certificate upload failed: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Downloads
+
+    public async Task<byte[]?> DownloadFileAsync(string path, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Downloading file from R2: {Path}", path);
+
+            var response = await _s3Client.GetObjectAsync(new GetObjectRequest
+            {
+                BucketName = _settings.BucketName,
+                Key = path,
+            }, cancellationToken);
+
+            using var memoryStream = new MemoryStream();
+            await response.ResponseStream.CopyToAsync(memoryStream, cancellationToken);
+            return memoryStream.ToArray();
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("File not found in R2: {Path}", path);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to download file from R2: {Path}", path);
+            return null;
         }
     }
 

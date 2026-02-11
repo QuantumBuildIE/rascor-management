@@ -102,6 +102,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkCourseItem> ToolboxTalkCourseItems => Set<ToolboxTalkCourseItem>();
     public DbSet<ToolboxTalkCourseTranslation> ToolboxTalkCourseTranslations => Set<ToolboxTalkCourseTranslation>();
     public DbSet<ToolboxTalkCourseAssignment> ToolboxTalkCourseAssignments => Set<ToolboxTalkCourseAssignment>();
+    public DbSet<ToolboxTalkCertificate> ToolboxTalkCertificates => Set<ToolboxTalkCertificate>();
     public DbSet<SubtitleProcessingJob> SubtitleProcessingJobs => Set<SubtitleProcessingJob>();
     public DbSet<SubtitleTranslation> SubtitleTranslations => Set<SubtitleTranslation>();
 
@@ -257,6 +258,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseItemConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkCourseAssignmentConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleProcessingJobConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleTranslationConfiguration());
 
@@ -310,7 +312,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         // BaseEntity-based (not tenant-scoped): HazardControlLink
 
         // Note: Toolbox Talks query filters are defined in entity configurations
-        // TenantEntity-based: ToolboxTalk, ToolboxTalkCourse, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, SubtitleProcessingJob
+        // TenantEntity-based: ToolboxTalk, ToolboxTalkCourse, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, ToolboxTalkCertificate, SubtitleProcessingJob
         // BaseEntity-based (not tenant-scoped): ToolboxTalkSection, ToolboxTalkQuestion, ToolboxTalkCourseItem, ToolboxTalkCourseTranslation,
         //   ToolboxTalkScheduleAssignment, ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings, SubtitleTranslation
 
