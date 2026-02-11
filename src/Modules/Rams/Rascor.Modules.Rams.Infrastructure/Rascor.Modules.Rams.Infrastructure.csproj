@@ -18,7 +18,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
-    <PackageReference Include="QuestPDF" Version="2025.12.0" />
+    <PackageReference Include="QuestPDF" Version="2025.12.4" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />
   </ItemGroup>
 
