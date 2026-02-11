@@ -159,7 +159,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ id: str
   if (error || !assignment) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/toolbox-talks/my')}>
+        <Button variant="ghost" size="sm" onClick={() => router.push('/toolbox-talks')}>
           <ArrowLeftIcon className="mr-2 h-4 w-4" />
           Back to My Talks
         </Button>
@@ -178,7 +178,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <Button variant="ghost" size="sm" onClick={() => router.push('/toolbox-talks/my')}>
+      <Button variant="ghost" size="sm" onClick={() => router.push('/toolbox-talks')}>
         <ArrowLeftIcon className="mr-2 h-4 w-4" />
         Back to My Talks
       </Button>

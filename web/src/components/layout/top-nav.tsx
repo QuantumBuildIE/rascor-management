@@ -77,7 +77,7 @@ export function TopNav() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/toolbox-talks/my" className="flex items-center justify-between w-full">
+              <Link href="/toolbox-talks" className="flex items-center justify-between w-full">
                 <span className="flex items-center">
                   <ClipboardList className="mr-2 h-4 w-4" />
                   <span>My Toolbox Talks</span>

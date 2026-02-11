@@ -124,7 +124,7 @@ export function PendingTrainingBanner() {
                 "bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
             )}
           >
-            <Link href="/toolbox-talks/my" className="flex items-center gap-1">
+            <Link href="/toolbox-talks" className="flex items-center gap-1">
               View Training
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
