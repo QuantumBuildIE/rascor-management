@@ -343,6 +343,12 @@ using (var scope = app.Services.CreateScope())
         job => job.ExecuteAsync(CancellationToken.None),
         "0 * * * *"); // Run every hour
 
+    recurringJobManager.AddOrUpdate<SendRefresherRemindersJob>(
+        "send-refresher-reminders",
+        job => job.ExecuteAsync(CancellationToken.None),
+        "0 9 * * *", // Run daily at 9:00 AM
+        new RecurringJobOptions { TimeZone = irelandTimeZone });
+
     // RAMS background jobs
     recurringJobManager.AddOrUpdate<RamsDailyDigestJob>(
         "rams-daily-digest",

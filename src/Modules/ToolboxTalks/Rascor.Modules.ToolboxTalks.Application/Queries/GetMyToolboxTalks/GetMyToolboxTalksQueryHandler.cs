@@ -60,7 +60,9 @@ public class GetMyToolboxTalksQueryHandler : IRequestHandler<GetMyToolboxTalksQu
                     ? Math.Round((decimal)st.SectionProgress.Count(sp => sp.IsRead) / st.ToolboxTalk.Sections.Count * 100, 2)
                     : 0,
                 IsOverdue = st.Status != ScheduledTalkStatus.Completed && st.DueDate < now,
-                DaysUntilDue = (int)Math.Ceiling((st.DueDate - now).TotalDays)
+                DaysUntilDue = (int)Math.Ceiling((st.DueDate - now).TotalDays),
+                IsRefresher = st.IsRefresher,
+                RefresherDueDate = st.RefresherDueDate
             })
             .ToListAsync(cancellationToken);
 

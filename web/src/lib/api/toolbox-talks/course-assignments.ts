@@ -19,6 +19,7 @@ export interface ToolboxTalkCourseAssignmentDto {
   completedAt?: string;
   status: string;
   isRefresher: boolean;
+  refresherDueDate?: string;
   totalTalks: number;
   completedTalks: number;
   progressPercent: number;

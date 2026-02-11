@@ -17,6 +17,7 @@ public record ToolboxTalkCourseAssignmentDto
 
     public string Status { get; init; } = string.Empty;
     public bool IsRefresher { get; init; }
+    public DateTime? RefresherDueDate { get; init; }
 
     public int TotalTalks { get; init; }
     public int CompletedTalks { get; init; }

@@ -53,6 +53,23 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
         builder.Property(s => s.TenantId)
             .IsRequired();
 
+        // Refresher tracking
+        builder.Property(s => s.IsRefresher)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.OriginalScheduledTalkId);
+
+        builder.Property(s => s.RefresherDueDate);
+
+        builder.Property(s => s.ReminderSent2Weeks)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.ReminderSent1Week)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         // Audit fields
         builder.Property(s => s.CreatedAt)
             .IsRequired();
@@ -106,6 +123,11 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
             .HasForeignKey<ScheduledTalkCompletion>(c => c.ScheduledTalkId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(s => s.OriginalScheduledTalk)
+            .WithMany()
+            .HasForeignKey(s => s.OriginalScheduledTalkId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Indexes
         builder.HasIndex(s => new { s.TenantId, s.EmployeeId, s.Status })
             .HasDatabaseName("ix_scheduled_talks_tenant_employee_status");
@@ -130,6 +152,9 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
 
         builder.HasIndex(s => s.CourseAssignmentId)
             .HasDatabaseName("ix_scheduled_talks_course_assignment");
+
+        builder.HasIndex(s => s.OriginalScheduledTalkId)
+            .HasDatabaseName("ix_scheduled_talks_original");
 
         // Query filter for soft delete
         builder.HasQueryFilter(s => !s.IsDeleted);

@@ -413,6 +413,152 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
         }
     }
 
+    public async Task SendRefresherReminderAsync(
+        ScheduledTalk refresherTalk,
+        Employee employee,
+        string timeframe,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(employee?.Email))
+        {
+            _logger.LogWarning("Cannot send refresher reminder: Employee {EmployeeId} has no email", employee?.Id);
+            return;
+        }
+
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
+        var talkUrl = $"{baseUrl}/login?returnUrl={Uri.EscapeDataString($"/toolbox-talks/{refresherTalk.Id}")}";
+
+        var subject = $"Refresher Training Due in {timeframe}: {refresherTalk.ToolboxTalk.Title}";
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #f97316; color: white; padding: 20px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .button {{ display: inline-block; background-color: #f97316; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
+        .footer {{ padding: 20px; text-align: center; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>Refresher Training Due</h1>
+        </div>
+        <div class='content'>
+            <p>Dear {employee.FirstName},</p>
+            <p>Your refresher training for <strong>{refresherTalk.ToolboxTalk.Title}</strong> is due in {timeframe}.</p>
+            <p><strong>Due Date:</strong> {refresherTalk.RefresherDueDate:dd MMM yyyy}</p>
+            <p>
+                <a href='{talkUrl}' class='button'>Complete Training</a>
+            </p>
+        </div>
+        <div class='footer'>
+            <p>Thank you,<br>RASCOR Safety Team</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
+
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
+
+        if (result.Success)
+        {
+            _logger.LogInformation("Refresher reminder sent to {Email} for talk {TalkId}, timeframe: {Timeframe}",
+                employee.Email, refresherTalk.Id, timeframe);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to send refresher reminder to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
+    }
+
+    public async Task SendCourseRefresherReminderAsync(
+        ToolboxTalkCourseAssignment refresherAssignment,
+        Employee employee,
+        string timeframe,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(employee?.Email))
+        {
+            _logger.LogWarning("Cannot send course refresher reminder: Employee {EmployeeId} has no email", employee?.Id);
+            return;
+        }
+
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
+        var courseUrl = $"{baseUrl}/login?returnUrl={Uri.EscapeDataString($"/toolbox-talks/courses/{refresherAssignment.Id}")}";
+
+        var subject = $"Course Refresher Due in {timeframe}: {refresherAssignment.Course.Title}";
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #f97316; color: white; padding: 20px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .button {{ display: inline-block; background-color: #f97316; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
+        .footer {{ padding: 20px; text-align: center; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>Course Refresher Due</h1>
+        </div>
+        <div class='content'>
+            <p>Dear {employee.FirstName},</p>
+            <p>Your refresher course <strong>{refresherAssignment.Course.Title}</strong> is due in {timeframe}.</p>
+            <p><strong>Due Date:</strong> {refresherAssignment.RefresherDueDate:dd MMM yyyy}</p>
+            <p>
+                <a href='{courseUrl}' class='button'>Start Course</a>
+            </p>
+        </div>
+        <div class='footer'>
+            <p>Thank you,<br>RASCOR Safety Team</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
+
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
+
+        if (result.Success)
+        {
+            _logger.LogInformation("Course refresher reminder sent to {Email} for assignment {AssignmentId}, timeframe: {Timeframe}",
+                employee.Email, refresherAssignment.Id, timeframe);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to send course refresher reminder to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
+    }
+
     private static string FormatTimeSpent(int totalSeconds)
     {
         if (totalSeconds < 60)

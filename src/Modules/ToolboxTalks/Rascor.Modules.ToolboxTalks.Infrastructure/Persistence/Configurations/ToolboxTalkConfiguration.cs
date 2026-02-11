@@ -115,6 +115,15 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(false);
 
+        // Refresher settings
+        builder.Property(t => t.RequiresRefresher)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.RefresherIntervalMonths)
+            .IsRequired()
+            .HasDefaultValue(12);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 

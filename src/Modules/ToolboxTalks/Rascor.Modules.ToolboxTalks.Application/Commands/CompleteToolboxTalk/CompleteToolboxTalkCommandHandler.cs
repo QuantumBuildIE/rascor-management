@@ -17,19 +17,22 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
     private readonly ICurrentUserService _currentUserService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ICourseProgressService _courseProgressService;
+    private readonly IRefresherSchedulingService _refresherSchedulingService;
 
     public CompleteToolboxTalkCommandHandler(
         IToolboxTalksDbContext dbContext,
         ICoreDbContext coreDbContext,
         ICurrentUserService currentUserService,
         IHttpContextAccessor httpContextAccessor,
-        ICourseProgressService courseProgressService)
+        ICourseProgressService courseProgressService,
+        IRefresherSchedulingService refresherSchedulingService)
     {
         _dbContext = dbContext;
         _coreDbContext = coreDbContext;
         _currentUserService = currentUserService;
         _httpContextAccessor = httpContextAccessor;
         _courseProgressService = courseProgressService;
+        _refresherSchedulingService = refresherSchedulingService;
     }
 
     public async Task<ScheduledTalkCompletionDto> Handle(CompleteToolboxTalkCommand request, CancellationToken cancellationToken)
@@ -185,6 +188,11 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
         if (scheduledTalk.CourseAssignmentId.HasValue)
         {
             await _courseProgressService.UpdateProgressAsync(scheduledTalk.CourseAssignmentId.Value, cancellationToken);
+        }
+        else
+        {
+            // For standalone talks (not part of a course), schedule refresher directly
+            await _refresherSchedulingService.ScheduleRefresherIfRequired(scheduledTalk, cancellationToken);
         }
 
         return new ScheduledTalkCompletionDto

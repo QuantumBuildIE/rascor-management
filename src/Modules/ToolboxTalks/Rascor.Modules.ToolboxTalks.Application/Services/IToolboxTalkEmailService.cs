@@ -41,4 +41,22 @@ public interface IToolboxTalkEmailService
         Employee employee,
         Employee manager,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a refresher reminder email for an upcoming standalone talk refresher
+    /// </summary>
+    Task SendRefresherReminderAsync(
+        ScheduledTalk refresherTalk,
+        Employee employee,
+        string timeframe,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a refresher reminder email for an upcoming course refresher
+    /// </summary>
+    Task SendCourseRefresherReminderAsync(
+        ToolboxTalkCourseAssignment refresherAssignment,
+        Employee employee,
+        string timeframe,
+        CancellationToken cancellationToken = default);
 }

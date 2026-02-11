@@ -71,6 +71,33 @@ public class ScheduledTalk : TenantEntity
     /// </summary>
     public int VideoWatchPercent { get; set; } = 0;
 
+    // Refresher tracking (Phase 4)
+
+    /// <summary>
+    /// Whether this scheduled talk is a refresher of a previously completed talk
+    /// </summary>
+    public bool IsRefresher { get; set; } = false;
+
+    /// <summary>
+    /// Links to the original scheduled talk that this refresher is based on
+    /// </summary>
+    public Guid? OriginalScheduledTalkId { get; set; }
+
+    /// <summary>
+    /// When the refresher training is due
+    /// </summary>
+    public DateTime? RefresherDueDate { get; set; }
+
+    /// <summary>
+    /// Whether the 2-week reminder has been sent
+    /// </summary>
+    public bool ReminderSent2Weeks { get; set; } = false;
+
+    /// <summary>
+    /// Whether the 1-week reminder has been sent
+    /// </summary>
+    public bool ReminderSent1Week { get; set; } = false;
+
     // Navigation properties
 
     /// <summary>
@@ -92,6 +119,11 @@ public class ScheduledTalk : TenantEntity
     /// The course assignment that created this scheduled talk (if any)
     /// </summary>
     public ToolboxTalkCourseAssignment? CourseAssignment { get; set; }
+
+    /// <summary>
+    /// The original scheduled talk that this refresher is based on (if any)
+    /// </summary>
+    public ScheduledTalk? OriginalScheduledTalk { get; set; }
 
     /// <summary>
     /// Progress tracking for each section

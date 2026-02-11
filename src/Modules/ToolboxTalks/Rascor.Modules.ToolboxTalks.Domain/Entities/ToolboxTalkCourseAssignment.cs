@@ -21,9 +21,12 @@ public class ToolboxTalkCourseAssignment : TenantEntity
 
     public CourseAssignmentStatus Status { get; set; } = CourseAssignmentStatus.Assigned;
 
-    // Refresher tracking (for Phase 4)
+    // Refresher tracking (Phase 4)
     public bool IsRefresher { get; set; } = false;
     public Guid? OriginalAssignmentId { get; set; }
+    public DateTime? RefresherDueDate { get; set; }
+    public bool ReminderSent2Weeks { get; set; } = false;
+    public bool ReminderSent1Week { get; set; } = false;
 
     // Navigation properties
     public virtual ToolboxTalkCourse Course { get; set; } = null!;

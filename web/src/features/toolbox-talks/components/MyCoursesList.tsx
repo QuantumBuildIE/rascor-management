@@ -10,6 +10,7 @@ import {
   CheckCircle2Icon,
   AlertTriangleIcon,
   Inbox,
+  RefreshCwIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,7 +86,15 @@ function CourseCard({ assignment, onAction }: CourseCardProps) {
               {assignment.courseTitle}
             </CardTitle>
           </div>
-          {getStatusBadge(assignment)}
+          <div className="flex items-center gap-1 shrink-0">
+            {assignment.isRefresher && (
+              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800">
+                <RefreshCwIcon className="h-3 w-3 mr-1" />
+                Refresher
+              </Badge>
+            )}
+            {getStatusBadge(assignment)}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -46,6 +46,16 @@ public class ToolboxTalkCourseAssignmentConfiguration : IEntityTypeConfiguration
 
         builder.Property(x => x.OriginalAssignmentId);
 
+        builder.Property(x => x.RefresherDueDate);
+
+        builder.Property(x => x.ReminderSent2Weeks)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.ReminderSent1Week)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.TenantId)
             .IsRequired();
 

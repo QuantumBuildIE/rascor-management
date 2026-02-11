@@ -328,6 +328,8 @@ export interface MyToolboxTalkListItem {
   progressPercent: number;
   isOverdue: boolean;
   daysUntilDue: number;
+  isRefresher: boolean;
+  refresherDueDate: string | null;
 }
 
 // ============================================

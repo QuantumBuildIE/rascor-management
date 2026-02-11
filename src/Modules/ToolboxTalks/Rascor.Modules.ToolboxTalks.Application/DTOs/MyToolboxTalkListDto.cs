@@ -28,4 +28,8 @@ public record MyToolboxTalkListDto
     // Timing
     public bool IsOverdue { get; init; }
     public int DaysUntilDue { get; init; }
+
+    // Refresher
+    public bool IsRefresher { get; init; }
+    public DateTime? RefresherDueDate { get; init; }
 }

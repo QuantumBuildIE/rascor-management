@@ -34,6 +34,11 @@ public record ScheduledTalkDto
     // Completion (if completed)
     public ScheduledTalkCompletionDto? Completion { get; init; }
 
+    // Refresher
+    public bool IsRefresher { get; init; }
+    public Guid? OriginalScheduledTalkId { get; init; }
+    public DateTime? RefresherDueDate { get; init; }
+
     // Audit
     public DateTime CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }

@@ -31,6 +31,9 @@ public static class DependencyInjection
         // Register course progress service
         services.AddScoped<ICourseProgressService, Services.CourseProgressService>();
 
+        // Register refresher scheduling service
+        services.AddScoped<IRefresherSchedulingService, Services.RefresherSchedulingService>();
+
         return services;
     }
 }

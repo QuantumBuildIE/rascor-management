@@ -153,6 +153,18 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public bool UseQuestionPool { get; set; } = false;
 
+    // Refresher settings (Phase 4)
+
+    /// <summary>
+    /// Whether completing this talk should auto-schedule a refresher
+    /// </summary>
+    public bool RequiresRefresher { get; set; } = false;
+
+    /// <summary>
+    /// Number of months after completion before refresher is due
+    /// </summary>
+    public int RefresherIntervalMonths { get; set; } = 12;
+
     // Navigation properties
 
     /// <summary>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { format, formatDistanceToNow, isPast } from 'date-fns';
-import { Calendar, Clock, Play, Eye, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, Play, Eye, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,10 +85,20 @@ export function TalkCard({ talk, onAction, className }: TalkCardProps) {
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base font-medium line-clamp-2">{talk.title}</CardTitle>
-          <Badge variant={statusVariants[effectiveStatus]} className="shrink-0">
-            {statusLabels[effectiveStatus]}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-medium line-clamp-2">{talk.title}</CardTitle>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {talk.isRefresher && (
+              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800">
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Refresher
+              </Badge>
+            )}
+            <Badge variant={statusVariants[effectiveStatus]}>
+              {statusLabels[effectiveStatus]}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

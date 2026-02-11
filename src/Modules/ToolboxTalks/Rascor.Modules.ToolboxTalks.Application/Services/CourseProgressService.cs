@@ -7,6 +7,7 @@ namespace Rascor.Modules.ToolboxTalks.Application.Services;
 
 public class CourseProgressService(
     IToolboxTalksDbContext dbContext,
+    IRefresherSchedulingService refresherSchedulingService,
     ILogger<CourseProgressService> logger) : ICourseProgressService
 {
     public async Task UpdateProgressAsync(Guid courseAssignmentId, CancellationToken cancellationToken = default)
@@ -58,6 +59,12 @@ public class CourseProgressService(
         }
 
         var saved = await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Schedule refresher if course was just completed
+        if (assignment.Status == CourseAssignmentStatus.Completed)
+        {
+            await refresherSchedulingService.ScheduleRefresherIfRequired(assignment, cancellationToken);
+        }
         logger.LogDebug("Course progress update saved {RowCount} rows for assignment {CourseAssignmentId}",
             saved, courseAssignmentId);
     }

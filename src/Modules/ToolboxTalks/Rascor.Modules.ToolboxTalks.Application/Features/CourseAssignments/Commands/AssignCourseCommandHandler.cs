@@ -136,6 +136,7 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
                 CompletedAt = null,
                 Status = CourseAssignmentStatus.Assigned.ToString(),
                 IsRefresher = false,
+                RefresherDueDate = null,
                 TotalTalks = courseItems.Count,
                 CompletedTalks = 0,
                 ScheduledTalks = scheduledTalkDtos,

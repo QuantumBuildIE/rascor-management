@@ -90,6 +90,7 @@ public class GetEmployeeCourseAssignmentsQueryHandler : IRequestHandler<GetEmplo
                 CompletedAt = assignment.CompletedAt,
                 Status = assignment.Status.ToString(),
                 IsRefresher = assignment.IsRefresher,
+                RefresherDueDate = assignment.RefresherDueDate,
                 TotalTalks = orderedTalks.Count,
                 CompletedTalks = completedCount,
                 ScheduledTalks = scheduledTalkDtos,
