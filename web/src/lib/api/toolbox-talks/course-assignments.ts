@@ -38,9 +38,14 @@ export interface CourseScheduledTalkDto {
   lockedReason?: string;
 }
 
+export interface EmployeeCourseAssignment {
+  employeeId: string;
+  includedTalkIds?: string[];
+}
+
 export interface AssignCourseDto {
   courseId: string;
-  employeeIds: string[];
+  assignments: EmployeeCourseAssignment[];
   dueDate?: string;
 }
 
@@ -59,8 +64,47 @@ export interface CourseAssignmentListDto {
 }
 
 // ============================================
+// Course Assignment Preview DTOs
+// ============================================
+
+export interface CourseAssignmentPreviewDto {
+  courseId: string;
+  courseTitle: string;
+  employees: EmployeePreviewDto[];
+}
+
+export interface EmployeePreviewDto {
+  employeeId: string;
+  employeeName: string;
+  employeeCode?: string;
+  talks: TalkPreviewDto[];
+  completedCount: number;
+  totalCount: number;
+}
+
+export interface TalkPreviewDto {
+  toolboxTalkId: string;
+  title: string;
+  orderIndex: number;
+  isRequired: boolean;
+  alreadyCompleted: boolean;
+  completedAt?: string;
+}
+
+// ============================================
 // API Functions
 // ============================================
+
+export async function getCourseAssignmentPreview(
+  courseId: string,
+  employeeIds: string[]
+): Promise<CourseAssignmentPreviewDto> {
+  const response = await apiClient.post<ApiResponse<CourseAssignmentPreviewDto>>(
+    '/toolbox-talks/course-assignments/preview',
+    { courseId, employeeIds }
+  );
+  return response.data.data!;
+}
 
 export async function assignCourse(
   data: AssignCourseDto

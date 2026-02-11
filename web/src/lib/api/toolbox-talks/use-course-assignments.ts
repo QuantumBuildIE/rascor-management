@@ -6,6 +6,7 @@ import {
   deleteCourseAssignment,
   getMyCourseAssignment,
   getMyCourseAssignments,
+  getCourseAssignmentPreview,
 } from './course-assignments';
 import type { AssignCourseDto } from './course-assignments';
 import { TOOLBOX_TALKS_KEY } from './use-toolbox-talks';
@@ -54,6 +55,13 @@ export function useMyCourseAssignments() {
 // ============================================
 // Mutation Hooks
 // ============================================
+
+export function useCourseAssignmentPreview() {
+  return useMutation({
+    mutationFn: ({ courseId, employeeIds }: { courseId: string; employeeIds: string[] }) =>
+      getCourseAssignmentPreview(courseId, employeeIds),
+  });
+}
 
 export function useAssignCourse() {
   const queryClient = useQueryClient();

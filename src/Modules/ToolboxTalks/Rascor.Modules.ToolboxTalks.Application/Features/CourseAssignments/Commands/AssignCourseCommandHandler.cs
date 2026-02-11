@@ -45,32 +45,42 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
             throw new InvalidOperationException("Course has no talks");
 
         // 2. Validate employees exist
+        var employeeIds = dto.Assignments.Select(a => a.EmployeeId).Distinct().ToList();
+
         var employees = await _coreDbContext.Employees
-            .Where(e => dto.EmployeeIds.Contains(e.Id) && e.TenantId == tenantId && !e.IsDeleted)
+            .Where(e => employeeIds.Contains(e.Id) && e.TenantId == tenantId && !e.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        if (employees.Count != dto.EmployeeIds.Distinct().Count())
+        if (employees.Count != employeeIds.Count)
             throw new KeyNotFoundException("One or more employees not found");
 
         // 3. Check for existing active assignments - skip employees who already have one
         var existingEmployeeIds = await _dbContext.ToolboxTalkCourseAssignments
             .Where(a => a.CourseId == dto.CourseId
-                && dto.EmployeeIds.Contains(a.EmployeeId)
+                && employeeIds.Contains(a.EmployeeId)
                 && a.Status != CourseAssignmentStatus.Completed
                 && !a.IsDeleted)
             .Select(a => a.EmployeeId)
             .ToListAsync(cancellationToken);
 
-        var eligibleEmployees = employees.Where(e => !existingEmployeeIds.Contains(e.Id)).ToList();
+        var existingEmployeeIdSet = existingEmployeeIds.ToHashSet();
+        var eligibleAssignments = dto.Assignments
+            .Where(a => !existingEmployeeIdSet.Contains(a.EmployeeId))
+            .ToList();
 
-        if (!eligibleEmployees.Any())
+        if (!eligibleAssignments.Any())
             throw new InvalidOperationException("All selected employees already have active assignments for this course");
+
+        // Build employee lookup
+        var employeeLookup = employees.ToDictionary(e => e.Id);
 
         // 4. Create assignments
         var results = new List<ToolboxTalkCourseAssignmentDto>();
 
-        foreach (var employee in eligibleEmployees)
+        foreach (var assignmentDto in eligibleAssignments)
         {
+            var employee = employeeLookup[assignmentDto.EmployeeId];
+
             var assignment = new ToolboxTalkCourseAssignment
             {
                 Id = Guid.NewGuid(),
@@ -84,9 +94,19 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
                 Status = CourseAssignmentStatus.Assigned,
             };
 
+            // Determine which talks to include
+            var itemsToInclude = courseItems;
+            if (assignmentDto.IncludedTalkIds != null && assignmentDto.IncludedTalkIds.Any())
+            {
+                var includedSet = assignmentDto.IncludedTalkIds.ToHashSet();
+                itemsToInclude = courseItems
+                    .Where(ci => includedSet.Contains(ci.ToolboxTalkId))
+                    .ToList();
+            }
+
             var scheduledTalkDtos = new List<CourseScheduledTalkDto>();
 
-            foreach (var item in courseItems)
+            foreach (var item in itemsToInclude)
             {
                 var scheduledTalk = new ScheduledTalk
                 {
@@ -137,7 +157,7 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
                 Status = CourseAssignmentStatus.Assigned.ToString(),
                 IsRefresher = false,
                 RefresherDueDate = null,
-                TotalTalks = courseItems.Count,
+                TotalTalks = itemsToInclude.Count,
                 CompletedTalks = 0,
                 ScheduledTalks = scheduledTalkDtos,
             });

@@ -9,6 +9,12 @@ using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.Queries
 
 namespace Rascor.API.Controllers;
 
+public class GetAssignmentPreviewRequest
+{
+    public Guid CourseId { get; set; }
+    public List<Guid> EmployeeIds { get; set; } = new();
+}
+
 [ApiController]
 [Route("api/toolbox-talks/course-assignments")]
 [Authorize(Policy = "ToolboxTalks.View")]
@@ -26,6 +32,36 @@ public class ToolboxTalkCourseAssignmentsController : ControllerBase
         _mediator = mediator;
         _currentUserService = currentUserService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Preview course assignment showing which talks employees have already completed
+    /// </summary>
+    [HttpPost("preview")]
+    [ProducesResponseType(typeof(Result<CourseAssignmentPreviewDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAssignmentPreview([FromBody] GetAssignmentPreviewRequest request)
+    {
+        try
+        {
+            var query = new GetCourseAssignmentPreviewQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                CourseId = request.CourseId,
+                EmployeeIds = request.EmployeeIds
+            };
+
+            var result = await _mediator.Send(query);
+            if (result == null)
+                return NotFound(new { message = "Course not found" });
+
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating course assignment preview");
+            return StatusCode(500, Result.Fail("Error generating assignment preview"));
+        }
     }
 
     /// <summary>
