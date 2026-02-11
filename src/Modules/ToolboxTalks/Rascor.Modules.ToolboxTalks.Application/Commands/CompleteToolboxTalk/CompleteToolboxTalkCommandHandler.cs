@@ -5,6 +5,7 @@ using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
 namespace Rascor.Modules.ToolboxTalks.Application.Commands.CompleteToolboxTalk;
@@ -15,17 +16,20 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
     private readonly ICoreDbContext _coreDbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICourseProgressService _courseProgressService;
 
     public CompleteToolboxTalkCommandHandler(
         IToolboxTalksDbContext dbContext,
         ICoreDbContext coreDbContext,
         ICurrentUserService currentUserService,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ICourseProgressService courseProgressService)
     {
         _dbContext = dbContext;
         _coreDbContext = coreDbContext;
         _currentUserService = currentUserService;
         _httpContextAccessor = httpContextAccessor;
+        _courseProgressService = courseProgressService;
     }
 
     public async Task<ScheduledTalkCompletionDto> Handle(CompleteToolboxTalkCommand request, CancellationToken cancellationToken)
@@ -176,6 +180,12 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
         scheduledTalk.Status = ScheduledTalkStatus.Completed;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Update course assignment progress if this talk belongs to a course
+        if (scheduledTalk.CourseAssignmentId.HasValue)
+        {
+            await _courseProgressService.UpdateProgressAsync(scheduledTalk.CourseAssignmentId.Value, cancellationToken);
+        }
 
         return new ScheduledTalkCompletionDto
         {

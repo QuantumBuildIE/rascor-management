@@ -20,7 +20,21 @@ import { useMyCourseAssignments } from '@/lib/api/toolbox-talks/use-course-assig
 import type { ToolboxTalkCourseAssignmentDto } from '@/lib/api/toolbox-talks/course-assignments';
 import { cn } from '@/lib/utils';
 
-const getStatusBadge = (status: string) => {
+const getEffectiveStatus = (assignment: ToolboxTalkCourseAssignmentDto) => {
+  // Derive effective status from progress data as a fallback
+  // (handles existing assignments that were completed before the backend fix)
+  if (assignment.status === 'Completed' || (assignment.totalTalks > 0 && assignment.completedTalks >= assignment.totalTalks)) {
+    return 'Completed';
+  }
+  if (assignment.status === 'Overdue') return 'Overdue';
+  if (assignment.status === 'InProgress' || assignment.completedTalks > 0) {
+    return 'InProgress';
+  }
+  return 'Assigned';
+};
+
+const getStatusBadge = (assignment: ToolboxTalkCourseAssignmentDto) => {
+  const status = getEffectiveStatus(assignment);
   switch (status) {
     case 'Completed':
       return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Completed</Badge>;
@@ -34,7 +48,8 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-const getActionButton = (status: string) => {
+const getActionButton = (assignment: ToolboxTalkCourseAssignmentDto) => {
+  const status = getEffectiveStatus(assignment);
   switch (status) {
     case 'Completed':
       return { text: 'Review', icon: CheckCircle2Icon, variant: 'outline' as const };
@@ -51,8 +66,10 @@ interface CourseCardProps {
 }
 
 function CourseCard({ assignment, onAction }: CourseCardProps) {
-  const isOverdue = assignment.status === 'Overdue';
-  const action = getActionButton(assignment.status);
+  const effectiveStatus = getEffectiveStatus(assignment);
+  const isOverdue = effectiveStatus === 'Overdue';
+  const isCompleted = effectiveStatus === 'Completed';
+  const action = getActionButton(assignment);
   const ActionIcon = action.icon;
 
   return (
@@ -68,7 +85,7 @@ function CourseCard({ assignment, onAction }: CourseCardProps) {
               {assignment.courseTitle}
             </CardTitle>
           </div>
-          {getStatusBadge(assignment.status)}
+          {getStatusBadge(assignment)}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -94,7 +111,7 @@ function CourseCard({ assignment, onAction }: CourseCardProps) {
         )}
 
         {/* Progress */}
-        {assignment.status !== 'Completed' ? (
+        {!isCompleted ? (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Progress</span>
@@ -196,8 +213,8 @@ export function MyCoursesList() {
       Assigned: 2,
       Completed: 3,
     };
-    const aOrder = statusOrder[a.status] ?? 4;
-    const bOrder = statusOrder[b.status] ?? 4;
+    const aOrder = statusOrder[getEffectiveStatus(a)] ?? 4;
+    const bOrder = statusOrder[getEffectiveStatus(b)] ?? 4;
     if (aOrder !== bOrder) return aOrder - bOrder;
     // Within same status, sort by due date
     if (a.dueDate && b.dueDate) {

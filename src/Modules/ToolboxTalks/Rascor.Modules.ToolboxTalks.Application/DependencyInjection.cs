@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 
 namespace Rascor.Modules.ToolboxTalks.Application;
@@ -26,6 +27,9 @@ public static class DependencyInjection
         // Register subtitle processing application services
         services.AddScoped<ISrtGeneratorService, SrtGeneratorService>();
         services.AddScoped<ILanguageCodeService, LanguageCodeService>();
+
+        // Register course progress service
+        services.AddScoped<ICourseProgressService, Services.CourseProgressService>();
 
         return services;
     }
