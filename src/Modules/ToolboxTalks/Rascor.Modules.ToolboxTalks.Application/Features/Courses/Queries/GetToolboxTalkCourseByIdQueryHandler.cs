@@ -40,6 +40,8 @@ public class GetToolboxTalkCourseByIdQueryHandler : IRequestHandler<GetToolboxTa
             RequiresRefresher = course.RequiresRefresher,
             RefresherIntervalMonths = course.RefresherIntervalMonths,
             GenerateCertificate = course.GenerateCertificate,
+            AutoAssignToNewEmployees = course.AutoAssignToNewEmployees,
+            AutoAssignDueDays = course.AutoAssignDueDays,
             TalkCount = course.CourseItems.Count(ci => ci.ToolboxTalk != null),
             Items = course.CourseItems
                 .Where(ci => ci.ToolboxTalk != null)

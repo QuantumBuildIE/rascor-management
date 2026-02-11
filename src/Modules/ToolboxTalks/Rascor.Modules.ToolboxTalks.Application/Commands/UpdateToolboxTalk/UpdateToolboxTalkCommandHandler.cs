@@ -101,6 +101,8 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         toolboxTalk.ShuffleQuestions = request.RequiresQuiz && request.ShuffleQuestions;
         toolboxTalk.ShuffleOptions = request.RequiresQuiz && request.ShuffleOptions;
         toolboxTalk.UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool;
+        toolboxTalk.AutoAssignToNewEmployees = request.AutoAssignToNewEmployees;
+        toolboxTalk.AutoAssignDueDays = request.AutoAssignDueDays;
         toolboxTalk.UpdatedAt = DateTime.UtcNow;
         toolboxTalk.UpdatedBy = _currentUser.UserId;
 
@@ -352,6 +354,8 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             ShuffleQuestions = entity.ShuffleQuestions,
             ShuffleOptions = entity.ShuffleOptions,
             UseQuestionPool = entity.UseQuestionPool,
+            AutoAssignToNewEmployees = entity.AutoAssignToNewEmployees,
+            AutoAssignDueDays = entity.AutoAssignDueDays,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = sections

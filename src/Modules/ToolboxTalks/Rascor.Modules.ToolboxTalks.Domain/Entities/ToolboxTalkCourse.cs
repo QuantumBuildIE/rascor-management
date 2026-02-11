@@ -20,6 +20,10 @@ public class ToolboxTalkCourse : TenantEntity
     // Certificate settings (for Phase 5)
     public bool GenerateCertificate { get; set; } = false;
 
+    // Auto-assignment settings
+    public bool AutoAssignToNewEmployees { get; set; } = false;
+    public int AutoAssignDueDays { get; set; } = 14;
+
     // Navigation properties
     public virtual ICollection<ToolboxTalkCourseItem> CourseItems { get; set; } = new List<ToolboxTalkCourseItem>();
     public virtual ICollection<ToolboxTalkCourseTranslation> Translations { get; set; } = new List<ToolboxTalkCourseTranslation>();

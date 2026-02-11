@@ -10,6 +10,7 @@ public record ToolboxTalkCourseListDto
     public string? Description { get; init; }
     public bool IsActive { get; init; }
     public bool RequireSequentialCompletion { get; init; }
+    public bool AutoAssignToNewEmployees { get; init; }
     public int TalkCount { get; init; }
     public int TranslationCount { get; init; }
     public DateTime CreatedAt { get; init; }

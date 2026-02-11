@@ -41,6 +41,7 @@ public class GetToolboxTalkCoursesQueryHandler : IRequestHandler<GetToolboxTalkC
                 Description = c.Description,
                 IsActive = c.IsActive,
                 RequireSequentialCompletion = c.RequireSequentialCompletion,
+                AutoAssignToNewEmployees = c.AutoAssignToNewEmployees,
                 TalkCount = c.CourseItems.Count(ci => !ci.IsDeleted),
                 TranslationCount = c.Translations.Count(t => !t.IsDeleted),
                 CreatedAt = c.CreatedAt

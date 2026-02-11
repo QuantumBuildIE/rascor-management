@@ -74,6 +74,8 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             ShuffleQuestions = talk.ShuffleQuestions,
             ShuffleOptions = talk.ShuffleOptions,
             UseQuestionPool = talk.UseQuestionPool,
+            AutoAssignToNewEmployees = talk.AutoAssignToNewEmployees,
+            AutoAssignDueDays = talk.AutoAssignDueDays,
             Sections = talk.Sections.Select(s => new ToolboxTalkSectionDto
             {
                 Id = s.Id,

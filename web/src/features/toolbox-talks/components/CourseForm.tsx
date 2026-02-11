@@ -75,6 +75,8 @@ const courseFormSchema = z.object({
   requiresRefresher: z.boolean(),
   refresherIntervalMonths: z.number().min(1).max(120),
   generateCertificate: z.boolean(),
+  autoAssignToNewEmployees: z.boolean(),
+  autoAssignDueDays: z.number().min(1).max(365),
 });
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
@@ -230,10 +232,13 @@ export function CourseForm({ course }: CourseFormProps) {
       requiresRefresher: course?.requiresRefresher ?? false,
       refresherIntervalMonths: course?.refresherIntervalMonths ?? 12,
       generateCertificate: course?.generateCertificate ?? false,
+      autoAssignToNewEmployees: course?.autoAssignToNewEmployees ?? false,
+      autoAssignDueDays: course?.autoAssignDueDays ?? 14,
     },
   });
 
   const requiresRefresher = form.watch('requiresRefresher');
+  const autoAssignToNewEmployees = form.watch('autoAssignToNewEmployees');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -299,6 +304,8 @@ export function CourseForm({ course }: CourseFormProps) {
             requiresRefresher: values.requiresRefresher,
             refresherIntervalMonths: values.refresherIntervalMonths,
             generateCertificate: values.generateCertificate,
+            autoAssignToNewEmployees: values.autoAssignToNewEmployees,
+            autoAssignDueDays: values.autoAssignDueDays,
           },
         });
 
@@ -323,6 +330,8 @@ export function CourseForm({ course }: CourseFormProps) {
           requiresRefresher: values.requiresRefresher,
           refresherIntervalMonths: values.refresherIntervalMonths,
           generateCertificate: values.generateCertificate,
+          autoAssignToNewEmployees: values.autoAssignToNewEmployees,
+          autoAssignDueDays: values.autoAssignDueDays,
           items: courseItems.map((item) => ({
             toolboxTalkId: item.toolboxTalkId,
             orderIndex: item.orderIndex,
@@ -505,6 +514,50 @@ export function CourseForm({ course }: CourseFormProps) {
                     </FormControl>
                     <FormDescription>
                       How many months before the course must be retaken.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="autoAssignToNewEmployees"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Auto-Assign to New Employees</FormLabel>
+                    <FormDescription>
+                      Automatically assign this course when a new employee is created.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {autoAssignToNewEmployees && (
+              <FormField
+                control={form.control}
+                name="autoAssignDueDays"
+                render={({ field }) => (
+                  <FormItem className="ml-4">
+                    <FormLabel>Due Days</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={365}
+                        className="w-32"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of days after employee start date for the course to be due.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

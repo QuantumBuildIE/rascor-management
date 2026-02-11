@@ -19,4 +19,6 @@ public record UpdateToolboxTalkCourseDto
     public bool RequiresRefresher { get; init; }
     public int RefresherIntervalMonths { get; init; }
     public bool GenerateCertificate { get; init; }
+    public bool AutoAssignToNewEmployees { get; init; }
+    public int AutoAssignDueDays { get; init; }
 }

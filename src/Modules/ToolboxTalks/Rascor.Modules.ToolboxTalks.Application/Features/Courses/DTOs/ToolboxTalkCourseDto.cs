@@ -13,6 +13,8 @@ public record ToolboxTalkCourseDto
     public bool RequiresRefresher { get; init; }
     public int RefresherIntervalMonths { get; init; }
     public bool GenerateCertificate { get; init; }
+    public bool AutoAssignToNewEmployees { get; init; }
+    public int AutoAssignDueDays { get; init; }
 
     public int TalkCount { get; init; }
     public List<ToolboxTalkCourseItemDto> Items { get; init; } = new();

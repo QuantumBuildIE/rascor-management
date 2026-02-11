@@ -172,6 +172,18 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public int RefresherIntervalMonths { get; set; } = 12;
 
+    // Auto-assignment settings
+
+    /// <summary>
+    /// Whether to automatically assign this talk to new employees
+    /// </summary>
+    public bool AutoAssignToNewEmployees { get; set; } = false;
+
+    /// <summary>
+    /// Number of days after hire date before the training is due
+    /// </summary>
+    public int AutoAssignDueDays { get; set; } = 14;
+
     // Navigation properties
 
     /// <summary>

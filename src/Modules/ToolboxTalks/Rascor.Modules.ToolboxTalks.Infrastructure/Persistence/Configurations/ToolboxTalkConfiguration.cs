@@ -124,6 +124,15 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(12);
 
+        // Auto-assignment settings
+        builder.Property(t => t.AutoAssignToNewEmployees)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.AutoAssignDueDays)
+            .IsRequired()
+            .HasDefaultValue(14);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 

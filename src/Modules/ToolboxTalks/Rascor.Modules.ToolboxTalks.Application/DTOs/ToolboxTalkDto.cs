@@ -33,6 +33,10 @@ public record ToolboxTalkDto
     public bool ShuffleOptions { get; init; }
     public bool UseQuestionPool { get; init; }
 
+    // Auto-assignment settings
+    public bool AutoAssignToNewEmployees { get; init; }
+    public int AutoAssignDueDays { get; init; }
+
     // Child collections
     public List<ToolboxTalkSectionDto> Sections { get; init; } = new();
     public List<ToolboxTalkQuestionDto> Questions { get; init; } = new();

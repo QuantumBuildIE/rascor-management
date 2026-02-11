@@ -14,6 +14,8 @@ export interface ToolboxTalkCourseDto {
   requiresRefresher: boolean;
   refresherIntervalMonths: number;
   generateCertificate: boolean;
+  autoAssignToNewEmployees: boolean;
+  autoAssignDueDays: number;
   talkCount: number;
   items: ToolboxTalkCourseItemDto[];
   translations: ToolboxTalkCourseTranslationDto[];
@@ -46,6 +48,7 @@ export interface ToolboxTalkCourseListDto {
   description?: string;
   isActive: boolean;
   requireSequentialCompletion: boolean;
+  autoAssignToNewEmployees: boolean;
   talkCount: number;
   translationCount: number;
   createdAt: string;
@@ -59,6 +62,8 @@ export interface CreateToolboxTalkCourseDto {
   requiresRefresher?: boolean;
   refresherIntervalMonths?: number;
   generateCertificate?: boolean;
+  autoAssignToNewEmployees?: boolean;
+  autoAssignDueDays?: number;
   items?: CreateToolboxTalkCourseItemDto[];
 }
 
@@ -70,6 +75,8 @@ export interface UpdateToolboxTalkCourseDto {
   requiresRefresher: boolean;
   refresherIntervalMonths: number;
   generateCertificate: boolean;
+  autoAssignToNewEmployees: boolean;
+  autoAssignDueDays: number;
 }
 
 export interface CreateToolboxTalkCourseItemDto {

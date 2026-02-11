@@ -20,6 +20,9 @@ public record ToolboxTalkListDto
     public bool GeneratedFromVideo { get; init; }
     public bool GeneratedFromPdf { get; init; }
 
+    // Auto-assignment
+    public bool AutoAssignToNewEmployees { get; init; }
+
     // Counts
     public int SectionCount { get; init; }
     public int QuestionCount { get; init; }

@@ -89,6 +89,9 @@ export interface ToolboxTalk {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   useQuestionPool: boolean;
+  // Auto-assignment settings
+  autoAssignToNewEmployees: boolean;
+  autoAssignDueDays: number;
   sections: ToolboxTalkSection[];
   questions: ToolboxTalkQuestion[];
   translations: ToolboxTalkTranslation[];
@@ -111,6 +114,7 @@ export interface ToolboxTalkListItem {
   questionCount: number;
   status: ToolboxTalkStatus;
   statusDisplay: string;
+  autoAssignToNewEmployees: boolean;
   completionStats: ToolboxTalkCompletionStats | null;
   createdAt: string;
 }
@@ -519,6 +523,9 @@ export interface CreateToolboxTalkRequest {
   shuffleQuestions?: boolean;
   shuffleOptions?: boolean;
   useQuestionPool?: boolean;
+  // Auto-assignment settings
+  autoAssignToNewEmployees?: boolean;
+  autoAssignDueDays?: number;
   sections: CreateToolboxTalkSectionRequest[];
   questions?: CreateToolboxTalkQuestionRequest[];
 }

@@ -76,6 +76,8 @@ const toolboxTalkFormSchema = z.object({
   useQuestionPool: z.boolean(),
   quizQuestionCount: z.number().min(1).optional().nullable(),
   isActive: z.boolean(),
+  autoAssignToNewEmployees: z.boolean(),
+  autoAssignDueDays: z.number().min(1).max(365),
   sections: z.array(sectionSchema),
   questions: z.array(questionSchema).optional(),
 }).refine(
@@ -143,6 +145,8 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       useQuestionPool: talk?.useQuestionPool ?? false,
       quizQuestionCount: talk?.quizQuestionCount ?? null,
       isActive: talk?.isActive ?? true,
+      autoAssignToNewEmployees: talk?.autoAssignToNewEmployees ?? false,
+      autoAssignDueDays: talk?.autoAssignDueDays ?? 14,
       sections: talk?.sections?.map((s) => ({
         id: s.id,
         sectionNumber: s.sectionNumber,
@@ -167,6 +171,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
   const watchRequiresQuiz = form.watch('requiresQuiz');
   const watchVideoSource = form.watch('videoSource');
   const watchUseQuestionPool = form.watch('useQuestionPool');
+  const watchAutoAssign = form.watch('autoAssignToNewEmployees');
   const watchQuestions = form.watch('questions');
   const questionCount = watchQuestions?.length ?? 0;
 
@@ -244,6 +249,8 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
         useQuestionPool: values.requiresQuiz ? values.useQuestionPool : false,
         quizQuestionCount: values.requiresQuiz && values.useQuestionPool ? values.quizQuestionCount : undefined,
         isActive: values.isActive,
+        autoAssignToNewEmployees: values.autoAssignToNewEmployees,
+        autoAssignDueDays: values.autoAssignDueDays,
         sections,
         questions,
       };
@@ -668,6 +675,57 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                   )}
                 </div>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Auto-Assignment Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Auto-Assignment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="autoAssignToNewEmployees"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Auto-Assign to New Employees</FormLabel>
+                    <FormDescription>
+                      Automatically assign this talk when a new employee is created.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {watchAutoAssign && (
+              <FormField
+                control={form.control}
+                name="autoAssignDueDays"
+                render={({ field }) => (
+                  <FormItem className="max-w-xs ml-4">
+                    <FormLabel>Due Days</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={365}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of days after employee start date for this talk to be due.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
           </CardContent>
         </Card>

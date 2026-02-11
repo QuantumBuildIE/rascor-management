@@ -46,7 +46,9 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             QuizQuestionCount = request.RequiresQuiz ? request.QuizQuestionCount : null,
             ShuffleQuestions = request.RequiresQuiz && request.ShuffleQuestions,
             ShuffleOptions = request.RequiresQuiz && request.ShuffleOptions,
-            UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool
+            UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool,
+            AutoAssignToNewEmployees = request.AutoAssignToNewEmployees,
+            AutoAssignDueDays = request.AutoAssignDueDays
         };
 
         // Create sections
@@ -109,6 +111,8 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             ShuffleQuestions = entity.ShuffleQuestions,
             ShuffleOptions = entity.ShuffleOptions,
             UseQuestionPool = entity.UseQuestionPool,
+            AutoAssignToNewEmployees = entity.AutoAssignToNewEmployees,
+            AutoAssignDueDays = entity.AutoAssignDueDays,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = entity.Sections.Select(s => new ToolboxTalkSectionDto

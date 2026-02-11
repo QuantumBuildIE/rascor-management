@@ -19,6 +19,8 @@ public record CreateToolboxTalkCourseDto
     public bool RequiresRefresher { get; init; } = false;
     public int RefresherIntervalMonths { get; init; } = 12;
     public bool GenerateCertificate { get; init; } = false;
+    public bool AutoAssignToNewEmployees { get; init; } = false;
+    public int AutoAssignDueDays { get; init; } = 14;
 
     /// <summary>
     /// Optional: add talks during creation

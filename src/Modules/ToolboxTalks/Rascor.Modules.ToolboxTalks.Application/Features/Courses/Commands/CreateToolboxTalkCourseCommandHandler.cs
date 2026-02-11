@@ -44,7 +44,9 @@ public class CreateToolboxTalkCourseCommandHandler : IRequestHandler<CreateToolb
             RequireSequentialCompletion = dto.RequireSequentialCompletion,
             RequiresRefresher = dto.RequiresRefresher,
             RefresherIntervalMonths = dto.RefresherIntervalMonths,
-            GenerateCertificate = dto.GenerateCertificate
+            GenerateCertificate = dto.GenerateCertificate,
+            AutoAssignToNewEmployees = dto.AutoAssignToNewEmployees,
+            AutoAssignDueDays = dto.AutoAssignDueDays
         };
 
         // Add items if provided
@@ -111,6 +113,8 @@ public class CreateToolboxTalkCourseCommandHandler : IRequestHandler<CreateToolb
             RequiresRefresher = course.RequiresRefresher,
             RefresherIntervalMonths = course.RefresherIntervalMonths,
             GenerateCertificate = course.GenerateCertificate,
+            AutoAssignToNewEmployees = course.AutoAssignToNewEmployees,
+            AutoAssignDueDays = course.AutoAssignDueDays,
             TalkCount = course.CourseItems.Count,
             Items = itemDtos.OrderBy(i => i.OrderIndex).ToList(),
             Translations = new List<ToolboxTalkCourseTranslationDto>(),

@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 
@@ -36,6 +37,9 @@ public static class DependencyInjection
 
         // Register certificate generation service
         services.AddScoped<ICertificateGenerationService, Services.CertificateGenerationService>();
+
+        // Register auto-assignment service for new employees
+        services.AddScoped<INewEmployeeTrainingAssigner, AutoAssignmentService>();
 
         return services;
     }

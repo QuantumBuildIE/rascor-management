@@ -45,6 +45,14 @@ public class ToolboxTalkCourseConfiguration : IEntityTypeConfiguration<ToolboxTa
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(x => x.AutoAssignToNewEmployees)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.AutoAssignDueDays)
+            .IsRequired()
+            .HasDefaultValue(14);
+
         builder.Property(x => x.TenantId)
             .IsRequired();
 

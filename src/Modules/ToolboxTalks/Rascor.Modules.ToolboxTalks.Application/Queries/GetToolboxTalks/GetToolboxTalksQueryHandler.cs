@@ -65,6 +65,7 @@ public class GetToolboxTalksQueryHandler : IRequestHandler<GetToolboxTalksQuery,
                 StatusDisplay = GetStatusDisplay(t.Status),
                 GeneratedFromVideo = t.GeneratedFromVideo,
                 GeneratedFromPdf = t.GeneratedFromPdf,
+                AutoAssignToNewEmployees = t.AutoAssignToNewEmployees,
                 SectionCount = t.Sections.Count,
                 QuestionCount = t.Questions.Count,
                 CreatedAt = t.CreatedAt

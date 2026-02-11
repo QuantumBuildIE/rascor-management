@@ -51,6 +51,8 @@ public class UpdateToolboxTalkCourseCommandHandler : IRequestHandler<UpdateToolb
         course.RequiresRefresher = dto.RequiresRefresher;
         course.RefresherIntervalMonths = dto.RefresherIntervalMonths;
         course.GenerateCertificate = dto.GenerateCertificate;
+        course.AutoAssignToNewEmployees = dto.AutoAssignToNewEmployees;
+        course.AutoAssignDueDays = dto.AutoAssignDueDays;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

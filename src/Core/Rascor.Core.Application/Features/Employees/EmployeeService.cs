@@ -17,6 +17,7 @@ public class EmployeeService : IEmployeeService
     private readonly ICurrentUserService _currentUserService;
     private readonly IEmailService _emailService;
     private readonly ILogger<EmployeeService> _logger;
+    private readonly IEnumerable<INewEmployeeTrainingAssigner> _trainingAssigners;
 
     private const string DefaultUserRole = "SiteManager";
 
@@ -26,7 +27,8 @@ public class EmployeeService : IEmployeeService
         RoleManager<Role> roleManager,
         ICurrentUserService currentUserService,
         IEmailService emailService,
-        ILogger<EmployeeService> logger)
+        ILogger<EmployeeService> logger,
+        IEnumerable<INewEmployeeTrainingAssigner> trainingAssigners)
     {
         _context = context;
         _userManager = userManager;
@@ -34,6 +36,7 @@ public class EmployeeService : IEmployeeService
         _currentUserService = currentUserService;
         _emailService = emailService;
         _logger = logger;
+        _trainingAssigners = trainingAssigners;
     }
 
     public async Task<Result<List<EmployeeDto>>> GetAllAsync()
@@ -311,6 +314,26 @@ public class EmployeeService : IEmployeeService
             }
 
             await _context.SaveChangesAsync();
+
+            // Auto-assign training to new employee
+            foreach (var assigner in _trainingAssigners)
+            {
+                try
+                {
+                    await assigner.AssignNewEmployeeTrainingAsync(
+                        tenantId,
+                        employee.Id,
+                        employee.StartDate);
+                }
+                catch (Exception trainingEx)
+                {
+                    _logger.LogWarning(
+                        trainingEx,
+                        "Failed to auto-assign training for Employee {EmployeeId} via {AssignerType}",
+                        employee.Id,
+                        assigner.GetType().Name);
+                }
+            }
 
             // Send password setup email if user was created
             if (createdUser != null && !string.IsNullOrWhiteSpace(dto.Email))
