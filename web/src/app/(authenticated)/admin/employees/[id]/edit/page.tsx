@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/admin/employee-form";
+import { EmployeeCertificatesSection } from "@/components/admin/employee-certificates-section";
 import { useEmployee } from "@/lib/api/admin/use-employees";
 import { ChevronLeft } from "lucide-react";
 
@@ -107,6 +108,10 @@ export default function EditEmployeePage() {
           <EmployeeForm employee={employee} onSuccess={handleSuccess} onCancel={handleCancel} />
         </CardContent>
       </Card>
+
+      <div className="max-w-2xl">
+        <EmployeeCertificatesSection employeeId={employeeId} />
+      </div>
     </div>
   );
 }

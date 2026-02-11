@@ -39,3 +39,24 @@ export async function downloadCertificate(id: string): Promise<Blob> {
   );
   return response.data;
 }
+
+// ============================================
+// Admin Certificate Functions
+// ============================================
+
+export async function getEmployeeCertificates(employeeId: string): Promise<CertificateDto[]> {
+  const response = await apiClient.get<ApiResponse<CertificateDto[]>>(
+    `/toolbox-talks/certificates/by-employee/${employeeId}`
+  );
+  return response.data.data ?? [];
+}
+
+export async function downloadCertificateAdmin(id: string): Promise<Blob> {
+  const response = await apiClient.get(
+    `/toolbox-talks/certificates/${id}/download`,
+    {
+      responseType: 'blob',
+    }
+  );
+  return response.data;
+}

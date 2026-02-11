@@ -15,6 +15,9 @@ using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkDashboard;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalks;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSettings;
 using Rascor.Modules.ToolboxTalks.Application.Services;
+using Rascor.Modules.ToolboxTalks.Application.Features.Certificates.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Features.Certificates.Queries;
+using Rascor.Modules.ToolboxTalks.Application.Abstractions.Storage;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 using System.ComponentModel.DataAnnotations;
@@ -36,6 +39,7 @@ public class ToolboxTalksController : ControllerBase
     private readonly IToolboxTalkExportService _exportService;
     private readonly IContentExtractionService _contentExtractionService;
     private readonly IContentDeduplicationService _deduplicationService;
+    private readonly IR2StorageService _r2StorageService;
     private readonly ILogger<ToolboxTalksController> _logger;
 
     public ToolboxTalksController(
@@ -45,6 +49,7 @@ public class ToolboxTalksController : ControllerBase
         IToolboxTalkExportService exportService,
         IContentExtractionService contentExtractionService,
         IContentDeduplicationService deduplicationService,
+        IR2StorageService r2StorageService,
         ILogger<ToolboxTalksController> logger)
     {
         _mediator = mediator;
@@ -53,6 +58,7 @@ public class ToolboxTalksController : ControllerBase
         _exportService = exportService;
         _contentExtractionService = contentExtractionService;
         _deduplicationService = deduplicationService;
+        _r2StorageService = r2StorageService;
         _logger = logger;
     }
 
@@ -1014,6 +1020,76 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error exporting compliance report");
             return StatusCode(500, Result.Fail("Error exporting compliance report"));
+        }
+    }
+
+    #endregion
+
+    #region Certificates (Admin)
+
+    /// <summary>
+    /// Get all certificates for a specific employee (admin view)
+    /// </summary>
+    /// <param name="employeeId">Employee ID</param>
+    /// <returns>List of certificates ordered by issue date</returns>
+    [HttpGet("certificates/by-employee/{employeeId:guid}")]
+    [ProducesResponseType(typeof(Result<List<CertificateDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEmployeeCertificates(Guid employeeId)
+    {
+        try
+        {
+            var query = new GetEmployeeCertificatesQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving certificates for employee {EmployeeId}", employeeId);
+            return StatusCode(500, Result.Fail("Error retrieving employee certificates"));
+        }
+    }
+
+    /// <summary>
+    /// Download a certificate PDF (admin)
+    /// </summary>
+    /// <param name="id">Certificate ID</param>
+    /// <returns>Certificate PDF file</returns>
+    [HttpGet("certificates/{id:guid}/download")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadCertificateAdmin(Guid id)
+    {
+        try
+        {
+            var query = new GetAdminCertificateDownloadQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                CertificateId = id
+            };
+
+            var result = await _mediator.Send(query);
+            if (result == null)
+            {
+                return NotFound(new { message = "Certificate not found" });
+            }
+
+            var fileBytes = await _r2StorageService.DownloadFileAsync(result.StoragePath);
+            if (fileBytes == null)
+            {
+                return NotFound(new { message = "Certificate file not found in storage" });
+            }
+
+            return File(fileBytes, "application/pdf", result.FileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading certificate {CertificateId}", id);
+            return StatusCode(500, new { message = "Error downloading certificate" });
         }
     }
 
