@@ -13,6 +13,7 @@ const adminToolboxTalksNavItems = [
   { href: "/admin/toolbox-talks/schedules", label: "Schedules" },
   { href: "/admin/toolbox-talks/assignments", label: "Assignments" },
   { href: "/admin/toolbox-talks/reports", label: "Reports" },
+  { href: "/admin/toolbox-talks/certificates", label: "Certificates" },
   { href: "/admin/toolbox-talks/settings", label: "Settings" },
 ];
 

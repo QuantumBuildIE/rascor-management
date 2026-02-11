@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getMyCertificates, downloadCertificate, getEmployeeCertificates, downloadCertificateAdmin } from './certificates';
+import { getMyCertificates, downloadCertificate, getEmployeeCertificates, downloadCertificateAdmin, getCertificateReport } from './certificates';
+import type { CertificateReportParams } from './certificates';
 
 // ============================================
 // Query Keys
@@ -7,6 +8,7 @@ import { getMyCertificates, downloadCertificate, getEmployeeCertificates, downlo
 
 export const MY_CERTIFICATES_KEY = ['my-certificates'];
 export const EMPLOYEE_CERTIFICATES_KEY = ['employee-certificates'];
+export const CERTIFICATE_REPORT_KEY = ['certificate-report'];
 
 // ============================================
 // Certificate Query Hooks
@@ -24,6 +26,13 @@ export function useEmployeeCertificates(employeeId: string | undefined) {
     queryKey: [...EMPLOYEE_CERTIFICATES_KEY, employeeId],
     queryFn: () => getEmployeeCertificates(employeeId!),
     enabled: !!employeeId,
+  });
+}
+
+export function useCertificateReport(params: CertificateReportParams) {
+  return useQuery({
+    queryKey: [...CERTIFICATE_REPORT_KEY, params],
+    queryFn: () => getCertificateReport(params),
   });
 }
 

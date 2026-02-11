@@ -1028,6 +1028,46 @@ public class ToolboxTalksController : ControllerBase
     #region Certificates (Admin)
 
     /// <summary>
+    /// Get certificate report with filtering, pagination, and summary stats
+    /// </summary>
+    /// <param name="status">Filter by status: valid, expired, expiring</param>
+    /// <param name="type">Filter by type: Talk, Course</param>
+    /// <param name="search">Search by employee name, training title, or employee code</param>
+    /// <param name="page">Page number (1-based)</param>
+    /// <param name="pageSize">Number of items per page</param>
+    /// <returns>Paginated certificate report with summary statistics</returns>
+    [HttpGet("certificates/report")]
+    [ProducesResponseType(typeof(Result<CertificateReportDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCertificateReport(
+        [FromQuery] string? status = null,
+        [FromQuery] string? type = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        try
+        {
+            var query = new GetCertificateReportQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Status = status,
+                Type = type,
+                Search = search,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(Result.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving certificate report");
+            return StatusCode(500, Result.Fail("Error retrieving certificate report"));
+        }
+    }
+
+    /// <summary>
     /// Get all certificates for a specific employee (admin view)
     /// </summary>
     /// <param name="employeeId">Employee ID</param>

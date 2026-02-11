@@ -60,3 +60,60 @@ export async function downloadCertificateAdmin(id: string): Promise<Blob> {
   );
   return response.data;
 }
+
+// ============================================
+// Certificate Report Types
+// ============================================
+
+export interface CertificateReportDto {
+  items: CertificateReportItemDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalCertificates: number;
+  validCertificates: number;
+  expiredCertificates: number;
+  expiringSoonCertificates: number;
+}
+
+export interface CertificateReportItemDto {
+  id: string;
+  certificateNumber: string;
+  certificateType: string;
+  trainingTitle: string;
+  employeeName: string;
+  employeeCode?: string;
+  employeeId: string;
+  issuedAt: string;
+  expiresAt?: string;
+  isExpired: boolean;
+  isExpiringSoon: boolean;
+  isRefresher: boolean;
+}
+
+export interface CertificateReportParams {
+  status?: string;
+  type?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+// ============================================
+// Certificate Report Functions
+// ============================================
+
+export async function getCertificateReport(params: CertificateReportParams): Promise<CertificateReportDto> {
+  const searchParams = new URLSearchParams();
+  if (params.status) searchParams.set('status', params.status);
+  if (params.type) searchParams.set('type', params.type);
+  if (params.search) searchParams.set('search', params.search);
+  if (params.page) searchParams.set('page', params.page.toString());
+  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
+
+  const response = await apiClient.get<ApiResponse<CertificateReportDto>>(
+    `/toolbox-talks/certificates/report?${searchParams}`
+  );
+  return response.data.data!;
+}
