@@ -319,7 +319,7 @@ public class ContentGenerationJob
             var slideResult = await _slideshowGenerationService.GenerateSlidesFromPdfAsync(
                 tenantId, toolboxTalkId, cancellationToken);
 
-            if (slideResult.Success)
+            if (slideResult.Success && slideResult.Data > 0)
             {
                 _logger.LogInformation(
                     "Slideshow generated for ToolboxTalk {ToolboxTalkId}: {SlideCount} slides",
@@ -332,14 +332,18 @@ public class ContentGenerationJob
             }
             else
             {
+                var errorDetail = slideResult.Success
+                    ? "0 slides could be created from the PDF"
+                    : string.Join("; ", slideResult.Errors);
+
                 _logger.LogWarning(
                     "Slideshow generation failed for ToolboxTalk {ToolboxTalkId}: {Errors}",
-                    toolboxTalkId, string.Join("; ", slideResult.Errors));
+                    toolboxTalkId, errorDetail);
 
                 await SendProgressUpdateAsync(toolboxTalkId, connectionId,
                     new ContentGenerationProgress(
                         "GeneratingSlides", 92,
-                        "Slideshow generation failed. Slides can be generated manually."));
+                        "Slideshow generation failed. Slides can be generated manually from the edit page."));
             }
         }
         catch (Exception ex)

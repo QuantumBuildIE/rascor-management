@@ -865,13 +865,40 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                 )}
               />
 
-              {talk?.slidesGenerated && (
+              {talk?.slidesGenerated && talk.slideCount > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-muted-foreground">
                     {talk.slideCount} slide{talk.slideCount !== 1 ? 's' : ''} generated
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRegenerateSlides}
+                    disabled={isRegenerating}
+                  >
+                    {isRegenerating ? (
+                      <LoadingSpinner className="mr-1 h-3 w-3" />
+                    ) : (
+                      <svg className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    )}
+                    Regenerate
+                  </Button>
+                </div>
+              )}
+
+              {talk?.slidesGenerated && talk.slideCount === 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <span className="text-yellow-700">
+                    Slide generation failed - try regenerating
                   </span>
                   <Button
                     type="button"

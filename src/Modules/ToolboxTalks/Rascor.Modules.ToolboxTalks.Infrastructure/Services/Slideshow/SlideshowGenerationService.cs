@@ -103,6 +103,8 @@ public class SlideshowGenerationService : ISlideshowGenerationService
             }
 
             var slidesCreated = 0;
+            var renderFailures = 0;
+            var uploadFailures = 0;
 
             for (var pageNum = 1; pageNum <= pageCount; pageNum++)
             {
@@ -116,7 +118,8 @@ public class SlideshowGenerationService : ISlideshowGenerationService
                 var imageBytes = RenderPageToImage(pdfBytes, pageNum - 1, pageNum);
                 if (imageBytes == null)
                 {
-                    _logger.LogWarning("Failed to render page {PageNum}, skipping", pageNum);
+                    renderFailures++;
+                    _logger.LogWarning("Failed to render page {PageNum}/{Total}, skipping", pageNum, pageCount);
                     continue;
                 }
 
@@ -126,9 +129,10 @@ public class SlideshowGenerationService : ISlideshowGenerationService
 
                 if (!uploadResult.Success)
                 {
+                    uploadFailures++;
                     _logger.LogWarning(
-                        "Failed to upload slide image for page {PageNum}: {Error}",
-                        pageNum, uploadResult.ErrorMessage);
+                        "Failed to upload slide image for page {PageNum}/{Total}: {Error}",
+                        pageNum, pageCount, uploadResult.ErrorMessage);
                     continue;
                 }
 
@@ -151,12 +155,27 @@ public class SlideshowGenerationService : ISlideshowGenerationService
                     pageNum, pageCount, toolboxTalkId);
             }
 
+            // Only mark as generated if at least one slide was created
+            if (slidesCreated == 0)
+            {
+                _logger.LogError(
+                    "No slides could be generated for talk {TalkId}. " +
+                    "Pages: {PageCount}, RenderFailures: {RenderFailures}, UploadFailures: {UploadFailures}. " +
+                    "This usually means the PDF rendering library (PDFium) is not available on the server.",
+                    toolboxTalkId, pageCount, renderFailures, uploadFailures);
+
+                return Result.Fail<int>(
+                    $"Failed to generate slides: {renderFailures} page(s) failed to render, " +
+                    $"{uploadFailures} failed to upload (out of {pageCount} pages).");
+            }
+
             talk.SlidesGenerated = true;
 
             var saved = await _context.SaveChangesAsync(ct);
             _logger.LogInformation(
-                "Successfully generated {Count} slides for talk {TalkId} (SaveChanges wrote {Saved} rows)",
-                slidesCreated, toolboxTalkId, saved);
+                "Successfully generated {Count}/{Total} slides for talk {TalkId} (SaveChanges wrote {Saved} rows). " +
+                "RenderFailures: {RenderFailures}, UploadFailures: {UploadFailures}",
+                slidesCreated, pageCount, toolboxTalkId, saved, renderFailures, uploadFailures);
 
             return Result.Ok(slidesCreated);
         }
