@@ -8,6 +8,7 @@ import type {
   ScheduledTalkCompletion,
   QuizResult,
   VideoProgress,
+  SlideDto,
   GetMyToolboxTalksParams,
   MarkSectionReadRequest,
   SubmitQuizRequest,
@@ -283,6 +284,27 @@ export async function completeToolboxTalk(
   const response = await apiClient.post<ScheduledTalkCompletion>(
     `/my/toolbox-talks/${scheduledTalkId}/complete`,
     data
+  );
+  return response.data;
+}
+
+// ============================================
+// Slides
+// ============================================
+
+/**
+ * Get slides for an assigned toolbox talk with optional translated text
+ * @param scheduledTalkId The scheduled talk ID (not the toolbox talk ID)
+ * @param lang Optional ISO 639-1 language code for translated slide text
+ */
+export async function getToolboxTalkSlides(
+  scheduledTalkId: string,
+  lang?: string
+): Promise<SlideDto[]> {
+  const params = lang ? { lang } : undefined;
+  const response = await apiClient.get<SlideDto[]>(
+    `/my/toolbox-talks/${scheduledTalkId}/slides`,
+    { params }
   );
   return response.data;
 }

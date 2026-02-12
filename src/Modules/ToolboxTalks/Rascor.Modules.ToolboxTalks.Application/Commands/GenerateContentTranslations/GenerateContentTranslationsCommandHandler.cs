@@ -48,6 +48,8 @@ public class GenerateContentTranslationsCommandHandler
             .Include(t => t.Sections.Where(s => !s.IsDeleted).OrderBy(s => s.SectionNumber))
             .Include(t => t.Questions.Where(q => !q.IsDeleted).OrderBy(q => q.QuestionNumber))
             .Include(t => t.Translations.Where(tr => !tr.IsDeleted))
+            .Include(t => t.Slides.Where(s => !s.IsDeleted).OrderBy(s => s.PageNumber))
+                .ThenInclude(s => s.Translations)
             .FirstOrDefaultAsync(t => t.Id == request.ToolboxTalkId
                 && t.TenantId == request.TenantId
                 && !t.IsDeleted, cancellationToken);
@@ -62,8 +64,10 @@ public class GenerateContentTranslationsCommandHandler
 
         _logger.LogInformation(
             "Loaded ToolboxTalk '{Title}'. Sections: {SectionCount}, Questions: {QuestionCount}, " +
-            "Existing translations: {TranslationCount}",
-            toolboxTalk.Title, toolboxTalk.Sections.Count, toolboxTalk.Questions.Count, toolboxTalk.Translations.Count);
+            "Existing translations: {TranslationCount}, Slides with text: {SlideCount}",
+            toolboxTalk.Title, toolboxTalk.Sections.Count, toolboxTalk.Questions.Count,
+            toolboxTalk.Translations.Count,
+            toolboxTalk.Slides.Count(s => !string.IsNullOrEmpty(s.OriginalText)));
 
         var results = new List<LanguageTranslationResult>();
 
@@ -73,9 +77,10 @@ public class GenerateContentTranslationsCommandHandler
             var result = await TranslateForLanguageAsync(toolboxTalk, language, cancellationToken);
             _logger.LogInformation(
                 "Translation result for {Language}: Success={Success}, " +
-                "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, Error={Error}",
+                "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, " +
+                "SlidesTranslated={Slides}, Error={Error}",
                 language, result.Success, result.SectionsTranslated, result.QuestionsTranslated,
-                result.ErrorMessage ?? "none");
+                result.SlidesTranslated, result.ErrorMessage ?? "none");
             results.Add(result);
         }
 
@@ -300,6 +305,44 @@ public class GenerateContentTranslationsCommandHandler
                 ? emailBodyResult.TranslatedContent
                 : $"You have been assigned a new toolbox talk: {translation.TranslatedTitle}. Please complete it by the due date.";
 
+            // Translate slide text
+            var slidesTranslated = 0;
+            var slidesWithText = toolboxTalk.Slides
+                .Where(s => !string.IsNullOrEmpty(s.OriginalText))
+                .ToList();
+
+            foreach (var slide in slidesWithText)
+            {
+                // Skip if already translated to this language
+                if (slide.Translations.Any(t => t.LanguageCode == languageCode))
+                {
+                    slidesTranslated++;
+                    continue;
+                }
+
+                var slideTextResult = await _translationService.TranslateTextAsync(
+                    slide.OriginalText!, language, false, cancellationToken);
+
+                if (slideTextResult.Success && !string.IsNullOrEmpty(slideTextResult.TranslatedContent))
+                {
+                    var slideTranslation = new ToolboxTalkSlideTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        SlideId = slide.Id,
+                        LanguageCode = languageCode,
+                        TranslatedText = slideTextResult.TranslatedContent
+                    };
+                    _context.ToolboxTalkSlideTranslations.Add(slideTranslation);
+                    slidesTranslated++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Slide {SlideId} (page {PageNumber}) translation failed for {Language}: {Error}",
+                        slide.Id, slide.PageNumber, language, slideTextResult.ErrorMessage);
+                }
+            }
+
             // Explicitly add to DbSet so the change tracker registers it as Added.
             // Using navigation collection Add alone is unreliable when the parent entity
             // was already tracked by a previous operation (content generation) on the same
@@ -309,15 +352,15 @@ public class GenerateContentTranslationsCommandHandler
                 _context.ToolboxTalkTranslations.Add(translation);
                 _logger.LogInformation(
                     "Added new translation entity for {Language} ({LanguageCode}) via DbSet.Add(). " +
-                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped})",
-                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped);
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated);
             }
             else
             {
                 _logger.LogInformation(
                     "Updated existing translation entity for {Language} ({LanguageCode}). " +
-                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped})",
-                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped);
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated);
             }
 
             return new LanguageTranslationResult
@@ -326,7 +369,8 @@ public class GenerateContentTranslationsCommandHandler
                 LanguageCode = languageCode,
                 Success = true,
                 SectionsTranslated = sectionsTranslated,
-                QuestionsTranslated = questionsTranslated
+                QuestionsTranslated = questionsTranslated,
+                SlidesTranslated = slidesTranslated
             };
         }
         catch (Exception ex)

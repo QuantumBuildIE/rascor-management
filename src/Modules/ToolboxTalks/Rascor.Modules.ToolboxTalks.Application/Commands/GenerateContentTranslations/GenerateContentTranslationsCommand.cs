@@ -92,4 +92,9 @@ public class LanguageTranslationResult
     /// Number of questions translated
     /// </summary>
     public int QuestionsTranslated { get; set; }
+
+    /// <summary>
+    /// Number of slides translated
+    /// </summary>
+    public int SlidesTranslated { get; set; }
 }

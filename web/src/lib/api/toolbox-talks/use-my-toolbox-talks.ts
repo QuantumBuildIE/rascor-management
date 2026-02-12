@@ -7,6 +7,7 @@ import {
   getMyOverdueToolboxTalks,
   getMyCompletedToolboxTalks,
   getMyTrainingSummary,
+  getToolboxTalkSlides,
   markSectionRead,
   updateVideoProgress,
   resetVideoProgress,
@@ -80,6 +81,14 @@ export function useMyTrainingSummary() {
     queryFn: getMyTrainingSummary,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useToolboxTalkSlides(scheduledTalkId: string, lang?: string) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'slides', scheduledTalkId, lang],
+    queryFn: () => getToolboxTalkSlides(scheduledTalkId, lang),
+    enabled: !!scheduledTalkId,
   });
 }
 

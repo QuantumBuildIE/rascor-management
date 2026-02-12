@@ -64,6 +64,13 @@ export interface ToolboxTalkTranslation {
   translationProvider: string;
 }
 
+export interface SlideDto {
+  id: string;
+  pageNumber: number;
+  imageUrl: string;
+  text?: string;
+}
+
 export interface ToolboxTalk {
   id: string;
   title: string;

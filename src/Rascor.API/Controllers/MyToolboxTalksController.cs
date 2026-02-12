@@ -17,6 +17,7 @@ using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.Queries;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalks;
+using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSlides;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
@@ -696,6 +697,59 @@ public class MyToolboxTalksController : ControllerBase
         }
 
         return string.Join("\n", vttLines);
+    }
+
+    /// <summary>
+    /// Get slides for an assigned toolbox talk with optional translated text
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <param name="lang">Optional ISO 639-1 language code for translated slide text</param>
+    /// <returns>List of slides with image URLs and text</returns>
+    [HttpGet("{id:guid}/slides")]
+    [ProducesResponseType(typeof(List<SlideDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSlides(Guid id, [FromQuery] string? lang)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            // Verify the employee is assigned to this talk
+            var query = new GetMyToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                ScheduledTalkId = id
+            };
+
+            var talk = await _mediator.Send(query);
+            if (talk == null)
+            {
+                return NotFound(new { message = "Toolbox talk not found or not assigned to you" });
+            }
+
+            // Use employee's preferred language if no language specified
+            var languageCode = lang ?? talk.LanguageCode;
+
+            var slidesQuery = new GetToolboxTalkSlidesQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = talk.ToolboxTalkId,
+                LanguageCode = languageCode
+            };
+
+            var slides = await _mediator.Send(slidesQuery);
+            return Ok(slides);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting slides for talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error getting slides" });
+        }
     }
 
     /// <summary>
