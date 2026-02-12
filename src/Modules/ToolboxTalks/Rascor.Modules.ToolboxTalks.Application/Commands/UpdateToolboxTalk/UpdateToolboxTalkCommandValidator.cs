@@ -51,8 +51,8 @@ public class UpdateToolboxTalkCommandValidator : AbstractValidator<UpdateToolbox
             .WithMessage("Attachment URL must not exceed 500 characters.");
 
         RuleFor(x => x.MinimumVideoWatchPercent)
-            .InclusiveBetween(0, 100)
-            .WithMessage("Minimum video watch percent must be between 0 and 100.");
+            .InclusiveBetween(50, 100)
+            .WithMessage("Minimum video watch percent must be between 50 and 100.");
 
         // If quiz is required, passing score must be set and valid
         RuleFor(x => x.PassingScore)
@@ -61,9 +61,9 @@ public class UpdateToolboxTalkCommandValidator : AbstractValidator<UpdateToolbox
             .WithMessage("Passing score is required when quiz is required.");
 
         RuleFor(x => x.PassingScore)
-            .InclusiveBetween(0, 100)
+            .InclusiveBetween(50, 100)
             .When(x => x.RequiresQuiz && x.PassingScore.HasValue)
-            .WithMessage("Passing score must be between 0 and 100.");
+            .WithMessage("Passing score must be between 50 and 100.");
 
         // At least one section required if no video
         RuleFor(x => x.Sections)

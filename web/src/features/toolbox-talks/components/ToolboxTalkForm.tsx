@@ -68,15 +68,15 @@ const questionSchema = z.object({
 
 const toolboxTalkFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
-  description: z.string().max(1000).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
   category: z.string().max(100).optional().nullable(),
   frequency: z.enum(['Once', 'Weekly', 'Monthly', 'Annually'] as const),
   videoUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
   videoSource: z.enum(['None', 'YouTube', 'GoogleDrive', 'Vimeo', 'DirectUrl'] as const),
   attachmentUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
-  minimumVideoWatchPercent: z.number().min(0).max(100),
+  minimumVideoWatchPercent: z.number().min(50).max(100),
   requiresQuiz: z.boolean(),
-  passingScore: z.number().min(0).max(100).optional().nullable(),
+  passingScore: z.number().min(50).max(100).optional().nullable(),
   shuffleQuestions: z.boolean(),
   shuffleOptions: z.boolean(),
   useQuestionPool: z.boolean(),
@@ -506,18 +506,30 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                   name="minimumVideoWatchPercent"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minimum Watch %</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Minimum Watch %</FormLabel>
+                        <span className="text-2xl font-bold text-primary">
+                          {field.value}%
+                        </span>
+                      </div>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
+                        <input
+                          type="range"
+                          min={50}
                           max={100}
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          step={5}
+                          value={field.value}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                         />
                       </FormControl>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span>100%</span>
+                      </div>
                       <FormDescription>
-                        Required percentage of video to watch
+                        Employees must watch at least this percentage of the video
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -620,18 +632,29 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                   control={form.control}
                   name="passingScore"
                   render={({ field }) => (
-                    <FormItem className="max-w-xs">
-                      <FormLabel>Passing Score (%) *</FormLabel>
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Passing Score (%) *</FormLabel>
+                        <span className="text-2xl font-bold text-primary">
+                          {field.value ?? 70}%
+                        </span>
+                      </div>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
+                        <input
+                          type="range"
+                          min={50}
                           max={100}
-                          {...field}
+                          step={5}
                           value={field.value ?? 70}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                         />
                       </FormControl>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span>100%</span>
+                      </div>
                       <FormDescription>
                         Minimum percentage required to pass the quiz
                       </FormDescription>
