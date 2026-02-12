@@ -13,12 +13,14 @@ public interface IContentTranslationService
     /// <param name="targetLanguage">Target language name (e.g., "Polish", "Romanian")</param>
     /// <param name="isHtml">If true, preserves HTML tags while translating text content</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="sourceLanguage">Source language name (e.g., "English", "Afrikaans"). Defaults to "English" if null.</param>
     /// <returns>Translation result with translated content</returns>
     Task<ContentTranslationResult> TranslateTextAsync(
         string text,
         string targetLanguage,
         bool isHtml = false,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? sourceLanguage = null);
 
     /// <summary>
     /// Translates multiple items in a batch for efficiency.
@@ -26,11 +28,13 @@ public interface IContentTranslationService
     /// <param name="items">Items to translate with their context</param>
     /// <param name="targetLanguage">Target language name</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="sourceLanguage">Source language name. Defaults to "English" if null.</param>
     /// <returns>Translation results keyed by item index</returns>
     Task<BatchTranslationResult> TranslateBatchAsync(
         IEnumerable<TranslationItem> items,
         string targetLanguage,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? sourceLanguage = null);
 }
 
 /// <summary>

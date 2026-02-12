@@ -365,26 +365,38 @@ public class ContentGenerationJob
                 "[DEBUG] AutoGenerateTranslationsAsync called for ToolboxTalk {ToolboxTalkId}, TenantId {TenantId}",
                 toolboxTalkId, tenantId);
 
+            // Get the source language of the toolbox talk
+            var sourceLanguageCode = await _toolboxTalksDbContext.ToolboxTalks
+                .IgnoreQueryFilters()
+                .Where(t => t.Id == toolboxTalkId && t.TenantId == tenantId && !t.IsDeleted)
+                .Select(t => t.SourceLanguageCode)
+                .FirstOrDefaultAsync(cancellationToken) ?? "en";
+
+            _logger.LogInformation(
+                "[DEBUG] ToolboxTalk {ToolboxTalkId} source language: {SourceLanguage}",
+                toolboxTalkId, sourceLanguageCode);
+
             // NOTE: We use IgnoreQueryFilters() because this method runs in a background job context
             // where ICurrentUserService.TenantId may not be set correctly for the global tenant filter.
             // Since we explicitly filter by tenantId and IsDeleted, this is safe.
+            // Filter out employees whose preferred language matches the source language
             var employeeLanguageCodes = await _coreDbContext.Employees
                 .IgnoreQueryFilters()
                 .Where(e => e.TenantId == tenantId && !e.IsDeleted
-                    && e.PreferredLanguage != null && e.PreferredLanguage != "en")
+                    && e.PreferredLanguage != null && e.PreferredLanguage != sourceLanguageCode)
                 .Select(e => e.PreferredLanguage!)
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
             _logger.LogInformation(
-                "[DEBUG] Employee languages query returned {Count} languages: {Languages}",
-                employeeLanguageCodes.Count, string.Join(", ", employeeLanguageCodes));
+                "[DEBUG] Employee languages query returned {Count} languages (excluding source '{Source}'): {Languages}",
+                employeeLanguageCodes.Count, sourceLanguageCode, string.Join(", ", employeeLanguageCodes));
 
             if (employeeLanguageCodes.Count == 0)
             {
                 _logger.LogInformation(
-                    "[DEBUG] No non-English employee languages found for tenant {TenantId}. Skipping auto-translation.",
-                    tenantId);
+                    "[DEBUG] No employee languages different from source language '{Source}' found for tenant {TenantId}. Skipping auto-translation.",
+                    sourceLanguageCode, tenantId);
                 return;
             }
 

@@ -8,6 +8,7 @@ public class LanguageCodeService : ILanguageCodeService
 {
     private static readonly Dictionary<string, string> LanguageCodes = new(StringComparer.OrdinalIgnoreCase)
     {
+        { "Afrikaans", "af" },
         { "Arabic", "ar" },
         { "Bulgarian", "bg" },
         { "Chinese", "zh" },

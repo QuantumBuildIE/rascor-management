@@ -32,8 +32,11 @@ public class ContentTranslationService : IContentTranslationService
         string text,
         string targetLanguage,
         bool isHtml = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? sourceLanguage = null)
     {
+        var source = sourceLanguage ?? "English";
+
         if (string.IsNullOrWhiteSpace(text))
         {
             _logger.LogInformation(
@@ -46,11 +49,11 @@ public class ContentTranslationService : IContentTranslationService
         {
             _logger.LogInformation(
                 "[DEBUG] ContentTranslationService.TranslateTextAsync called. " +
-                "TargetLanguage: {Language}, IsHtml: {IsHtml}, TextLength: {TextLength}, TextPreview: {Preview}",
-                targetLanguage, isHtml, text.Length,
+                "SourceLanguage: {SourceLanguage}, TargetLanguage: {Language}, IsHtml: {IsHtml}, TextLength: {TextLength}, TextPreview: {Preview}",
+                source, targetLanguage, isHtml, text.Length,
                 text.Length > 80 ? text.Substring(0, 80) + "..." : text);
 
-            var prompt = BuildTranslationPrompt(text, targetLanguage, isHtml);
+            var prompt = BuildTranslationPrompt(text, source, targetLanguage, isHtml);
             var translatedText = await CallClaudeApiAsync(prompt, cancellationToken);
 
             if (string.IsNullOrWhiteSpace(translatedText))
@@ -91,8 +94,10 @@ public class ContentTranslationService : IContentTranslationService
     public async Task<BatchTranslationResult> TranslateBatchAsync(
         IEnumerable<TranslationItem> items,
         string targetLanguage,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? sourceLanguage = null)
     {
+        var source = sourceLanguage ?? "English";
         var itemsList = items.ToList();
         if (itemsList.Count == 0)
         {
@@ -101,9 +106,9 @@ public class ContentTranslationService : IContentTranslationService
 
         try
         {
-            _logger.LogInformation("Translating batch of {Count} items to {Language}", itemsList.Count, targetLanguage);
+            _logger.LogInformation("Translating batch of {Count} items from {Source} to {Language}", itemsList.Count, source, targetLanguage);
 
-            var prompt = BuildBatchTranslationPrompt(itemsList, targetLanguage);
+            var prompt = BuildBatchTranslationPrompt(itemsList, source, targetLanguage);
             var responseText = await CallClaudeApiAsync(prompt, cancellationToken);
 
             var results = ParseBatchResponse(responseText, itemsList);
@@ -178,18 +183,18 @@ public class ContentTranslationService : IContentTranslationService
     /// <summary>
     /// Builds the translation prompt for plain text or HTML content.
     /// </summary>
-    private static string BuildTranslationPrompt(string text, string targetLanguage, bool isHtml)
+    private static string BuildTranslationPrompt(string text, string sourceLanguage, string targetLanguage, bool isHtml)
     {
         if (isHtml)
         {
-            return $@"Translate the following HTML content to {targetLanguage}.
+            return $@"Translate the following {sourceLanguage} HTML content to {targetLanguage}.
 IMPORTANT: Keep all HTML tags exactly as they are. Only translate the text content between tags.
 Return only the translated HTML, nothing else.
 
 {text}";
         }
 
-        return $@"Translate the following text to {targetLanguage}.
+        return $@"Translate the following {sourceLanguage} text to {targetLanguage}.
 Return only the translated text, nothing else.
 
 {text}";
@@ -198,10 +203,10 @@ Return only the translated text, nothing else.
     /// <summary>
     /// Builds a batch translation prompt for multiple items.
     /// </summary>
-    private static string BuildBatchTranslationPrompt(List<TranslationItem> items, string targetLanguage)
+    private static string BuildBatchTranslationPrompt(List<TranslationItem> items, string sourceLanguage, string targetLanguage)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Translate the following items to {targetLanguage}.");
+        sb.AppendLine($"Translate the following {sourceLanguage} items to {targetLanguage}.");
         sb.AppendLine("Return the translations as a JSON array with the same order as the input.");
         sb.AppendLine("Each element should be the translated text only.");
         sb.AppendLine("For HTML content (marked with [HTML]), preserve all HTML tags and only translate the text.");

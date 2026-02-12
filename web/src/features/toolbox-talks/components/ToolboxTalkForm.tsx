@@ -78,6 +78,7 @@ const toolboxTalkFormSchema = z.object({
   useQuestionPool: z.boolean(),
   quizQuestionCount: z.number().min(1).optional().nullable(),
   isActive: z.boolean(),
+  sourceLanguageCode: z.string().default('en'),
   autoAssignToNewEmployees: z.boolean(),
   autoAssignDueDays: z.number().min(1).max(365),
   generateSlidesFromPdf: z.boolean(),
@@ -109,6 +110,40 @@ const FREQUENCY_OPTIONS: { value: ToolboxTalkFrequency; label: string }[] = [
   { value: 'Weekly', label: 'Weekly' },
   { value: 'Monthly', label: 'Monthly' },
   { value: 'Annually', label: 'Annually' },
+];
+
+const SOURCE_LANGUAGE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'af', label: 'Afrikaans' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'bg', label: 'Bulgarian' },
+  { value: 'zh', label: 'Chinese' },
+  { value: 'hr', label: 'Croatian' },
+  { value: 'cs', label: 'Czech' },
+  { value: 'da', label: 'Danish' },
+  { value: 'nl', label: 'Dutch' },
+  { value: 'fi', label: 'Finnish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
+  { value: 'el', label: 'Greek' },
+  { value: 'hi', label: 'Hindi' },
+  { value: 'hu', label: 'Hungarian' },
+  { value: 'it', label: 'Italian' },
+  { value: 'ja', label: 'Japanese' },
+  { value: 'ko', label: 'Korean' },
+  { value: 'lv', label: 'Latvian' },
+  { value: 'lt', label: 'Lithuanian' },
+  { value: 'no', label: 'Norwegian' },
+  { value: 'pl', label: 'Polish' },
+  { value: 'pt', label: 'Portuguese' },
+  { value: 'ro', label: 'Romanian' },
+  { value: 'ru', label: 'Russian' },
+  { value: 'sk', label: 'Slovak' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'sv', label: 'Swedish' },
+  { value: 'tr', label: 'Turkish' },
+  { value: 'uk', label: 'Ukrainian' },
+  { value: 'vi', label: 'Vietnamese' },
 ];
 
 const VIDEO_SOURCE_OPTIONS: { value: VideoSource; label: string; description?: string }[] = [
@@ -150,6 +185,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       useQuestionPool: talk?.useQuestionPool ?? false,
       quizQuestionCount: talk?.quizQuestionCount ?? null,
       isActive: talk?.isActive ?? true,
+      sourceLanguageCode: talk?.sourceLanguageCode ?? 'en',
       autoAssignToNewEmployees: talk?.autoAssignToNewEmployees ?? false,
       autoAssignDueDays: talk?.autoAssignDueDays ?? 14,
       generateSlidesFromPdf: talk?.generateSlidesFromPdf ?? false,
@@ -270,6 +306,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
         useQuestionPool: values.requiresQuiz ? values.useQuestionPool : false,
         quizQuestionCount: values.requiresQuiz && values.useQuestionPool ? values.quizQuestionCount : undefined,
         isActive: values.isActive,
+        sourceLanguageCode: values.sourceLanguageCode,
         autoAssignToNewEmployees: values.autoAssignToNewEmployees,
         autoAssignDueDays: values.autoAssignDueDays,
         generateSlidesFromPdf: values.generateSlidesFromPdf,
@@ -388,6 +425,33 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sourceLanguageCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Original Language</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SOURCE_LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The language of the original content. Translations will be generated from this language.
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

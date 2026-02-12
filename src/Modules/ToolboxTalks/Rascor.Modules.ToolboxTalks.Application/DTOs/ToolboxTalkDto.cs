@@ -38,6 +38,9 @@ public record ToolboxTalkDto
     public bool ShuffleOptions { get; init; }
     public bool UseQuestionPool { get; init; }
 
+    // Source language
+    public string SourceLanguageCode { get; init; } = "en";
+
     // Auto-assignment settings
     public bool AutoAssignToNewEmployees { get; init; }
     public int AutoAssignDueDays { get; init; }

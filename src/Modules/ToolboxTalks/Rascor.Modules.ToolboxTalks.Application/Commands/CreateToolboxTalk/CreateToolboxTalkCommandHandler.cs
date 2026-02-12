@@ -49,6 +49,7 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool,
             AutoAssignToNewEmployees = request.AutoAssignToNewEmployees,
             AutoAssignDueDays = request.AutoAssignDueDays,
+            SourceLanguageCode = request.SourceLanguageCode,
             GenerateSlidesFromPdf = request.GenerateSlidesFromPdf
         };
 
@@ -114,6 +115,7 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             UseQuestionPool = entity.UseQuestionPool,
             AutoAssignToNewEmployees = entity.AutoAssignToNewEmployees,
             AutoAssignDueDays = entity.AutoAssignDueDays,
+            SourceLanguageCode = entity.SourceLanguageCode,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = entity.Sections.Select(s => new ToolboxTalkSectionDto

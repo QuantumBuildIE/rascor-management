@@ -62,10 +62,15 @@ public class GenerateContentTranslationsCommandHandler
             return GenerateContentTranslationsResult.FailureResult("Toolbox talk not found");
         }
 
+        // Get the source language name from the code
+        var sourceLanguageName = _languageCodeService.GetLanguageName(toolboxTalk.SourceLanguageCode);
+
         _logger.LogInformation(
-            "Loaded ToolboxTalk '{Title}'. Sections: {SectionCount}, Questions: {QuestionCount}, " +
+            "Loaded ToolboxTalk '{Title}'. SourceLanguage: {SourceLanguage} ({SourceCode}), " +
+            "Sections: {SectionCount}, Questions: {QuestionCount}, " +
             "Existing translations: {TranslationCount}, Slides with text: {SlideCount}",
-            toolboxTalk.Title, toolboxTalk.Sections.Count, toolboxTalk.Questions.Count,
+            toolboxTalk.Title, sourceLanguageName, toolboxTalk.SourceLanguageCode,
+            toolboxTalk.Sections.Count, toolboxTalk.Questions.Count,
             toolboxTalk.Translations.Count,
             toolboxTalk.Slides.Count(s => !string.IsNullOrEmpty(s.OriginalText)));
 
@@ -73,8 +78,18 @@ public class GenerateContentTranslationsCommandHandler
 
         foreach (var language in request.TargetLanguages)
         {
-            _logger.LogInformation("Starting translation for language: {Language}", language);
-            var result = await TranslateForLanguageAsync(toolboxTalk, language, cancellationToken);
+            // Skip translation if target language is the same as source language
+            var targetCode = _languageCodeService.GetLanguageCode(language);
+            if (string.Equals(targetCode, toolboxTalk.SourceLanguageCode, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation(
+                    "Skipping translation to {Language} ({Code}) - same as source language",
+                    language, targetCode);
+                continue;
+            }
+
+            _logger.LogInformation("Starting translation for language: {Language} (from {Source})", language, sourceLanguageName);
+            var result = await TranslateForLanguageAsync(toolboxTalk, language, sourceLanguageName, cancellationToken);
             _logger.LogInformation(
                 "Translation result for {Language}: Success={Success}, " +
                 "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, " +
@@ -114,6 +129,7 @@ public class GenerateContentTranslationsCommandHandler
     private async Task<LanguageTranslationResult> TranslateForLanguageAsync(
         ToolboxTalk toolboxTalk,
         string language,
+        string sourceLanguage,
         CancellationToken cancellationToken)
     {
         var languageCode = _languageCodeService.GetLanguageCode(language);
@@ -139,7 +155,7 @@ public class GenerateContentTranslationsCommandHandler
 
             // Translate title (required - skip this language entirely if title fails)
             var titleResult = await _translationService.TranslateTextAsync(
-                toolboxTalk.Title, language, false, cancellationToken);
+                toolboxTalk.Title, language, false, cancellationToken, sourceLanguage);
 
             if (!titleResult.Success)
             {
@@ -164,7 +180,7 @@ public class GenerateContentTranslationsCommandHandler
             if (!string.IsNullOrWhiteSpace(toolboxTalk.Description))
             {
                 var descResult = await _translationService.TranslateTextAsync(
-                    toolboxTalk.Description, language, false, cancellationToken);
+                    toolboxTalk.Description, language, false, cancellationToken, sourceLanguage);
 
                 translation.TranslatedDescription = descResult.Success
                     ? descResult.TranslatedContent
@@ -185,10 +201,10 @@ public class GenerateContentTranslationsCommandHandler
             foreach (var section in toolboxTalk.Sections)
             {
                 var sectionTitleResult = await _translationService.TranslateTextAsync(
-                    section.Title, language, false, cancellationToken);
+                    section.Title, language, false, cancellationToken, sourceLanguage);
 
                 var sectionContentResult = await _translationService.TranslateTextAsync(
-                    section.Content, language, true, cancellationToken);
+                    section.Content, language, true, cancellationToken, sourceLanguage);
 
                 if (sectionTitleResult.Success && sectionContentResult.Success)
                 {
@@ -218,7 +234,7 @@ public class GenerateContentTranslationsCommandHandler
             foreach (var question in toolboxTalk.Questions)
             {
                 var questionTextResult = await _translationService.TranslateTextAsync(
-                    question.QuestionText, language, false, cancellationToken);
+                    question.QuestionText, language, false, cancellationToken, sourceLanguage);
 
                 if (!questionTextResult.Success)
                 {
@@ -244,7 +260,7 @@ public class GenerateContentTranslationsCommandHandler
                             foreach (var option in options)
                             {
                                 var optionResult = await _translationService.TranslateTextAsync(
-                                    option, language, false, cancellationToken);
+                                    option, language, false, cancellationToken, sourceLanguage);
                                 if (optionResult.Success)
                                 {
                                     translatedOptions.Add(optionResult.TranslatedContent);
@@ -293,14 +309,14 @@ public class GenerateContentTranslationsCommandHandler
             // Generate translated email templates
             var emailSubjectResult = await _translationService.TranslateTextAsync(
                 $"Action Required: Complete Toolbox Talk - {toolboxTalk.Title}",
-                language, false, cancellationToken);
+                language, false, cancellationToken, sourceLanguage);
             translation.EmailSubject = emailSubjectResult.Success
                 ? emailSubjectResult.TranslatedContent
                 : $"Action Required: Complete Toolbox Talk - {translation.TranslatedTitle}";
 
             var emailBodyResult = await _translationService.TranslateTextAsync(
                 $"You have been assigned a new toolbox talk: {toolboxTalk.Title}. Please complete it by the due date.",
-                language, false, cancellationToken);
+                language, false, cancellationToken, sourceLanguage);
             translation.EmailBody = emailBodyResult.Success
                 ? emailBodyResult.TranslatedContent
                 : $"You have been assigned a new toolbox talk: {translation.TranslatedTitle}. Please complete it by the due date.";
@@ -321,7 +337,7 @@ public class GenerateContentTranslationsCommandHandler
                 }
 
                 var slideTextResult = await _translationService.TranslateTextAsync(
-                    slide.OriginalText!, language, false, cancellationToken);
+                    slide.OriginalText!, language, false, cancellationToken, sourceLanguage);
 
                 if (slideTextResult.Success && !string.IsNullOrEmpty(slideTextResult.TranslatedContent))
                 {

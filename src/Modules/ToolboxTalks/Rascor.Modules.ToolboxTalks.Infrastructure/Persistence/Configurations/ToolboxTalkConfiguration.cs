@@ -133,6 +133,11 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(14);
 
+        // Source language for translations
+        builder.Property(t => t.SourceLanguageCode)
+            .HasMaxLength(10)
+            .HasDefaultValue("en");
+
         // PDF slideshow settings
         builder.Property(t => t.GenerateSlidesFromPdf)
             .IsRequired()

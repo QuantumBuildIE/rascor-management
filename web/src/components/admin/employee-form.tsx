@@ -72,6 +72,7 @@ const SUPPORTED_LANGUAGES: Array<{ code: string; name: string; nativeName?: stri
   { code: "sv", name: "Swedish", nativeName: "Svenska" },
   { code: "tr", name: "Turkish", nativeName: "Türkçe" },
   { code: "vi", name: "Vietnamese", nativeName: "Tiếng Việt" },
+  { code: "af", name: "Afrikaans", nativeName: "Afrikaans" },
 ];
 
 const employeeFormSchema = z.object({

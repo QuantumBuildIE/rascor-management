@@ -100,6 +100,8 @@ export interface ToolboxTalk {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   useQuestionPool: boolean;
+  // Source language
+  sourceLanguageCode: string;
   // Auto-assignment settings
   autoAssignToNewEmployees: boolean;
   autoAssignDueDays: number;
@@ -534,6 +536,8 @@ export interface CreateToolboxTalkRequest {
   shuffleQuestions?: boolean;
   shuffleOptions?: boolean;
   useQuestionPool?: boolean;
+  // Source language
+  sourceLanguageCode?: string;
   // Auto-assignment settings
   autoAssignToNewEmployees?: boolean;
   autoAssignDueDays?: number;

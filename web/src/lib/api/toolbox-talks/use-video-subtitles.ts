@@ -81,6 +81,7 @@ const languageNames: Record<string, string> = {
   lt: 'Lithuanian',
   lv: 'Latvian',
   et: 'Estonian',
+  af: 'Afrikaans',
 };
 
 function getLanguageName(code: string): string {

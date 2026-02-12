@@ -80,6 +80,7 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             UseQuestionPool = talk.UseQuestionPool,
             AutoAssignToNewEmployees = talk.AutoAssignToNewEmployees,
             AutoAssignDueDays = talk.AutoAssignDueDays,
+            SourceLanguageCode = talk.SourceLanguageCode,
             Sections = talk.Sections.Select(s => new ToolboxTalkSectionDto
             {
                 Id = s.Id,

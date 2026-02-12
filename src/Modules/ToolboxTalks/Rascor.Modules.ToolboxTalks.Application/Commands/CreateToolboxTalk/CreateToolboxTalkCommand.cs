@@ -31,6 +31,9 @@ public record CreateToolboxTalkCommand : IRequest<ToolboxTalkDto>
     public bool AutoAssignToNewEmployees { get; init; } = false;
     public int AutoAssignDueDays { get; init; } = 14;
 
+    // Source language
+    public string SourceLanguageCode { get; init; } = "en";
+
     // Slideshow settings
     public bool GenerateSlidesFromPdf { get; init; } = false;
 

@@ -196,6 +196,12 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public bool SlidesGenerated { get; set; } = false;
 
+    /// <summary>
+    /// The language code of the original content (e.g., "en", "es", "af").
+    /// Used as source language for translations.
+    /// </summary>
+    public string SourceLanguageCode { get; set; } = "en";
+
     // Navigation properties
 
     /// <summary>
