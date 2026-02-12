@@ -22,6 +22,7 @@ using Rascor.Modules.ToolboxTalks.Domain.Enums;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 using System.ComponentModel.DataAnnotations;
 using FileHashType = Rascor.Modules.ToolboxTalks.Application.Services.FileHashType;
+using ISlideshowGenerationService = Rascor.Modules.ToolboxTalks.Application.Services.ISlideshowGenerationService;
 
 namespace Rascor.API.Controllers;
 
@@ -40,6 +41,7 @@ public class ToolboxTalksController : ControllerBase
     private readonly IContentExtractionService _contentExtractionService;
     private readonly IContentDeduplicationService _deduplicationService;
     private readonly IR2StorageService _r2StorageService;
+    private readonly ISlideshowGenerationService _slideshowGenerationService;
     private readonly ILogger<ToolboxTalksController> _logger;
 
     public ToolboxTalksController(
@@ -50,6 +52,7 @@ public class ToolboxTalksController : ControllerBase
         IContentExtractionService contentExtractionService,
         IContentDeduplicationService deduplicationService,
         IR2StorageService r2StorageService,
+        ISlideshowGenerationService slideshowGenerationService,
         ILogger<ToolboxTalksController> logger)
     {
         _mediator = mediator;
@@ -59,6 +62,7 @@ public class ToolboxTalksController : ControllerBase
         _contentExtractionService = contentExtractionService;
         _deduplicationService = deduplicationService;
         _r2StorageService = r2StorageService;
+        _slideshowGenerationService = slideshowGenerationService;
         _logger = logger;
     }
 
@@ -663,6 +667,55 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error starting content generation for toolbox talk {ToolboxTalkId}", id);
             return StatusCode(500, new { error = "Error starting content generation" });
+        }
+    }
+
+    /// <summary>
+    /// Manually triggers slideshow generation from PDF for a toolbox talk.
+    /// Regenerates all slides if they already exist.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <returns>Number of slides generated</returns>
+    [HttpPost("{id:guid}/generate-slides")]
+    [Authorize(Policy = "ToolboxTalks.Edit")]
+    [ProducesResponseType(typeof(GenerateSlidesResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GenerateSlides(Guid id)
+    {
+        try
+        {
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox Talk not found" });
+            }
+
+            if (string.IsNullOrEmpty(toolboxTalk.PdfUrl))
+            {
+                return BadRequest(new { error = "No PDF is uploaded for this toolbox talk" });
+            }
+
+            var result = await _slideshowGenerationService.GenerateSlidesFromPdfAsync(
+                _currentUserService.TenantId, id);
+
+            if (!result.Success)
+            {
+                return BadRequest(new { error = string.Join("; ", result.Errors) });
+            }
+
+            return Ok(new GenerateSlidesResponse { SlidesGenerated = result.Data });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating slides for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error generating slides" });
         }
     }
 
@@ -1412,4 +1465,15 @@ public record UpdateFileHashRequest
     /// </summary>
     [Required]
     public string FileType { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Response DTO for slideshow generation
+/// </summary>
+public record GenerateSlidesResponse
+{
+    /// <summary>
+    /// Number of slides generated from the PDF
+    /// </summary>
+    public int SlidesGenerated { get; init; }
 }

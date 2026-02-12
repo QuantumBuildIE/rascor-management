@@ -283,6 +283,19 @@ export async function generateToolboxTalkContent(
 }
 
 // ============================================
+// Slideshow Generation
+// ============================================
+
+export async function generateSlides(
+  id: string
+): Promise<{ slidesGenerated: number }> {
+  const response = await apiClient.post<{ slidesGenerated: number }>(
+    `/toolbox-talks/${id}/generate-slides`
+  );
+  return response.data;
+}
+
+// ============================================
 // Content Translations
 // ============================================
 

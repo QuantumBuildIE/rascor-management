@@ -84,6 +84,10 @@ export interface ToolboxTalk {
   pdfFileName: string | null;
   generatedFromVideo: boolean;
   generatedFromPdf: boolean;
+  // Slideshow settings
+  generateSlidesFromPdf: boolean;
+  slidesGenerated: boolean;
+  slideCount: number;
   // Quiz randomization settings
   quizQuestionCount: number | null;
   shuffleQuestions: boolean;
@@ -526,6 +530,8 @@ export interface CreateToolboxTalkRequest {
   // Auto-assignment settings
   autoAssignToNewEmployees?: boolean;
   autoAssignDueDays?: number;
+  // Slideshow settings
+  generateSlidesFromPdf?: boolean;
   sections: CreateToolboxTalkSectionRequest[];
   questions?: CreateToolboxTalkQuestionRequest[];
 }

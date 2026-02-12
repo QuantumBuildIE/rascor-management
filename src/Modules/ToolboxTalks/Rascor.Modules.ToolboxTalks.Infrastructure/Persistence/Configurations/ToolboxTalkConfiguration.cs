@@ -133,6 +133,15 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(14);
 
+        // PDF slideshow settings
+        builder.Property(t => t.GenerateSlidesFromPdf)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.SlidesGenerated)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 
@@ -172,6 +181,11 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
         builder.HasMany(t => t.VideoTranslations)
             .WithOne(vt => vt.ToolboxTalk)
             .HasForeignKey(vt => vt.ToolboxTalkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(t => t.Slides)
+            .WithOne(s => s.ToolboxTalk)
+            .HasForeignKey(s => s.ToolboxTalkId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes

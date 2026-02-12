@@ -184,6 +184,18 @@ public class ToolboxTalk : TenantEntity
     /// </summary>
     public int AutoAssignDueDays { get; set; } = 14;
 
+    // PDF slideshow settings
+
+    /// <summary>
+    /// Whether to generate slide images from the PDF for slideshow display
+    /// </summary>
+    public bool GenerateSlidesFromPdf { get; set; } = false;
+
+    /// <summary>
+    /// Whether the slide images have been generated from the PDF
+    /// </summary>
+    public bool SlidesGenerated { get; set; } = false;
+
     // Navigation properties
 
     /// <summary>
@@ -205,4 +217,9 @@ public class ToolboxTalk : TenantEntity
     /// Video translations for this toolbox talk
     /// </summary>
     public ICollection<ToolboxTalkVideoTranslation> VideoTranslations { get; set; } = new List<ToolboxTalkVideoTranslation>();
+
+    /// <summary>
+    /// Slide images extracted from the PDF for slideshow display
+    /// </summary>
+    public virtual ICollection<ToolboxTalkSlide> Slides { get; set; } = new List<ToolboxTalkSlide>();
 }

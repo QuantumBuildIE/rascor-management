@@ -53,6 +53,15 @@ public interface IR2StorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Uploads a slide image (PNG) to R2 storage at the given storage path.
+    /// Path: {tenantId}/slides/{toolboxTalkId}/{pageNumber}.png
+    /// </summary>
+    Task<R2UploadResult> UploadSlideImageAsync(
+        string storagePath,
+        byte[] imageBytes,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Downloads a file from R2 storage by its storage key/path.
     /// Returns null if the file is not found.
     /// </summary>

@@ -48,7 +48,8 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
             ShuffleOptions = request.RequiresQuiz && request.ShuffleOptions,
             UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool,
             AutoAssignToNewEmployees = request.AutoAssignToNewEmployees,
-            AutoAssignDueDays = request.AutoAssignDueDays
+            AutoAssignDueDays = request.AutoAssignDueDays,
+            GenerateSlidesFromPdf = request.GenerateSlidesFromPdf
         };
 
         // Create sections

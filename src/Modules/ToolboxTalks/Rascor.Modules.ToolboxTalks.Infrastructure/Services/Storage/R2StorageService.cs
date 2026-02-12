@@ -250,6 +250,43 @@ public class R2StorageService : IR2StorageService, IDisposable
 
     #endregion
 
+    #region Slide Images
+
+    public async Task<R2UploadResult> UploadSlideImageAsync(
+        string storagePath,
+        byte[] imageBytes,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var stream = new MemoryStream(imageBytes);
+            var request = new PutObjectRequest
+            {
+                BucketName = _settings.BucketName,
+                Key = storagePath,
+                InputStream = stream,
+                ContentType = "image/png",
+                DisablePayloadSigning = true,
+                UseChunkEncoding = false
+            };
+
+            await _s3Client.PutObjectAsync(request, cancellationToken);
+
+            var publicUrl = $"{_settings.PublicUrl.TrimEnd('/')}/{storagePath}";
+
+            _logger.LogInformation("Successfully uploaded slide image: {Key}", storagePath);
+
+            return R2UploadResult.SuccessResult(publicUrl, storagePath, imageBytes.Length, "image/png");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload slide image to {Path}", storagePath);
+            return R2UploadResult.FailureResult($"Slide image upload failed: {ex.Message}");
+        }
+    }
+
+    #endregion
+
     #region Downloads
 
     public async Task<byte[]?> DownloadFileAsync(string path, CancellationToken cancellationToken = default)

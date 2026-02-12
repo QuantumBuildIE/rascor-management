@@ -81,6 +81,16 @@ public class FakeR2StorageService : IR2StorageService
             $"https://fake-r2.test/{key}", key, bytes.Length, "application/pdf"));
     }
 
+    public Task<R2UploadResult> UploadSlideImageAsync(
+        string storagePath,
+        byte[] imageBytes,
+        CancellationToken cancellationToken = default)
+    {
+        _files[storagePath] = imageBytes;
+        return Task.FromResult(R2UploadResult.SuccessResult(
+            $"https://fake-r2.test/{storagePath}", storagePath, imageBytes.Length, "image/png"));
+    }
+
     public Task<byte[]?> DownloadFileAsync(string path, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_files.TryGetValue(path, out var bytes) ? bytes : null);

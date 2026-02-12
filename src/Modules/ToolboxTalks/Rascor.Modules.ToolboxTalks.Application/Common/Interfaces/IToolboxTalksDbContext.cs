@@ -30,6 +30,10 @@ public interface IToolboxTalksDbContext
     // Certificate entities
     DbSet<ToolboxTalkCertificate> ToolboxTalkCertificates { get; }
 
+    // Slide entities
+    DbSet<ToolboxTalkSlide> ToolboxTalkSlides { get; }
+    DbSet<ToolboxTalkSlideTranslation> ToolboxTalkSlideTranslations { get; }
+
     // Subtitle processing entities
     DbSet<SubtitleProcessingJob> SubtitleProcessingJobs { get; }
     DbSet<SubtitleTranslation> SubtitleTranslations { get; }

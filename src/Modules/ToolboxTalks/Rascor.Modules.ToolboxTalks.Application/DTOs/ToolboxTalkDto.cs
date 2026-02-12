@@ -27,6 +27,11 @@ public record ToolboxTalkDto
     public bool GeneratedFromVideo { get; init; }
     public bool GeneratedFromPdf { get; init; }
 
+    // Slideshow settings
+    public bool GenerateSlidesFromPdf { get; init; }
+    public bool SlidesGenerated { get; init; }
+    public int SlideCount { get; init; }
+
     // Quiz randomization settings
     public int? QuizQuestionCount { get; init; }
     public bool ShuffleQuestions { get; init; }

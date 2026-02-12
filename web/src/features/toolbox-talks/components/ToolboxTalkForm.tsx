@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +30,7 @@ import { Switch } from '@/components/ui/switch';
 import { SectionEditor } from './SectionEditor';
 import { QuestionEditor } from './QuestionEditor';
 import { useCreateToolboxTalk, useUpdateToolboxTalk } from '@/lib/api/toolbox-talks';
+import { generateSlides } from '@/lib/api/toolbox-talks/toolbox-talks';
 import type {
   ToolboxTalk,
   ToolboxTalkFrequency,
@@ -78,6 +80,7 @@ const toolboxTalkFormSchema = z.object({
   isActive: z.boolean(),
   autoAssignToNewEmployees: z.boolean(),
   autoAssignDueDays: z.number().min(1).max(365),
+  generateSlidesFromPdf: z.boolean(),
   sections: z.array(sectionSchema),
   questions: z.array(questionSchema).optional(),
 }).refine(
@@ -125,8 +128,10 @@ interface ToolboxTalkFormProps {
 export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormProps) {
   const isEditing = !!talk;
 
+  const queryClient = useQueryClient();
   const createMutation = useCreateToolboxTalk();
   const updateMutation = useUpdateToolboxTalk();
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const form = useForm<ToolboxTalkFormValues>({
     resolver: zodResolver(toolboxTalkFormSchema) as any,
@@ -147,6 +152,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       isActive: talk?.isActive ?? true,
       autoAssignToNewEmployees: talk?.autoAssignToNewEmployees ?? false,
       autoAssignDueDays: talk?.autoAssignDueDays ?? 14,
+      generateSlidesFromPdf: talk?.generateSlidesFromPdf ?? false,
       sections: talk?.sections?.map((s) => ({
         id: s.id,
         sectionNumber: s.sectionNumber,
@@ -196,6 +202,21 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
   }, [watchUseQuestionPool, form]);
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  const handleRegenerateSlides = async () => {
+    if (!talk?.id) return;
+
+    setIsRegenerating(true);
+    try {
+      const result = await generateSlides(talk.id);
+      toast.success(`Regenerated ${result.slidesGenerated} slides`);
+      queryClient.invalidateQueries({ queryKey: ['toolbox-talk', talk.id] });
+    } catch {
+      toast.error('Failed to regenerate slides');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   async function onSubmit(values: ToolboxTalkFormValues) {
     // Custom validation for quiz requirements
@@ -251,6 +272,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
         isActive: values.isActive,
         autoAssignToNewEmployees: values.autoAssignToNewEmployees,
         autoAssignDueDays: values.autoAssignDueDays,
+        generateSlidesFromPdf: values.generateSlidesFromPdf,
         sections,
         questions,
       };
@@ -729,6 +751,67 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
             )}
           </CardContent>
         </Card>
+
+        {/* Animated Slideshow */}
+        {isEditing && (talk?.pdfUrl || talk?.pdfFileName) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Animated Slideshow</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="generateSlidesFromPdf"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Generate Slideshow from PDF</FormLabel>
+                      <FormDescription>
+                        Generate an animated slideshow from the PDF pages for a more engaging experience.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {talk?.slidesGenerated && (
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-muted-foreground">
+                    {talk.slideCount} slide{talk.slideCount !== 1 ? 's' : ''} generated
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRegenerateSlides}
+                    disabled={isRegenerating}
+                  >
+                    {isRegenerating ? (
+                      <LoadingSpinner className="mr-1 h-3 w-3" />
+                    ) : (
+                      <svg className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    )}
+                    Regenerate
+                  </Button>
+                </div>
+              )}
+
+              {form.watch('generateSlidesFromPdf') && !talk?.slidesGenerated && (
+                <p className="text-sm text-muted-foreground">
+                  Slides will be generated when you click &quot;Generate Content&quot;.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sections */}
         <SectionEditor form={form} fieldName="sections" />

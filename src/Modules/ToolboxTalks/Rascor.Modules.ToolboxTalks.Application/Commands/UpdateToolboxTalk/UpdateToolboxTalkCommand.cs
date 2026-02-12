@@ -32,6 +32,9 @@ public record UpdateToolboxTalkCommand : IRequest<ToolboxTalkDto>
     public bool AutoAssignToNewEmployees { get; init; } = false;
     public int AutoAssignDueDays { get; init; } = 14;
 
+    // Slideshow settings
+    public bool GenerateSlidesFromPdf { get; init; } = false;
+
     /// <summary>
     /// Content sections for this toolbox talk.
     /// Sections with null Id are created, existing sections are updated,

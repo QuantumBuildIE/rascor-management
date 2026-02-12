@@ -12,6 +12,7 @@ using Rascor.Modules.ToolboxTalks.Infrastructure.Services;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Pdf;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Storage;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Subtitles;
+using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Slideshow;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Services.Translations;
 
 namespace Rascor.Modules.ToolboxTalks.Infrastructure;
@@ -126,6 +127,12 @@ public static class ServiceCollectionExtensions
 
         // Register content deduplication service for detecting and reusing duplicate content
         services.AddScoped<IContentDeduplicationService, ContentDeduplicationService>();
+
+        // Register slideshow generation service (PDF page → slide images)
+        services.AddHttpClient<ISlideshowGenerationService, SlideshowGenerationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30); // 30 seconds for PDF download
+        });
 
         // Note: SignalR hubs are registered in Program.cs with app.MapHub<>()
         //   - SubtitleProcessingHub: /api/hubs/subtitle-processing

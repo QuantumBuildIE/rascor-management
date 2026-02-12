@@ -103,6 +103,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         toolboxTalk.UseQuestionPool = request.RequiresQuiz && request.UseQuestionPool;
         toolboxTalk.AutoAssignToNewEmployees = request.AutoAssignToNewEmployees;
         toolboxTalk.AutoAssignDueDays = request.AutoAssignDueDays;
+        toolboxTalk.GenerateSlidesFromPdf = request.GenerateSlidesFromPdf;
         toolboxTalk.UpdatedAt = DateTime.UtcNow;
         toolboxTalk.UpdatedBy = _currentUser.UserId;
 

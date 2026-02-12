@@ -27,6 +27,7 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             .Include(t => t.Sections.OrderBy(s => s.SectionNumber))
             .Include(t => t.Questions.OrderBy(q => q.QuestionNumber))
             .Include(t => t.Translations)
+            .Include(t => t.Slides.Where(s => !s.IsDeleted))
             .Where(t => t.Id == request.Id && t.TenantId == request.TenantId && !t.IsDeleted)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -70,6 +71,9 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             PdfFileName = talk.PdfFileName,
             GeneratedFromVideo = talk.GeneratedFromVideo,
             GeneratedFromPdf = talk.GeneratedFromPdf,
+            GenerateSlidesFromPdf = talk.GenerateSlidesFromPdf,
+            SlidesGenerated = talk.SlidesGenerated,
+            SlideCount = talk.Slides.Count,
             QuizQuestionCount = talk.QuizQuestionCount,
             ShuffleQuestions = talk.ShuffleQuestions,
             ShuffleOptions = talk.ShuffleOptions,

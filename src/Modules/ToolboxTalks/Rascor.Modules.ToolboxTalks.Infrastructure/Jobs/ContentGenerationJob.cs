@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Commands.GenerateContentTranslations;
+using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Infrastructure.Hubs;
@@ -24,23 +25,29 @@ public class ContentGenerationJob
     private readonly IContentGenerationService _generationService;
     private readonly IHubContext<ContentGenerationHub> _hubContext;
     private readonly ICoreDbContext _coreDbContext;
+    private readonly IToolboxTalksDbContext _toolboxTalksDbContext;
     private readonly ISender _sender;
     private readonly ILanguageCodeService _languageCodeService;
+    private readonly ISlideshowGenerationService _slideshowGenerationService;
     private readonly ILogger<ContentGenerationJob> _logger;
 
     public ContentGenerationJob(
         IContentGenerationService generationService,
         IHubContext<ContentGenerationHub> hubContext,
         ICoreDbContext coreDbContext,
+        IToolboxTalksDbContext toolboxTalksDbContext,
         ISender sender,
         ILanguageCodeService languageCodeService,
+        ISlideshowGenerationService slideshowGenerationService,
         ILogger<ContentGenerationJob> logger)
     {
         _generationService = generationService;
         _hubContext = hubContext;
         _coreDbContext = coreDbContext;
+        _toolboxTalksDbContext = toolboxTalksDbContext;
         _sender = sender;
         _languageCodeService = languageCodeService;
+        _slideshowGenerationService = slideshowGenerationService;
         _logger = logger;
     }
 
@@ -117,6 +124,9 @@ public class ContentGenerationJob
                     "Sections created: {SectionCount}, Questions created: {QuestionCount}, " +
                     "HasFinalPortionQuestion: {HasFinalQuestion}. Now starting auto-translation...",
                     toolboxTalkId, result.SectionsGenerated, result.QuestionsGenerated, result.HasFinalPortionQuestion);
+
+                // Generate slideshow from PDF if enabled
+                await AutoGenerateSlidesAsync(toolboxTalkId, tenantId, connectionId, cancellationToken);
 
                 await AutoGenerateTranslationsAsync(toolboxTalkId, tenantId, connectionId, cancellationToken);
             }
@@ -248,6 +258,94 @@ public class ContentGenerationJob
         }
 
         return $"Content generated successfully ({result.SectionsGenerated} sections, {result.QuestionsGenerated} questions)";
+    }
+
+    /// <summary>
+    /// Automatically generates slideshow slides from the PDF if the toolbox talk has
+    /// GenerateSlidesFromPdf enabled and has a PDF uploaded. Failures are logged
+    /// but do not affect the overall content generation result.
+    /// </summary>
+    private async Task AutoGenerateSlidesAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        string? connectionId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check if the toolbox talk has slideshow generation enabled
+            var talk = await _toolboxTalksDbContext.ToolboxTalks
+                .IgnoreQueryFilters()
+                .Where(t => t.Id == toolboxTalkId && t.TenantId == tenantId && !t.IsDeleted)
+                .Select(t => new { t.GenerateSlidesFromPdf, t.PdfUrl })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (talk == null || !talk.GenerateSlidesFromPdf || string.IsNullOrEmpty(talk.PdfUrl))
+            {
+                _logger.LogInformation(
+                    "Slideshow generation skipped for ToolboxTalk {ToolboxTalkId}. " +
+                    "GenerateSlidesFromPdf={Enabled}, HasPdf={HasPdf}",
+                    toolboxTalkId,
+                    talk?.GenerateSlidesFromPdf ?? false,
+                    !string.IsNullOrEmpty(talk?.PdfUrl));
+                return;
+            }
+
+            _logger.LogInformation(
+                "Auto-generating slideshow for ToolboxTalk {ToolboxTalkId}...",
+                toolboxTalkId);
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                new ContentGenerationProgress(
+                    "GeneratingSlides", 90,
+                    "Generating slideshow from PDF..."));
+
+            var slideResult = await _slideshowGenerationService.GenerateSlidesFromPdfAsync(
+                tenantId, toolboxTalkId, cancellationToken);
+
+            if (slideResult.Success)
+            {
+                _logger.LogInformation(
+                    "Slideshow generated for ToolboxTalk {ToolboxTalkId}: {SlideCount} slides",
+                    toolboxTalkId, slideResult.Data);
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "GeneratingSlides", 92,
+                        $"Slideshow generated ({slideResult.Data} slides)."));
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Slideshow generation failed for ToolboxTalk {ToolboxTalkId}: {Errors}",
+                    toolboxTalkId, string.Join("; ", slideResult.Errors));
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "GeneratingSlides", 92,
+                        "Slideshow generation failed. Slides can be generated manually."));
+            }
+        }
+        catch (Exception ex)
+        {
+            // Slideshow failure should never fail the content generation job
+            _logger.LogError(ex,
+                "Slideshow generation failed unexpectedly for ToolboxTalk {ToolboxTalkId}. " +
+                "Content generation was successful. Slides can be generated manually.",
+                toolboxTalkId);
+
+            try
+            {
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    new ContentGenerationProgress(
+                        "GeneratingSlides", 92,
+                        "Auto-slideshow generation skipped due to an error. Slides can be generated manually."));
+            }
+            catch
+            {
+                // Swallow - we're already in error handling
+            }
+        }
     }
 
     /// <summary>
