@@ -18,6 +18,8 @@ export { TalkViewer } from './TalkViewer';
 export { TalkCard, TalkCardSkeleton } from './TalkCard';
 export { SectionContent, SectionContentSkeleton } from './SectionContent';
 export { VideoPlayer, VideoPlayerSkeleton } from './VideoPlayer';
+export { Slideshow } from './Slideshow';
+export { SlideshowSection } from './SlideshowSection';
 export { QuizSection, QuizSectionSkeleton } from './QuizSection';
 export { SignatureCapture, SignatureCaptureSkeleton } from './SignatureCapture';
 export { CompletionSuccess, CompletionSuccessSkeleton } from './CompletionSuccess';

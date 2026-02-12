@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 
 import { SectionContent } from './SectionContent';
 import { VideoPlayer } from './VideoPlayer';
+import { SlideshowSection } from './SlideshowSection';
 import { QuizSection } from './QuizSection';
 import { SignatureCapture } from './SignatureCapture';
 import { CompletionSuccess } from './CompletionSuccess';
@@ -491,6 +492,10 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
                 scheduledTalkId={scheduledTalkId}
                 preferredLanguageCode={talk.employeePreferredLanguage}
               />
+              <SlideshowSection
+                scheduledTalkId={scheduledTalkId}
+                languageCode={talk.employeePreferredLanguage}
+              />
               <div className="flex justify-end">
                 <Button
                   onClick={() => {
@@ -516,6 +521,12 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
           )}
 
           {/* Sections step */}
+          {currentStep === 'sections' && !talk.videoUrl && (
+            <SlideshowSection
+              scheduledTalkId={scheduledTalkId}
+              languageCode={talk.employeePreferredLanguage}
+            />
+          )}
           {currentStep === 'sections' && talk.sections[currentSectionIndex] && (
             <SectionContent
               section={talk.sections[currentSectionIndex]}

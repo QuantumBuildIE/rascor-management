@@ -123,3 +123,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Slideshow: Ken Burns Effect */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.1) translate(-2%, -1%);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 12s ease-out forwards;
+}
+
+/* Slideshow: Progress Bar */
+@keyframes slideshow-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.slideshow-progress {
+  animation: slideshow-progress var(--slideshow-duration, 10000ms) linear;
+}
