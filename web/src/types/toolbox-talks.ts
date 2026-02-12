@@ -105,6 +105,11 @@ export interface ToolboxTalk {
   // Auto-assignment settings
   autoAssignToNewEmployees: boolean;
   autoAssignDueDays: number;
+  // Certificate settings
+  generateCertificate: boolean;
+  // Refresher settings
+  requiresRefresher: boolean;
+  refresherIntervalMonths: number;
   sections: ToolboxTalkSection[];
   questions: ToolboxTalkQuestion[];
   translations: ToolboxTalkTranslation[];
@@ -543,6 +548,11 @@ export interface CreateToolboxTalkRequest {
   autoAssignDueDays?: number;
   // Slideshow settings
   generateSlidesFromPdf?: boolean;
+  // Certificate settings
+  generateCertificate?: boolean;
+  // Refresher settings
+  requiresRefresher?: boolean;
+  refresherIntervalMonths?: number;
   sections: CreateToolboxTalkSectionRequest[];
   questions?: CreateToolboxTalkQuestionRequest[];
 }

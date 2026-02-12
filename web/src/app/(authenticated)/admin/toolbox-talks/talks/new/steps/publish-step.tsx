@@ -5,9 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Info,
   CheckCircle2,
@@ -23,9 +32,15 @@ import {
   Target,
   Clock,
   Sparkles,
+  Settings,
+  Presentation,
+  RefreshCw,
+  Award,
+  UserPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateToolboxTalk } from '@/lib/api/toolbox-talks/toolbox-talks';
+import { SOURCE_LANGUAGE_OPTIONS } from '@/features/toolbox-talks/constants';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
 import type {
   CreateToolboxTalkSectionRequest,
@@ -42,16 +57,35 @@ interface PublishStepProps {
   onComplete: () => void;
 }
 
+// Reusable section component for consistent card styling
+function SettingsSection({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Icon className="h-5 w-5 text-muted-foreground" />
+          {title}
+        </CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent className="space-y-4">{children}</CardContent>
+    </Card>
+  );
+}
+
 // Transform wizard section to API format
 function transformSection(section: GeneratedSection): CreateToolboxTalkSectionRequest {
-  console.log('[DEBUG] transformSection input:', {
-    id: section.id,
-    sortOrder: section.sortOrder,
-    source: section.source,
-    title: section.title?.substring(0, 40),
-  });
-
-  const result = {
+  return {
     id: section.id,
     sectionNumber: section.sortOrder,
     title: section.title,
@@ -59,26 +93,11 @@ function transformSection(section: GeneratedSection): CreateToolboxTalkSectionRe
     requiresAcknowledgment: section.requiresAcknowledgment,
     source: section.source,
   };
-
-  console.log('[DEBUG] transformSection output:', {
-    id: result.id,
-    sectionNumber: result.sectionNumber,
-    source: result.source,
-  });
-
-  return result;
 }
 
 // Transform wizard question to API format
 function transformQuestion(question: GeneratedQuestion): CreateToolboxTalkQuestionRequest {
-  console.log('[DEBUG] transformQuestion input:', {
-    id: question.id,
-    sortOrder: question.sortOrder,
-    source: question.source,
-    questionType: question.questionType,
-  });
-
-  const result = {
+  return {
     id: question.id,
     questionNumber: question.sortOrder,
     questionText: question.questionText,
@@ -88,14 +107,6 @@ function transformQuestion(question: GeneratedQuestion): CreateToolboxTalkQuesti
     points: question.points,
     source: question.source,
   };
-
-  console.log('[DEBUG] transformQuestion output:', {
-    id: result.id,
-    questionNumber: result.questionNumber,
-    source: result.source,
-  });
-
-  return result;
 }
 
 // Map wizard video source to API video source
@@ -128,6 +139,7 @@ export function PublishStep({
   const hasQuestions = data.questions.length > 0;
   const hasVideo = !!data.videoUrl;
   const hasPdf = !!data.pdfUrl;
+  const questionCount = data.questions.length;
 
   // Calculate quiz stats
   const totalPoints = useMemo(
@@ -140,8 +152,7 @@ export function PublishStep({
     [data.passThreshold, totalPoints]
   );
 
-  // Calculate minimum correct answers needed (assuming equal points)
-  const avgPointsPerQuestion = totalPoints / (data.questions.length || 1);
+  const avgPointsPerQuestion = totalPoints / (questionCount || 1);
   const minCorrectAnswers = Math.ceil(passingPoints / avgPointsPerQuestion);
 
   // Validation checks
@@ -152,14 +163,13 @@ export function PublishStep({
   if (data.requiresQuiz && !hasQuestions) {
     validationIssues.push('Quiz is enabled but no questions have been added');
   }
-  if (data.requiresQuiz && data.questions.length < 3) {
+  if (data.requiresQuiz && questionCount < 3) {
     validationIssues.push('At least 3 quiz questions are recommended');
   }
   if (data.passThreshold < 50 || data.passThreshold > 100) {
     validationIssues.push('Pass threshold must be between 50% and 100%');
   }
 
-  // Check for incomplete sections/questions
   const incompleteSections = data.sections.filter(
     (s) => !s.title.trim() || !s.content.trim()
   );
@@ -182,7 +192,6 @@ export function PublishStep({
   }
 
   const canPublish = validationIssues.length === 0;
-  // Allow saving as draft with fewer restrictions
   const canSaveDraft = hasSections || hasQuestions || data.title;
 
   const saveToolboxTalk = async (status: ToolboxTalkStatus) => {
@@ -193,33 +202,8 @@ export function PublishStep({
       return;
     }
 
-    console.log('[DEBUG] saveToolboxTalk called with status:', status);
-    console.log('[DEBUG] Sections in wizard state:', data.sections.map(s => ({
-      id: s.id,
-      sortOrder: s.sortOrder,
-      source: s.source,
-      title: s.title?.substring(0, 30),
-    })));
-    console.log('[DEBUG] Questions in wizard state:', data.questions.map(q => ({
-      id: q.id,
-      sortOrder: q.sortOrder,
-      source: q.source,
-      questionType: q.questionType,
-    })));
-
     const transformedSections = data.sections.map(transformSection);
     const transformedQuestions = data.requiresQuiz ? data.questions.map(transformQuestion) : [];
-
-    console.log('[DEBUG] Transformed sections to send:', transformedSections.map(s => ({
-      id: s.id,
-      sectionNumber: s.sectionNumber,
-      source: s.source,
-    })));
-    console.log('[DEBUG] Transformed questions to send:', transformedQuestions.map(q => ({
-      id: q.id,
-      questionNumber: q.questionNumber,
-      source: q.source,
-    })));
 
     try {
       await updateToolboxTalk(data.id, {
@@ -233,6 +217,17 @@ export function PublishStep({
         requiresQuiz: data.requiresQuiz,
         passingScore: data.requiresQuiz ? data.passThreshold : undefined,
         isActive: status === 'Published' ? data.isActive : false,
+        sourceLanguageCode: data.sourceLanguageCode,
+        shuffleQuestions: data.shuffleQuestions,
+        shuffleOptions: data.shuffleOptions,
+        useQuestionPool: data.useQuestionPool,
+        quizQuestionCount: data.quizQuestionCount,
+        generateSlidesFromPdf: data.generateSlidesFromPdf,
+        requiresRefresher: data.requiresRefresher,
+        refresherIntervalMonths: data.refresherIntervalMonths,
+        generateCertificate: data.generateCertificate,
+        autoAssignToNewEmployees: data.autoAssignToNewEmployees,
+        autoAssignDueDays: data.autoAssignDueDays,
         sections: transformedSections,
         questions: transformedQuestions,
       });
@@ -253,7 +248,6 @@ export function PublishStep({
         description: 'It is now available for scheduling and assignments.',
       });
 
-      // Wait a moment for the success animation, then redirect
       setTimeout(() => {
         onComplete();
       }, 2000);
@@ -322,7 +316,6 @@ export function PublishStep({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Title and Description */}
           <div>
             <h4 className="text-lg font-semibold">{data.title || 'Untitled'}</h4>
             <p className="text-sm text-muted-foreground line-clamp-2">
@@ -337,7 +330,6 @@ export function PublishStep({
 
           <Separator />
 
-          {/* Content Sources */}
           <div className="space-y-2">
             <h5 className="text-sm font-medium text-muted-foreground">Content Sources</h5>
             <div className="flex flex-wrap gap-3">
@@ -383,7 +375,6 @@ export function PublishStep({
 
           <Separator />
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="flex items-center justify-center gap-1 mb-1">
@@ -397,7 +388,7 @@ export function PublishStep({
               <div className="flex items-center justify-center gap-1 mb-1">
                 <HelpCircle className="h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="text-2xl font-bold">{data.questions.length}</p>
+              <p className="text-2xl font-bold">{questionCount}</p>
               <p className="text-xs text-muted-foreground">Questions</p>
             </div>
 
@@ -418,7 +409,6 @@ export function PublishStep({
             </div>
           </div>
 
-          {/* Final Portion Question Indicator */}
           {hasVideo && data.questions.some((q) => q.source === 'Video') && (
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900">
               <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -430,47 +420,76 @@ export function PublishStep({
         </CardContent>
       </Card>
 
-      {/* Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium">Quiz Settings</h3>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="requiresQuiz" className="text-base">
-              Require Quiz
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Employees must pass a quiz to complete this training
-            </p>
-          </div>
-          <Switch
-            id="requiresQuiz"
-            checked={data.requiresQuiz}
-            onCheckedChange={(checked) => updateData({ requiresQuiz: checked })}
-          />
-        </div>
-
-        {data.requiresQuiz && (
-          <div className="space-y-4 rounded-lg border p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="passThreshold">Passing Score</Label>
-                <span className="text-2xl font-bold text-primary">
-                  {data.passThreshold}%
-                </span>
+      {/* Settings Sections - Two Column Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Basic Settings */}
+          <SettingsSection
+            icon={Settings}
+            title="Basic Settings"
+            description="Core configuration for this toolbox talk"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Active</Label>
+                <p className="text-sm text-muted-foreground">
+                  Inactive talks cannot be assigned to employees
+                </p>
               </div>
+              <Switch
+                checked={data.isActive}
+                onCheckedChange={(checked) => updateData({ isActive: checked })}
+              />
+            </div>
 
-              {/* Custom slider using input range */}
-              <div className="space-y-2">
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Original Language</Label>
+              <Select
+                value={data.sourceLanguageCode}
+                onValueChange={(value) => updateData({ sourceLanguageCode: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_LANGUAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                The language of the original content. Translations will be generated from this language.
+              </p>
+            </div>
+          </SettingsSection>
+
+          {/* Video Settings */}
+          {hasVideo && (
+            <SettingsSection
+              icon={Video}
+              title="Video Settings"
+              description="Configure video playback requirements"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Minimum Watch Percentage</Label>
+                  <span className="text-2xl font-bold text-primary">
+                    {data.minimumVideoWatchPercent}%
+                  </span>
+                </div>
                 <input
-                  id="passThreshold"
                   type="range"
                   min={50}
                   max={100}
                   step={5}
-                  value={data.passThreshold}
+                  value={data.minimumVideoWatchPercent}
                   onChange={(e) =>
-                    updateData({ passThreshold: parseInt(e.target.value) || 80 })
+                    updateData({ minimumVideoWatchPercent: parseInt(e.target.value) || 80 })
                   }
                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                 />
@@ -479,89 +498,288 @@ export function PublishStep({
                   <span>75%</span>
                   <span>100%</span>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Employees must watch at least this percentage of the video
+                </p>
               </div>
+            </SettingsSection>
+          )}
 
-              {/* Passing preview */}
-              {hasQuestions && (
-                <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                  <p className="font-medium">What this means:</p>
-                  <p className="text-muted-foreground mt-1">
-                    Employees must score at least{' '}
-                    <span className="font-medium text-foreground">
-                      {passingPoints} of {totalPoints} points
-                    </span>
-                    {data.questions.every((q) => q.points === 1) && (
-                      <>
-                        {' '}
-                        ({minCorrectAnswers} of {data.questions.length} questions
-                        correct)
-                      </>
-                    )}
+          {/* Slideshow Settings */}
+          {hasPdf && (
+            <SettingsSection
+              icon={Presentation}
+              title="Slideshow Settings"
+              description="Generate an animated presentation from the PDF"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Generate Animated Slideshow</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Creates an auto-playing visual presentation with Ken Burns animations
+                    and translated captions
                   </p>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {hasVideo && (
-          <>
-            <Separator />
-            <h3 className="font-medium">Video Settings</h3>
-
-            <div className="rounded-lg border p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="minimumVideoWatchPercent">
-                  Minimum Watch Percentage
-                </Label>
-                <span className="text-2xl font-bold text-primary">
-                  {data.minimumVideoWatchPercent}%
-                </span>
+                <Switch
+                  checked={data.generateSlidesFromPdf}
+                  onCheckedChange={(checked) => updateData({ generateSlidesFromPdf: checked })}
+                />
               </div>
+            </SettingsSection>
+          )}
 
-              <input
-                id="minimumVideoWatchPercent"
-                type="range"
-                min={50}
-                max={100}
-                step={5}
-                value={data.minimumVideoWatchPercent}
-                onChange={(e) =>
-                  updateData({
-                    minimumVideoWatchPercent: parseInt(e.target.value) || 80,
-                  })
-                }
-                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+          {/* Quiz Settings */}
+          <SettingsSection
+            icon={HelpCircle}
+            title="Quiz Settings"
+            description="Configure quiz requirements and behavior"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Require Quiz</Label>
+                <p className="text-sm text-muted-foreground">
+                  Employees must pass the quiz to complete this talk
+                </p>
+              </div>
+              <Switch
+                checked={data.requiresQuiz}
+                onCheckedChange={(checked) => updateData({ requiresQuiz: checked })}
               />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>50%</span>
-                <span>75%</span>
-                <span>100%</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Employees must watch at least this percentage of the video before
-                proceeding
-              </p>
             </div>
-          </>
-        )}
 
-        <Separator />
+            {data.requiresQuiz && (
+              <>
+                {/* Passing Score */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label>Passing Score</Label>
+                    <span className="text-2xl font-bold text-primary">
+                      {data.passThreshold}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={50}
+                    max={100}
+                    step={5}
+                    value={data.passThreshold}
+                    onChange={(e) =>
+                      updateData({ passThreshold: parseInt(e.target.value) || 80 })
+                    }
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                  </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="isActive" className="text-base">
-              Active Status
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Active talks can be scheduled and assigned to employees
-            </p>
-          </div>
-          <Switch
-            id="isActive"
-            checked={data.isActive}
-            onCheckedChange={(checked) => updateData({ isActive: checked })}
-          />
+                  {hasQuestions && (
+                    <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                      <p className="font-medium">What this means:</p>
+                      <p className="text-muted-foreground mt-1">
+                        Employees must score at least{' '}
+                        <span className="font-medium text-foreground">
+                          {passingPoints} of {totalPoints} points
+                        </span>
+                        {data.questions.every((q) => q.points === 1) && (
+                          <>
+                            {' '}
+                            ({minCorrectAnswers} of {questionCount} questions correct)
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Randomization */}
+                <div className="space-y-4 pt-4 border-t">
+                  <Label className="text-sm font-medium">Randomization</Label>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="shuffleQuestions"
+                        checked={data.shuffleQuestions}
+                        onCheckedChange={(checked) =>
+                          updateData({ shuffleQuestions: !!checked })
+                        }
+                      />
+                      <Label htmlFor="shuffleQuestions" className="font-normal">
+                        Shuffle question order
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="shuffleOptions"
+                        checked={data.shuffleOptions}
+                        onCheckedChange={(checked) =>
+                          updateData({ shuffleOptions: !!checked })
+                        }
+                      />
+                      <Label htmlFor="shuffleOptions" className="font-normal">
+                        Shuffle answer options
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="useQuestionPool"
+                        checked={data.useQuestionPool}
+                        onCheckedChange={(checked) =>
+                          updateData({ useQuestionPool: !!checked })
+                        }
+                      />
+                      <Label htmlFor="useQuestionPool" className="font-normal">
+                        Use question pool (show different questions each attempt)
+                      </Label>
+                    </div>
+
+                    {data.useQuestionPool && (
+                      <div className="ml-6 space-y-2">
+                        <Label htmlFor="quizQuestionCount">Questions per attempt</Label>
+                        <Input
+                          id="quizQuestionCount"
+                          type="number"
+                          min={1}
+                          max={questionCount}
+                          className="w-24"
+                          value={data.quizQuestionCount}
+                          onChange={(e) =>
+                            updateData({
+                              quizQuestionCount: parseInt(e.target.value) || 5,
+                            })
+                          }
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          You have {questionCount} questions. Pool mode requires at least{' '}
+                          {data.quizQuestionCount * 2} questions.
+                        </p>
+                        {questionCount < data.quizQuestionCount * 2 && (
+                          <p className="text-sm text-amber-600">
+                            Add more questions or reduce questions per attempt
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </SettingsSection>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Refresher Training */}
+          <SettingsSection
+            icon={RefreshCw}
+            title="Refresher Training"
+            description="Schedule automatic refresher training for employees"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Require Refresher</Label>
+                <p className="text-sm text-muted-foreground">
+                  Employees will be automatically scheduled for refresher training
+                </p>
+              </div>
+              <Switch
+                checked={data.requiresRefresher}
+                onCheckedChange={(checked) => updateData({ requiresRefresher: checked })}
+              />
+            </div>
+
+            {data.requiresRefresher && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label htmlFor="refresherInterval">Refresher Interval</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="refresherInterval"
+                    type="number"
+                    min={1}
+                    max={60}
+                    className="w-24"
+                    value={data.refresherIntervalMonths}
+                    onChange={(e) =>
+                      updateData({
+                        refresherIntervalMonths: parseInt(e.target.value) || 12,
+                      })
+                    }
+                  />
+                  <span className="text-sm text-muted-foreground">months after completion</span>
+                </div>
+              </div>
+            )}
+          </SettingsSection>
+
+          {/* Certificate */}
+          <SettingsSection
+            icon={Award}
+            title="Certificate"
+            description="Award certificates upon completion"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Generate Certificate</Label>
+                <p className="text-sm text-muted-foreground">
+                  Employees will receive a PDF certificate when they complete this talk
+                </p>
+              </div>
+              <Switch
+                checked={data.generateCertificate}
+                onCheckedChange={(checked) => updateData({ generateCertificate: checked })}
+              />
+            </div>
+          </SettingsSection>
+
+          {/* Auto-Assignment */}
+          <SettingsSection
+            icon={UserPlus}
+            title="Auto-Assignment"
+            description="Automatically assign to new employees"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Auto-Assign to New Employees</Label>
+                <p className="text-sm text-muted-foreground">
+                  Automatically assign this talk when new employees are created
+                </p>
+              </div>
+              <Switch
+                checked={data.autoAssignToNewEmployees}
+                onCheckedChange={(checked) =>
+                  updateData({ autoAssignToNewEmployees: checked })
+                }
+              />
+            </div>
+
+            {data.autoAssignToNewEmployees && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label htmlFor="autoAssignDueDays">Due Date</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="autoAssignDueDays"
+                    type="number"
+                    min={1}
+                    max={365}
+                    className="w-24"
+                    value={data.autoAssignDueDays}
+                    onChange={(e) =>
+                      updateData({
+                        autoAssignDueDays: parseInt(e.target.value) || 14,
+                      })
+                    }
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    days after employee start date
+                  </span>
+                </div>
+              </div>
+            )}
+          </SettingsSection>
         </div>
       </div>
 

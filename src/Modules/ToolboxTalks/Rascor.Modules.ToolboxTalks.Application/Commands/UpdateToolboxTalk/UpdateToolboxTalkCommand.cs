@@ -38,6 +38,13 @@ public record UpdateToolboxTalkCommand : IRequest<ToolboxTalkDto>
     // Slideshow settings
     public bool GenerateSlidesFromPdf { get; init; } = false;
 
+    // Certificate settings
+    public bool GenerateCertificate { get; init; } = false;
+
+    // Refresher settings
+    public bool RequiresRefresher { get; init; } = false;
+    public int RefresherIntervalMonths { get; init; } = 12;
+
     /// <summary>
     /// Content sections for this toolbox talk.
     /// Sections with null Id are created, existing sections are updated,

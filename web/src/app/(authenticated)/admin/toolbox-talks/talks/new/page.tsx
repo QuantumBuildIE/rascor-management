@@ -66,6 +66,29 @@ export interface ToolboxTalkWizardData {
   requiresQuiz: boolean;
   isActive: boolean;
   status: 'Draft' | 'Published';
+
+  // Source language
+  sourceLanguageCode: string;
+
+  // Quiz randomization
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  useQuestionPool: boolean;
+  quizQuestionCount: number;
+
+  // Slideshow
+  generateSlidesFromPdf: boolean;
+
+  // Refresher
+  requiresRefresher: boolean;
+  refresherIntervalMonths: number;
+
+  // Certificate
+  generateCertificate: boolean;
+
+  // Auto-assignment
+  autoAssignToNewEmployees: boolean;
+  autoAssignDueDays: number;
 }
 
 const STEPS = [
@@ -97,6 +120,17 @@ const initialData: ToolboxTalkWizardData = {
   requiresQuiz: true,
   isActive: false,
   status: 'Draft',
+  sourceLanguageCode: 'en',
+  shuffleQuestions: false,
+  shuffleOptions: false,
+  useQuestionPool: false,
+  quizQuestionCount: 5,
+  generateSlidesFromPdf: false,
+  requiresRefresher: false,
+  refresherIntervalMonths: 12,
+  generateCertificate: false,
+  autoAssignToNewEmployees: false,
+  autoAssignDueDays: 14,
 };
 
 export default function NewToolboxTalkWizard() {

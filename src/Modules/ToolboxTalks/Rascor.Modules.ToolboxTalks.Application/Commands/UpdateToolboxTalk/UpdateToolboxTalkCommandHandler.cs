@@ -105,6 +105,9 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         toolboxTalk.AutoAssignDueDays = request.AutoAssignDueDays;
         toolboxTalk.SourceLanguageCode = request.SourceLanguageCode;
         toolboxTalk.GenerateSlidesFromPdf = request.GenerateSlidesFromPdf;
+        toolboxTalk.GenerateCertificate = request.GenerateCertificate;
+        toolboxTalk.RequiresRefresher = request.RequiresRefresher;
+        toolboxTalk.RefresherIntervalMonths = request.RefresherIntervalMonths;
         toolboxTalk.UpdatedAt = DateTime.UtcNow;
         toolboxTalk.UpdatedBy = _currentUser.UserId;
 
@@ -359,6 +362,9 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             AutoAssignToNewEmployees = entity.AutoAssignToNewEmployees,
             AutoAssignDueDays = entity.AutoAssignDueDays,
             SourceLanguageCode = entity.SourceLanguageCode,
+            GenerateCertificate = entity.GenerateCertificate,
+            RequiresRefresher = entity.RequiresRefresher,
+            RefresherIntervalMonths = entity.RefresherIntervalMonths,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             Sections = sections

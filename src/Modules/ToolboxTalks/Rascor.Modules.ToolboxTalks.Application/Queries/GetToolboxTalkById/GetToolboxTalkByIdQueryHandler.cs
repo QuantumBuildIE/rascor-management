@@ -81,6 +81,9 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             AutoAssignToNewEmployees = talk.AutoAssignToNewEmployees,
             AutoAssignDueDays = talk.AutoAssignDueDays,
             SourceLanguageCode = talk.SourceLanguageCode,
+            GenerateCertificate = talk.GenerateCertificate,
+            RequiresRefresher = talk.RequiresRefresher,
+            RefresherIntervalMonths = talk.RefresherIntervalMonths,
             Sections = talk.Sections.Select(s => new ToolboxTalkSectionDto
             {
                 Id = s.Id,

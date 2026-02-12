@@ -45,6 +45,13 @@ public record ToolboxTalkDto
     public bool AutoAssignToNewEmployees { get; init; }
     public int AutoAssignDueDays { get; init; }
 
+    // Certificate settings
+    public bool GenerateCertificate { get; init; }
+
+    // Refresher settings
+    public bool RequiresRefresher { get; init; }
+    public int RefresherIntervalMonths { get; init; }
+
     // Child collections
     public List<ToolboxTalkSectionDto> Sections { get; init; } = new();
     public List<ToolboxTalkQuestionDto> Questions { get; init; } = new();
