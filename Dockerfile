@@ -5,11 +5,11 @@ WORKDIR /src
 COPY *.sln ./
 COPY src/ ./src/
 
-# Restore
-RUN dotnet restore src/Rascor.API/Rascor.API.csproj
+# Restore (with RID to include platform-specific native assets like PDFium, SkiaSharp)
+RUN dotnet restore src/Rascor.API/Rascor.API.csproj -r linux-x64
 
-# Build and publish
-RUN dotnet publish src/Rascor.API/Rascor.API.csproj -c Release -o /app/publish --no-restore
+# Build and publish (framework-dependent for linux-x64)
+RUN dotnet publish src/Rascor.API/Rascor.API.csproj -c Release -o /app/publish --no-restore -r linux-x64 --self-contained false
 
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
