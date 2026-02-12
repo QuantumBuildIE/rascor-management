@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import {
   PencilIcon,
@@ -19,7 +20,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Accordion,
@@ -29,9 +29,7 @@ import {
 } from '@/components/ui/accordion';
 import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
 import { useToolboxTalk, useDeleteToolboxTalk } from '@/lib/api/toolbox-talks';
-import { SubtitleProcessingPanel } from './SubtitleProcessingPanel';
-import { ContentTranslationPanel } from './ContentTranslationPanel';
-import type { ToolboxTalk, RecentCompletion } from '@/types/toolbox-talks';
+import type { ToolboxTalk } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -290,20 +288,14 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
         </Card>
       </div>
 
-      {/* Subtitle Processing - only show if talk has a video */}
-      {talk.videoSource !== 'None' && talk.videoUrl && (
-        <SubtitleProcessingPanel
-          toolboxTalkId={talk.id}
-          currentVideoUrl={talk.videoUrl}
-        />
-      )}
-
-      {/* Content Translations - show if talk has sections or questions */}
-      {(talk.sections.length > 0 || talk.questions.length > 0) && (
-        <ContentTranslationPanel
-          toolboxTalkId={talk.id}
-          existingTranslations={talk.translations}
-        />
+      {/* Translation note */}
+      {(talk.videoSource !== 'None' || talk.sections.length > 0 || talk.questions.length > 0) && (
+        <p className="text-sm text-muted-foreground">
+          To generate translations or subtitles, use the{' '}
+          <Link href={`${basePath}/${talk.id}/edit`} className="underline text-primary hover:text-primary/80">
+            Edit page
+          </Link>.
+        </p>
       )}
 
       {/* Sections Preview */}

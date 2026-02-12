@@ -30,6 +30,8 @@ import { Switch } from '@/components/ui/switch';
 import { SOURCE_LANGUAGE_OPTIONS, TOOLBOX_TALK_CATEGORIES } from '../constants';
 import { SectionEditor } from './SectionEditor';
 import { QuestionEditor } from './QuestionEditor';
+import { SubtitleProcessingPanel } from './SubtitleProcessingPanel';
+import { ContentTranslationPanel } from './ContentTranslationPanel';
 import { useCreateToolboxTalk, useUpdateToolboxTalk } from '@/lib/api/toolbox-talks';
 import { generateSlides } from '@/lib/api/toolbox-talks/toolbox-talks';
 import type {
@@ -882,6 +884,27 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
         {/* Questions (conditional) */}
         {watchRequiresQuiz && (
           <QuestionEditor form={form} fieldName="questions" />
+        )}
+
+        {/* Translation Panels - only visible when editing an existing talk */}
+        {isEditing && talk && (
+          <>
+            {/* Subtitle Processing - only show if talk has a video */}
+            {talk.videoSource !== 'None' && talk.videoUrl && (
+              <SubtitleProcessingPanel
+                toolboxTalkId={talk.id}
+                currentVideoUrl={talk.videoUrl}
+              />
+            )}
+
+            {/* Content Translations - show if talk has sections or questions */}
+            {(talk.sections.length > 0 || talk.questions.length > 0) && (
+              <ContentTranslationPanel
+                toolboxTalkId={talk.id}
+                existingTranslations={talk.translations}
+              />
+            )}
+          </>
         )}
 
         {/* Form actions */}
