@@ -36,13 +36,17 @@ public interface IContentGenerationService
 /// <param name="MinimumQuestions">Minimum number of quiz questions to generate (default: 5)</param>
 /// <param name="PassThreshold">Quiz pass threshold percentage (default: 80)</param>
 /// <param name="ReplaceExisting">True to replace existing content, false to append (default: true)</param>
+/// <param name="SourceLanguageCode">The language code of the original content (default: "en")</param>
+/// <param name="GenerateSlidesFromPdf">Whether to auto-generate slideshow from PDF after content generation</param>
 public record ContentGenerationOptions(
     bool IncludeVideo,
     bool IncludePdf,
     int MinimumSections = 7,
     int MinimumQuestions = 5,
     int PassThreshold = 80,
-    bool ReplaceExisting = true);
+    bool ReplaceExisting = true,
+    string SourceLanguageCode = "en",
+    bool GenerateSlidesFromPdf = false);
 
 /// <summary>
 /// Result of a content generation operation.

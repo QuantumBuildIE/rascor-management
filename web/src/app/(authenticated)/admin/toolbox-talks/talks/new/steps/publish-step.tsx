@@ -11,13 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Info,
   CheckCircle2,
   Loader2,
@@ -33,14 +26,12 @@ import {
   Clock,
   Sparkles,
   Settings,
-  Presentation,
   RefreshCw,
   Award,
   UserPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateToolboxTalk } from '@/lib/api/toolbox-talks/toolbox-talks';
-import { SOURCE_LANGUAGE_OPTIONS } from '@/features/toolbox-talks/constants';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
 import type {
   CreateToolboxTalkSectionRequest,
@@ -443,30 +434,6 @@ export function PublishStep({
                 onCheckedChange={(checked) => updateData({ isActive: checked })}
               />
             </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>Original Language</Label>
-              <Select
-                value={data.sourceLanguageCode}
-                onValueChange={(value) => updateData({ sourceLanguageCode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_LANGUAGE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                The language of the original content. Translations will be generated from this language.
-              </p>
-            </div>
           </SettingsSection>
 
           {/* Video Settings */}
@@ -502,29 +469,6 @@ export function PublishStep({
                 <p className="text-sm text-muted-foreground">
                   Employees must watch at least this percentage of the video
                 </p>
-              </div>
-            </SettingsSection>
-          )}
-
-          {/* Slideshow Settings */}
-          {hasPdf && (
-            <SettingsSection
-              icon={Presentation}
-              title="Slideshow Settings"
-              description="Generate an animated presentation from the PDF"
-            >
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Generate Animated Slideshow</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Creates an auto-playing visual presentation with Ken Burns animations
-                    and translated captions
-                  </p>
-                </div>
-                <Switch
-                  checked={data.generateSlidesFromPdf}
-                  onCheckedChange={(checked) => updateData({ generateSlidesFromPdf: checked })}
-                />
               </div>
             </SettingsSection>
           )}

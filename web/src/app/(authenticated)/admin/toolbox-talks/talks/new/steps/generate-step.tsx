@@ -9,6 +9,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Sparkles,
   Video,
   FileText,
@@ -19,6 +26,7 @@ import {
   Rocket,
   RefreshCw,
   ArrowRight,
+  Presentation,
 } from 'lucide-react';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
 import { generateToolboxTalkContent, getToolboxTalk, checkForDuplicate, reuseContent } from '@/lib/api/toolbox-talks/toolbox-talks';
@@ -26,6 +34,7 @@ import { getStoredToken } from '@/lib/api/client';
 import { HubConnectionBuilder, HubConnection, LogLevel, HubConnectionState } from '@microsoft/signalr';
 import type { SourceToolboxTalkInfo, FileHashType } from '@/types/toolbox-talks';
 import { DuplicateContentModal } from '@/features/toolbox-talks/components/DuplicateContentModal';
+import { SOURCE_LANGUAGE_OPTIONS } from '@/features/toolbox-talks/constants';
 import { toast } from 'sonner';
 
 interface GenerateStepProps {
@@ -761,6 +770,8 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         passThreshold: data.passThreshold,
         replaceExisting: true,
         connectionId: currentConnection.connectionId || '',
+        sourceLanguageCode: data.sourceLanguageCode,
+        generateSlidesFromPdf: data.generateSlidesFromPdf,
       });
 
       // Show initial progress while waiting for SignalR updates
@@ -930,6 +941,58 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                 </div>
               </div>
             </div>
+
+            {/* Source Language */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-medium">Original Language</h3>
+              <div className="space-y-2">
+                <Select
+                  value={data.sourceLanguageCode}
+                  onValueChange={(value) => updateData({ sourceLanguageCode: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_LANGUAGE_OPTIONS.map((lang) => (
+                      <SelectItem key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  The language of your video/PDF content. This helps AI understand and
+                  process the content correctly, and determines which languages to translate to.
+                </p>
+              </div>
+            </div>
+
+            {/* Slideshow Option - only if PDF exists */}
+            {hasPdf && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="font-medium flex items-center gap-2">
+                  <Presentation className="h-4 w-4" />
+                  Slideshow
+                </h3>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="generateSlideshow"
+                    checked={data.generateSlidesFromPdf}
+                    onCheckedChange={(checked) => updateData({ generateSlidesFromPdf: !!checked })}
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="generateSlideshow">
+                      Generate animated slideshow from PDF
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Creates an auto-playing visual presentation with Ken Burns animations
+                      and translated captions
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Generation Settings */}
             <div className="space-y-4 pt-4 border-t">

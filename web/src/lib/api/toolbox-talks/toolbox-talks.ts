@@ -184,6 +184,8 @@ export interface GenerateContentRequest {
   passThreshold?: number;
   replaceExisting?: boolean;
   connectionId: string;
+  sourceLanguageCode?: string;
+  generateSlidesFromPdf?: boolean;
 }
 
 export interface GenerateContentResponse {

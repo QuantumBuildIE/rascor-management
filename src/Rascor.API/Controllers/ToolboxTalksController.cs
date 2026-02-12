@@ -713,7 +713,9 @@ public class ToolboxTalksController : ControllerBase
                 MinimumSections: request.MinimumSections ?? 7,
                 MinimumQuestions: request.MinimumQuestions ?? 5,
                 PassThreshold: request.PassThreshold ?? 80,
-                ReplaceExisting: request.ReplaceExisting ?? true);
+                ReplaceExisting: request.ReplaceExisting ?? true,
+                SourceLanguageCode: request.SourceLanguageCode ?? "en",
+                GenerateSlidesFromPdf: request.GenerateSlidesFromPdf ?? false);
 
             // Queue the background job with tenant context
             var tenantId = _currentUserService.TenantId;
@@ -1330,6 +1332,17 @@ public record GenerateContentRequest
     /// Clients should connect to the ContentGenerationHub before calling this endpoint.
     /// </summary>
     public string? ConnectionId { get; init; }
+
+    /// <summary>
+    /// The language code of the original content (default: "en").
+    /// Used for auto-translation to exclude the source language.
+    /// </summary>
+    public string? SourceLanguageCode { get; init; }
+
+    /// <summary>
+    /// Whether to auto-generate an animated slideshow from the PDF after content generation.
+    /// </summary>
+    public bool? GenerateSlidesFromPdf { get; init; }
 }
 
 /// <summary>

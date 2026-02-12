@@ -92,6 +92,22 @@ public class ContentGenerationJob
 
         try
         {
+            // Save source language and slideshow settings to the entity BEFORE generation
+            // so auto-translation and auto-slideshow steps can read them from the DB
+            var talk = await _toolboxTalksDbContext.ToolboxTalks
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Id == toolboxTalkId && t.TenantId == tenantId && !t.IsDeleted, cancellationToken);
+
+            if (talk != null)
+            {
+                talk.SourceLanguageCode = options.SourceLanguageCode;
+                talk.GenerateSlidesFromPdf = options.GenerateSlidesFromPdf;
+                var saved = await _toolboxTalksDbContext.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation(
+                    "Saved generation settings for ToolboxTalk {ToolboxTalkId}: SourceLanguageCode={SourceLang}, GenerateSlidesFromPdf={GenerateSlides}, RowsSaved={Rows}",
+                    toolboxTalkId, options.SourceLanguageCode, options.GenerateSlidesFromPdf, saved);
+            }
+
             // Create progress reporter that sends updates via SignalR
             var progress = new Progress<ContentGenerationProgress>(async update =>
             {
