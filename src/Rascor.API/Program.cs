@@ -49,9 +49,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure PostgreSQL database
+// Configure PostgreSQL database with transient fault retry
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null);
+    }));
 
 // Register IStockManagementDbContext
 builder.Services.AddScoped<IStockManagementDbContext>(provider =>
@@ -199,67 +205,101 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Apply database migrations on startup
-using (var scope = app.Services.CreateScope())
+// Apply database migrations on startup with retry for transient failures
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
-    try
+    var maxRetries = 5;
+    var delay = TimeSpan.FromSeconds(5);
+
+    for (int i = 0; i < maxRetries; i++)
     {
-        var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
-        
-        if (pendingMigrations.Any())
+        try
         {
-            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
-                pendingMigrations.Count,
-                string.Join(", ", pendingMigrations));
-            
-            await context.Database.MigrateAsync();
-            
-            logger.LogInformation("✓ Database migrations applied successfully");
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+
+            if (pendingMigrations.Any())
+            {
+                logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
+                    pendingMigrations.Count,
+                    string.Join(", ", pendingMigrations));
+
+                await context.Database.MigrateAsync();
+
+                logger.LogInformation("Database migrations applied successfully");
+            }
+            else
+            {
+                logger.LogInformation("Database schema is up to date");
+            }
+            break;
         }
-        else
+        catch (Exception ex) when (i < maxRetries - 1)
         {
-            logger.LogInformation("✓ Database schema is up to date");
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(ex,
+                "Database connection failed on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}s...",
+                i + 1, maxRetries, delay.TotalSeconds);
+            await Task.Delay(delay);
+            delay *= 2; // Exponential backoff
         }
-    }
-    catch (Exception ex)
-    {
-        logger.LogCritical(ex, "Failed to apply database migrations");
-        throw;
+        catch (Exception ex)
+        {
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogCritical(ex, "Failed to apply database migrations after {MaxRetries} attempts", maxRetries);
+            throw;
+        }
     }
 }
 
-// Apply Site Attendance module migrations (separate DbContext and schema)
-using (var scope = app.Services.CreateScope())
+// Apply Site Attendance module migrations (separate DbContext and schema) with retry
 {
-    var context = scope.ServiceProvider.GetRequiredService<SiteAttendanceDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var maxRetries = 5;
+    var delay = TimeSpan.FromSeconds(5);
 
-    try
+    for (int i = 0; i < maxRetries; i++)
     {
-        var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
-
-        if (pendingMigrations.Any())
+        try
         {
-            logger.LogInformation("Applying {Count} pending Site Attendance migration(s): {Migrations}",
-                pendingMigrations.Count,
-                string.Join(", ", pendingMigrations));
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<SiteAttendanceDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-            await context.Database.MigrateAsync();
+            var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
 
-            logger.LogInformation("✓ Site Attendance database migrations applied successfully");
+            if (pendingMigrations.Any())
+            {
+                logger.LogInformation("Applying {Count} pending Site Attendance migration(s): {Migrations}",
+                    pendingMigrations.Count,
+                    string.Join(", ", pendingMigrations));
+
+                await context.Database.MigrateAsync();
+
+                logger.LogInformation("Site Attendance database migrations applied successfully");
+            }
+            else
+            {
+                logger.LogInformation("Site Attendance database schema is up to date");
+            }
+            break;
         }
-        else
+        catch (Exception ex) when (i < maxRetries - 1)
         {
-            logger.LogInformation("✓ Site Attendance database schema is up to date");
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(ex,
+                "Site Attendance database connection failed on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}s...",
+                i + 1, maxRetries, delay.TotalSeconds);
+            await Task.Delay(delay);
+            delay *= 2;
         }
-    }
-    catch (Exception ex)
-    {
-        logger.LogCritical(ex, "Failed to apply Site Attendance database migrations");
-        throw;
+        catch (Exception ex)
+        {
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogCritical(ex, "Failed to apply Site Attendance database migrations after {MaxRetries} attempts", maxRetries);
+            throw;
+        }
     }
 }
 

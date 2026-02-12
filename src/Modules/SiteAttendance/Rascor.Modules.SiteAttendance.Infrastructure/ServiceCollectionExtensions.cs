@@ -32,9 +32,15 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Register SiteAttendanceDbContext
+        // Register SiteAttendanceDbContext with transient fault retry
         services.AddDbContext<SiteAttendanceDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
+            {
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorCodesToAdd: null);
+            }));
 
         // Register MediatR handlers from the Application assembly
         var applicationAssembly = typeof(SiteAttendanceMappingProfile).Assembly;
@@ -111,7 +117,13 @@ public static class ServiceCollectionExtensions
         if (!string.IsNullOrEmpty(mobileDbConnectionString) && !mobileDbConnectionString.Contains("<"))
         {
             services.AddDbContext<GeofenceMobileDbContext>(options =>
-                options.UseNpgsql(mobileDbConnectionString));
+                options.UseNpgsql(mobileDbConnectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorCodesToAdd: null);
+                }));
         }
 
         // Register sync service as both hosted service and scoped service
