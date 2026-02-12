@@ -20,6 +20,11 @@ public class ToolboxTalk : TenantEntity
     public string? Description { get; set; }
 
     /// <summary>
+    /// Safety category this toolbox talk falls under (e.g., "Fire Safety", "Working at Heights")
+    /// </summary>
+    public string? Category { get; set; }
+
+    /// <summary>
     /// How often employees must complete this toolbox talk
     /// </summary>
     public ToolboxTalkFrequency Frequency { get; set; } = ToolboxTalkFrequency.Once;

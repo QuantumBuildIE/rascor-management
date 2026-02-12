@@ -26,6 +26,9 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
         builder.Property(t => t.Description)
             .HasMaxLength(2000);
 
+        builder.Property(t => t.Category)
+            .HasMaxLength(100);
+
         builder.Property(t => t.Frequency)
             .IsRequired()
             .HasConversion<string>()

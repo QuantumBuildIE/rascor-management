@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToolboxTalk } from '@/lib/api/toolbox-talks';
+import { TOOLBOX_TALK_CATEGORIES } from '@/features/toolbox-talks/constants';
 import type { ToolboxTalkWizardData } from '../page';
 
 const basicInfoSchema = z.object({
@@ -44,24 +45,6 @@ const basicInfoSchema = z.object({
 
 type BasicInfoForm = z.infer<typeof basicInfoSchema>;
 
-// Common Toolbox Talk categories
-const CATEGORIES = [
-  'Working at Heights',
-  'Fire Safety',
-  'Manual Handling',
-  'PPE',
-  'Electrical Safety',
-  'Hazardous Substances',
-  'Confined Spaces',
-  'Machinery Safety',
-  'Slips, Trips and Falls',
-  'First Aid',
-  'Emergency Procedures',
-  'Site Induction',
-  'Environmental',
-  'General Safety',
-  'Other',
-];
 
 const FREQUENCY_OPTIONS = [
   { value: 'Once', label: 'Once', description: 'One-time training' },
@@ -110,6 +93,7 @@ export function BasicInfoStep({
         const response = await createToolboxTalk({
           title: formData.title,
           description: formData.description,
+          category: formData.category,
           frequency: formData.frequency,
           videoSource: 'None',
           isActive: false,
@@ -203,7 +187,7 @@ export function BasicInfoStep({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {CATEGORIES.map((category) => (
+                      {TOOLBOX_TALK_CATEGORIES.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>

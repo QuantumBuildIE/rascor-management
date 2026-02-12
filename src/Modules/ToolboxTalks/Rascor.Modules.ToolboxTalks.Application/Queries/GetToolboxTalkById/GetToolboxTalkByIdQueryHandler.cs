@@ -55,6 +55,7 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             Id = talk.Id,
             Title = talk.Title,
             Description = talk.Description,
+            Category = talk.Category,
             Frequency = talk.Frequency,
             FrequencyDisplay = GetFrequencyDisplay(talk.Frequency),
             VideoUrl = talk.VideoUrl,

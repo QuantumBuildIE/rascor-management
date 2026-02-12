@@ -75,6 +75,7 @@ export interface ToolboxTalk {
   id: string;
   title: string;
   description: string | null;
+  category: string | null;
   frequency: ToolboxTalkFrequency;
   frequencyDisplay: string;
   videoUrl: string | null;
@@ -122,6 +123,7 @@ export interface ToolboxTalkListItem {
   id: string;
   title: string;
   description: string | null;
+  category: string | null;
   frequency: ToolboxTalkFrequency;
   frequencyDisplay: string;
   isActive: boolean;
@@ -528,6 +530,7 @@ export interface CreateToolboxTalkQuestionRequest {
 export interface CreateToolboxTalkRequest {
   title: string;
   description?: string;
+  category?: string;
   frequency: ToolboxTalkFrequency;
   videoUrl?: string;
   videoSource: VideoSource;

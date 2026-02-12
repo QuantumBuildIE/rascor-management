@@ -89,6 +89,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
         // Update basic properties
         toolboxTalk.Title = request.Title;
         toolboxTalk.Description = request.Description;
+        toolboxTalk.Category = request.Category;
         toolboxTalk.Frequency = request.Frequency;
         toolboxTalk.VideoUrl = request.VideoUrl;
         toolboxTalk.VideoSource = request.VideoSource;
@@ -345,6 +346,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
             Id = entity.Id,
             Title = entity.Title,
             Description = entity.Description,
+            Category = entity.Category,
             Frequency = entity.Frequency,
             FrequencyDisplay = GetFrequencyDisplay(entity.Frequency),
             VideoUrl = entity.VideoUrl,

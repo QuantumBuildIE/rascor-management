@@ -210,6 +210,7 @@ export function PublishStep({
         id: data.id,
         title: data.title,
         description: data.description || undefined,
+        category: data.category || undefined,
         frequency: data.frequency,
         videoUrl: data.videoUrl || undefined,
         videoSource: mapVideoSource(data.videoSource),

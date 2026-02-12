@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { SOURCE_LANGUAGE_OPTIONS } from '../constants';
+import { SOURCE_LANGUAGE_OPTIONS, TOOLBOX_TALK_CATEGORIES } from '../constants';
 import { SectionEditor } from './SectionEditor';
 import { QuestionEditor } from './QuestionEditor';
 import { useCreateToolboxTalk, useUpdateToolboxTalk } from '@/lib/api/toolbox-talks';
@@ -67,6 +67,7 @@ const questionSchema = z.object({
 const toolboxTalkFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(1000).optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
   frequency: z.enum(['Once', 'Weekly', 'Monthly', 'Annually'] as const),
   videoUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
   videoSource: z.enum(['None', 'YouTube', 'GoogleDrive', 'Vimeo', 'DirectUrl'] as const),
@@ -141,6 +142,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
     defaultValues: {
       title: talk?.title ?? '',
       description: talk?.description ?? '',
+      category: talk?.category ?? '',
       frequency: talk?.frequency ?? 'Once',
       videoUrl: talk?.videoUrl ?? '',
       videoSource: talk?.videoSource ?? 'None',
@@ -262,6 +264,7 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
       const requestData = {
         title: values.title,
         description: values.description || undefined,
+        category: values.category || undefined,
         frequency: values.frequency,
         videoUrl: values.videoUrl || undefined,
         videoSource: values.videoSource,
@@ -343,6 +346,34 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
                         value={field.value ?? ''}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TOOLBOX_TALK_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The safety category this training falls under
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

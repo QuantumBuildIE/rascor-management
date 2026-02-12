@@ -12,6 +12,7 @@ public record CreateToolboxTalkCommand : IRequest<ToolboxTalkDto>
     public Guid TenantId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
+    public string? Category { get; init; }
     public ToolboxTalkFrequency Frequency { get; init; } = ToolboxTalkFrequency.Once;
     public string? VideoUrl { get; init; }
     public VideoSource VideoSource { get; init; } = VideoSource.None;

@@ -108,6 +108,9 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
             <p className="text-muted-foreground">{talk.description}</p>
           )}
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {talk.category && (
+              <Badge variant="secondary">{talk.category}</Badge>
+            )}
             <span>Created {format(new Date(talk.createdAt), 'dd MMM yyyy')}</span>
             {talk.updatedAt && (
               <span>Updated {format(new Date(talk.updatedAt), 'dd MMM yyyy')}</span>
