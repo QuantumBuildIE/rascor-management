@@ -10,6 +10,8 @@ import {
   updateToolboxTalkSettings,
   generateContentTranslations,
   getContentTranslations,
+  getToolboxTalkPreview,
+  getToolboxTalkPreviewSlides,
 } from './toolbox-talks';
 import type {
   GenerateTranslationsRequest,
@@ -134,5 +136,25 @@ export function useGenerateContentTranslations() {
       queryClient.invalidateQueries({ queryKey: [...TOOLBOX_TALKS_KEY, toolboxTalkId] });
       queryClient.invalidateQueries({ queryKey: [...TOOLBOX_TALKS_KEY, toolboxTalkId, 'translations'] });
     },
+  });
+}
+
+// ============================================
+// Admin Preview Hooks
+// ============================================
+
+export function useToolboxTalkPreview(id: string, lang?: string) {
+  return useQuery({
+    queryKey: [...TOOLBOX_TALKS_KEY, id, 'preview', lang],
+    queryFn: () => getToolboxTalkPreview(id, lang),
+    enabled: !!id,
+  });
+}
+
+export function useToolboxTalkPreviewSlides(id: string, lang?: string, enabled = true) {
+  return useQuery({
+    queryKey: [...TOOLBOX_TALKS_KEY, id, 'preview-slides', lang],
+    queryFn: () => getToolboxTalkPreviewSlides(id, lang),
+    enabled: !!id && enabled,
   });
 }

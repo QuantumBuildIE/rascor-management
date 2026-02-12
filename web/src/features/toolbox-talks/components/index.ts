@@ -8,6 +8,7 @@ export { ScheduleDialog } from './ScheduleDialog';
 export { ScheduleList } from './ScheduleList';
 export { AssignmentsList } from './AssignmentsList';
 export { Dashboard, DashboardSkeleton } from './Dashboard';
+export { PreviewModal } from './PreviewModal';
 export { CourseList } from './CourseList';
 export { CourseForm } from './CourseForm';
 export { AddTalksDialog } from './AddTalksDialog';

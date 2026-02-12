@@ -5,6 +5,8 @@ import type {
   ToolboxTalkListItem,
   ToolboxTalkDashboard,
   ToolboxTalkSettings,
+  ToolboxTalkPreview,
+  SlideDto,
   CreateToolboxTalkRequest,
   UpdateToolboxTalkRequest,
   UpdateToolboxTalkSettingsRequest,
@@ -391,6 +393,34 @@ export async function updateFileHash(
   const response = await apiClient.post<{ success: boolean; fileHash: string }>(
     `/toolbox-talks/${id}/update-file-hash`,
     request
+  );
+  return response.data;
+}
+
+// ============================================
+// Admin Preview (view as employee)
+// ============================================
+
+export async function getToolboxTalkPreview(
+  id: string,
+  lang?: string
+): Promise<ToolboxTalkPreview> {
+  const params = lang ? { lang } : undefined;
+  const response = await apiClient.get<ToolboxTalkPreview>(
+    `/toolbox-talks/${id}/preview`,
+    { params }
+  );
+  return response.data;
+}
+
+export async function getToolboxTalkPreviewSlides(
+  id: string,
+  lang?: string
+): Promise<SlideDto[]> {
+  const params = lang ? { lang } : undefined;
+  const response = await apiClient.get<SlideDto[]>(
+    `/toolbox-talks/${id}/preview/slides`,
+    { params }
   );
   return response.data;
 }

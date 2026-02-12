@@ -16,6 +16,7 @@ import {
   AlertTriangleIcon,
   ListChecksIcon,
   ExternalLinkIcon,
+  EyeIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
+import { PreviewModal } from './PreviewModal';
 import { useToolboxTalk, useDeleteToolboxTalk } from '@/lib/api/toolbox-talks';
 import type { ToolboxTalk } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
@@ -43,6 +45,7 @@ interface ToolboxTalkDetailProps {
 export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolbox-talks/talks' }: ToolboxTalkDetailProps) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: talk, isLoading, error } = useToolboxTalk(talkId);
   const deleteMutation = useDeleteToolboxTalk();
@@ -117,6 +120,10 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+            <EyeIcon className="mr-2 h-4 w-4" />
+            Preview as Employee
+          </Button>
           <Button variant="outline" onClick={() => router.push(`${basePath}/${talk.id}/edit`)}>
             <PencilIcon className="mr-2 h-4 w-4" />
             Edit
@@ -406,6 +413,13 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
         description={`Are you sure you want to delete "${talk.title}"? This action cannot be undone and will also delete all associated schedules and assignments.`}
         onConfirm={handleDelete}
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Preview as Employee modal */}
+      <PreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        talk={talk}
       />
     </div>
   );

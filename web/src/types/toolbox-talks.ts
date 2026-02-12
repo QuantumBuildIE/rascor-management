@@ -870,6 +870,46 @@ export interface ContentReuseResponse {
   message: string;
 }
 
+// ============================================
+// Preview DTOs (Admin viewing as employee)
+// ============================================
+
+export interface PreviewSectionDto {
+  id: string;
+  sectionNumber: number;
+  title: string;
+  content: string;
+  requiresAcknowledgment: boolean;
+}
+
+export interface PreviewQuestionDto {
+  id: string;
+  questionNumber: number;
+  questionText: string;
+  questionType: QuestionType;
+  questionTypeDisplay: string;
+  options: string[] | null;
+  points: number;
+}
+
+export interface ToolboxTalkPreview {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  videoUrl: string | null;
+  videoSource: VideoSource;
+  requiresQuiz: boolean;
+  passingScore: number | null;
+  slidesGenerated: boolean;
+  slideCount: number;
+  sourceLanguageCode: string;
+  previewLanguageCode: string;
+  availableTranslations: ToolboxTalkTranslation[];
+  sections: PreviewSectionDto[];
+  questions: PreviewQuestionDto[];
+}
+
 /** Request to update file hash */
 export interface UpdateFileHashRequest {
   /** The file hash (SHA-256). If not provided, fileUrl must be provided. */

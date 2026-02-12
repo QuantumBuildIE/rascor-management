@@ -12,6 +12,8 @@ using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Reports;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkDashboard;
+using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkPreview;
+using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSlides;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalks;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSettings;
 using Rascor.Modules.ToolboxTalks.Application.Services;
@@ -136,6 +138,70 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving toolbox talk {ToolboxTalkId}", id);
             return StatusCode(500, new { message = "Error retrieving toolbox talk" });
+        }
+    }
+
+    /// <summary>
+    /// Preview a toolbox talk as an employee would see it, with translated content.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="lang">Optional language code for translated preview</param>
+    /// <returns>Preview data with translated sections and questions (no correct answers)</returns>
+    [HttpGet("{id:guid}/preview")]
+    [ProducesResponseType(typeof(ToolboxTalkPreviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPreview(Guid id, [FromQuery] string? lang = null)
+    {
+        try
+        {
+            var query = new GetToolboxTalkPreviewQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = id,
+                LanguageCode = lang
+            };
+
+            var result = await _mediator.Send(query);
+            if (result == null)
+            {
+                return NotFound(new { message = "Toolbox talk not found" });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving toolbox talk preview {ToolboxTalkId}", id);
+            return StatusCode(500, new { message = "Error retrieving toolbox talk preview" });
+        }
+    }
+
+    /// <summary>
+    /// Get slides for a toolbox talk preview with optional translated text.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="lang">Optional language code for translated slide text</param>
+    /// <returns>List of slides with translated text</returns>
+    [HttpGet("{id:guid}/preview/slides")]
+    [ProducesResponseType(typeof(List<SlideDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPreviewSlides(Guid id, [FromQuery] string? lang = null)
+    {
+        try
+        {
+            var query = new GetToolboxTalkSlidesQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = id,
+                LanguageCode = lang
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving preview slides for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { message = "Error retrieving preview slides" });
         }
     }
 
