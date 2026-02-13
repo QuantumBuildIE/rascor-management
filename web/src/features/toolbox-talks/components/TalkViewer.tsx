@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Video,
   FileText,
+  FileDown,
   HelpCircle,
   PenLine,
 } from 'lucide-react';
@@ -430,7 +431,17 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-xl font-semibold">{talk.title}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold">{talk.title}</h1>
+              {talk.pdfUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={talk.pdfUrl} target="_blank" rel="noopener noreferrer" download>
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    {talk.pdfFileName || 'Download PDF'}
+                  </a>
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
               <Badge variant={statusVariants[talk.status]}>{talk.statusDisplay}</Badge>
               <span className="flex items-center gap-1">

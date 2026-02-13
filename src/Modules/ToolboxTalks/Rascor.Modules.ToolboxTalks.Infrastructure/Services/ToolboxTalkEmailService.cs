@@ -486,6 +486,92 @@ public class ToolboxTalkEmailService : IToolboxTalkEmailService
         }
     }
 
+    public async Task SendCourseAssignmentEmailAsync(
+        ToolboxTalkCourse course,
+        Employee employee,
+        int talkCount,
+        DateTime? dueDate,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(employee.Email))
+        {
+            _logger.LogWarning(
+                "Cannot send course assignment email: Employee {EmployeeId} has no email address",
+                employee.Id);
+            return;
+        }
+
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://rascorweb-production.up.railway.app";
+        var courseUrl = $"{baseUrl}/login?returnUrl={Uri.EscapeDataString("/toolbox-talks")}";
+
+        var subject = $"New Training Course Assigned: {course.Title}";
+        var dueDateHtml = dueDate.HasValue
+            ? $"<p><strong>Due Date:</strong> {dueDate.Value:dd MMM yyyy}</p>"
+            : "";
+
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #28a745; color: white; padding: 20px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .button {{ display: inline-block; background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
+        .footer {{ padding: 20px; text-align: center; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>New Training Course Assigned</h1>
+        </div>
+        <div class='content'>
+            <p>Dear {employee.FirstName},</p>
+            <p>You have been assigned a new training course:</p>
+            <p><strong>{course.Title}</strong></p>
+            {(string.IsNullOrEmpty(course.Description) ? "" : $"<p>{course.Description}</p>")}
+            <p>This course contains <strong>{talkCount}</strong> training item{(talkCount == 1 ? "" : "s")}.</p>
+            {dueDateHtml}
+            <p>Please complete all items in the course by the due date.</p>
+            <p>
+                <a href='{courseUrl}' class='button'>View Course</a>
+            </p>
+        </div>
+        <div class='footer'>
+            <p>Thank you,<br>RASCOR Safety Team</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        var emailMessage = new EmailMessage
+        {
+            ToEmail = employee.Email,
+            ToName = $"{employee.FirstName} {employee.LastName}",
+            Subject = subject,
+            HtmlBody = body
+        };
+
+        var result = await _emailProvider.SendAsync(emailMessage, cancellationToken);
+
+        if (result.Success)
+        {
+            _logger.LogInformation(
+                "Course assignment email sent to {Email} for course {CourseId} ({CourseTitle})",
+                employee.Email, course.Id, course.Title);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed to send course assignment email to {Email}: {Error}",
+                employee.Email, result.ErrorMessage);
+        }
+    }
+
     public async Task SendCourseRefresherReminderAsync(
         ToolboxTalkCourseAssignment refresherAssignment,
         Employee employee,

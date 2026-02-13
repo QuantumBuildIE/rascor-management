@@ -311,6 +311,8 @@ export interface MyToolboxTalk {
   videoUrl: string | null;
   videoSource: VideoSource;
   attachmentUrl: string | null;
+  pdfUrl: string | null;
+  pdfFileName: string | null;
   minimumVideoWatchPercent: number;
   requiresQuiz: boolean;
   passingScore: number | null;

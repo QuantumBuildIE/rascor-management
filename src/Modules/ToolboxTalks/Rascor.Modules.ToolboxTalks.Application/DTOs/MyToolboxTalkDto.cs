@@ -16,6 +16,8 @@ public record MyToolboxTalkDto
     public string? VideoUrl { get; init; }
     public VideoSource VideoSource { get; init; }
     public string? AttachmentUrl { get; init; }
+    public string? PdfUrl { get; init; }
+    public string? PdfFileName { get; init; }
     public int MinimumVideoWatchPercent { get; init; }
     public bool RequiresQuiz { get; init; }
     public int? PassingScore { get; init; }

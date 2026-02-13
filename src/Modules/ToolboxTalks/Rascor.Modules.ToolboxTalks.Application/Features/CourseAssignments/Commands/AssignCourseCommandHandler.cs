@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Rascor.Core.Application.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Common.Interfaces;
 using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.DTOs;
+using Rascor.Modules.ToolboxTalks.Application.Services;
 using Rascor.Modules.ToolboxTalks.Domain.Entities;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
 
@@ -12,11 +14,19 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
 {
     private readonly IToolboxTalksDbContext _dbContext;
     private readonly ICoreDbContext _coreDbContext;
+    private readonly IToolboxTalkEmailService _emailService;
+    private readonly ILogger<AssignCourseCommandHandler> _logger;
 
-    public AssignCourseCommandHandler(IToolboxTalksDbContext dbContext, ICoreDbContext coreDbContext)
+    public AssignCourseCommandHandler(
+        IToolboxTalksDbContext dbContext,
+        ICoreDbContext coreDbContext,
+        IToolboxTalkEmailService emailService,
+        ILogger<AssignCourseCommandHandler> logger)
     {
         _dbContext = dbContext;
         _coreDbContext = coreDbContext;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<List<ToolboxTalkCourseAssignmentDto>> Handle(AssignCourseCommand request, CancellationToken cancellationToken)
@@ -164,6 +174,32 @@ public class AssignCourseCommandHandler : IRequestHandler<AssignCourseCommand, L
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Send email notifications to each assigned employee
+        foreach (var assignmentDto in eligibleAssignments)
+        {
+            var employee = employeeLookup[assignmentDto.EmployeeId];
+
+            // Determine talk count for this employee
+            var talkCount = courseItems.Count;
+            if (assignmentDto.IncludedTalkIds != null && assignmentDto.IncludedTalkIds.Any())
+            {
+                talkCount = courseItems.Count(ci => assignmentDto.IncludedTalkIds.Contains(ci.ToolboxTalkId));
+            }
+
+            try
+            {
+                await _emailService.SendCourseAssignmentEmailAsync(
+                    course, employee, talkCount, dto.DueDate, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to send course assignment email for Course {CourseId} to Employee {EmployeeId}",
+                    course.Id, employee.Id);
+                // Continue processing - don't fail the entire operation due to email failure
+            }
+        }
 
         return results;
     }

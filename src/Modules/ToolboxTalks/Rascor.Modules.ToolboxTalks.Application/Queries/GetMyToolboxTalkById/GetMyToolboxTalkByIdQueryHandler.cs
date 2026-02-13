@@ -124,6 +124,8 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
             VideoUrl = talk.VideoUrl,
             VideoSource = talk.VideoSource,
             AttachmentUrl = talk.AttachmentUrl,
+            PdfUrl = talk.PdfUrl,
+            PdfFileName = talk.PdfFileName,
             MinimumVideoWatchPercent = talk.MinimumVideoWatchPercent,
             RequiresQuiz = talk.RequiresQuiz,
             PassingScore = talk.PassingScore,

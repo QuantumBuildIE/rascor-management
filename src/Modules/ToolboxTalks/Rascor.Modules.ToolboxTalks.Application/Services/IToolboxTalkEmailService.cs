@@ -52,6 +52,16 @@ public interface IToolboxTalkEmailService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Sends an email to an employee when a training course is assigned to them
+    /// </summary>
+    Task SendCourseAssignmentEmailAsync(
+        ToolboxTalkCourse course,
+        Employee employee,
+        int talkCount,
+        DateTime? dueDate,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Sends a refresher reminder email for an upcoming course refresher
     /// </summary>
     Task SendCourseRefresherReminderAsync(
