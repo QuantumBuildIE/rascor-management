@@ -114,6 +114,12 @@ public class ContentDeduplicationService : IContentDeduplicationService
             .Distinct()
             .ToList();
 
+        // Check if source has completed subtitle processing
+        var hasSubtitles = await _dbContext.SubtitleProcessingJobs
+            .AnyAsync(j => j.ToolboxTalkId == existingTalk.Id
+                && !j.IsDeleted
+                && j.Status == Domain.Enums.SubtitleProcessingStatus.Completed, cancellationToken);
+
         return new DuplicateCheckResult
         {
             IsDuplicate = true,
@@ -125,6 +131,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 SectionCount = existingTalk.Sections.Count,
                 QuestionCount = existingTalk.Questions.Count,
                 HasSlideshow = !string.IsNullOrEmpty(existingTalk.SlideshowHtml),
+                HasSubtitles = hasSubtitles,
                 TranslationLanguages = translationLanguages
             }
         };
@@ -277,6 +284,95 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 translationsCopied++;
             }
 
+            // Copy HTML slideshow if source has it
+            var slideshowCopied = false;
+            if (!string.IsNullOrEmpty(source.SlideshowHtml))
+            {
+                target.SlideshowHtml = source.SlideshowHtml;
+                target.SlideshowGeneratedAt = currentTime;
+                target.SlidesGenerated = true;
+                slideshowCopied = true;
+
+                // Copy slideshow translations
+                var slideshowTranslations = await _dbContext.ToolboxTalkSlideshowTranslations
+                    .Where(t => t.ToolboxTalkId == sourceToolboxTalkId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var slideshowTranslation in slideshowTranslations)
+                {
+                    _dbContext.ToolboxTalkSlideshowTranslations.Add(new ToolboxTalkSlideshowTranslation
+                    {
+                        ToolboxTalkId = targetToolboxTalkId,
+                        LanguageCode = slideshowTranslation.LanguageCode,
+                        TranslatedHtml = slideshowTranslation.TranslatedHtml,
+                        TranslatedAt = currentTime
+                    });
+                }
+            }
+
+            // Copy subtitle data from the source's latest completed processing job
+            var subtitlesCopied = false;
+            var sourceSubtitleJob = await _dbContext.SubtitleProcessingJobs
+                .Include(j => j.Translations)
+                .Where(j => j.ToolboxTalkId == sourceToolboxTalkId
+                    && !j.IsDeleted
+                    && j.Status == SubtitleProcessingStatus.Completed)
+                .OrderByDescending(j => j.CompletedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (sourceSubtitleJob != null && !string.IsNullOrEmpty(sourceSubtitleJob.EnglishSrtContent))
+            {
+                var existingTargetJobs = await _dbContext.SubtitleProcessingJobs
+                    .Where(j => j.ToolboxTalkId == targetToolboxTalkId && !j.IsDeleted)
+                    .ToListAsync(cancellationToken);
+                foreach (var existingJob in existingTargetJobs)
+                {
+                    existingJob.IsDeleted = true;
+                    existingJob.UpdatedAt = currentTime;
+                    existingJob.UpdatedBy = currentUser;
+                }
+
+                var newSubtitleJob = new SubtitleProcessingJob
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    ToolboxTalkId = targetToolboxTalkId,
+                    Status = SubtitleProcessingStatus.Completed,
+                    SourceVideoUrl = sourceSubtitleJob.SourceVideoUrl,
+                    VideoSourceType = sourceSubtitleJob.VideoSourceType,
+                    StartedAt = currentTime,
+                    CompletedAt = currentTime,
+                    TotalSubtitles = sourceSubtitleJob.TotalSubtitles,
+                    EnglishSrtContent = sourceSubtitleJob.EnglishSrtContent,
+                    EnglishSrtUrl = sourceSubtitleJob.EnglishSrtUrl,
+                    CreatedAt = currentTime,
+                    CreatedBy = currentUser
+                };
+
+                _dbContext.SubtitleProcessingJobs.Add(newSubtitleJob);
+
+                foreach (var sourceSubTranslation in sourceSubtitleJob.Translations
+                    .Where(t => t.Status == SubtitleTranslationStatus.Completed))
+                {
+                    _dbContext.SubtitleTranslations.Add(new SubtitleTranslation
+                    {
+                        SubtitleProcessingJobId = newSubtitleJob.Id,
+                        Language = sourceSubTranslation.Language,
+                        LanguageCode = sourceSubTranslation.LanguageCode,
+                        Status = SubtitleTranslationStatus.Completed,
+                        SubtitlesProcessed = sourceSubTranslation.SubtitlesProcessed,
+                        TotalSubtitles = sourceSubTranslation.TotalSubtitles,
+                        SrtContent = sourceSubTranslation.SrtContent,
+                        SrtUrl = sourceSubTranslation.SrtUrl
+                    });
+                }
+
+                subtitlesCopied = true;
+                _logger.LogInformation(
+                    "Copied subtitle data from source job {SourceJobId} to target talk {TargetId}",
+                    sourceSubtitleJob.Id, targetToolboxTalkId);
+            }
+
             // Copy file hash and URL (reuse the same blob)
             if (!string.IsNullOrEmpty(source.PdfFileHash))
             {
@@ -308,15 +404,18 @@ public class ContentDeduplicationService : IContentDeduplicationService
             await _dbContext.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "Content reuse complete. Sections: {Sections}, Questions: {Questions}, Translations: {Translations}",
-                sectionsCopied, questionsCopied, translationsCopied);
+                "Content reuse complete. Sections: {Sections}, Questions: {Questions}, " +
+                "Translations: {Translations}, Slideshow: {Slideshow}, Subtitles: {Subtitles}",
+                sectionsCopied, questionsCopied, translationsCopied, slideshowCopied, subtitlesCopied);
 
             return new ContentReuseResult
             {
                 Success = true,
                 SectionsCopied = sectionsCopied,
                 QuestionsCopied = questionsCopied,
-                TranslationsCopied = translationsCopied
+                SlideshowCopied = slideshowCopied,
+                TranslationsCopied = translationsCopied,
+                SubtitlesCopied = subtitlesCopied
             };
         }
         catch (Exception ex)
@@ -519,6 +618,73 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 }
             }
 
+            // Copy subtitle data from the source's latest completed processing job
+            var subtitlesCopied = false;
+            var sourceSubtitleJob = await _dbContext.SubtitleProcessingJobs
+                .Include(j => j.Translations)
+                .Where(j => j.ToolboxTalkId == sourceToolboxTalkId
+                    && !j.IsDeleted
+                    && j.Status == Domain.Enums.SubtitleProcessingStatus.Completed)
+                .OrderByDescending(j => j.CompletedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (sourceSubtitleJob != null && !string.IsNullOrEmpty(sourceSubtitleJob.EnglishSrtContent))
+            {
+                // Soft delete any existing subtitle jobs on the target
+                var existingTargetJobs = await _dbContext.SubtitleProcessingJobs
+                    .Where(j => j.ToolboxTalkId == targetToolboxTalkId && !j.IsDeleted)
+                    .ToListAsync(cancellationToken);
+                foreach (var existingJob in existingTargetJobs)
+                {
+                    existingJob.IsDeleted = true;
+                    existingJob.UpdatedAt = currentTime;
+                    existingJob.UpdatedBy = currentUser;
+                }
+
+                // Create a copy of the subtitle processing job for the target talk
+                var newSubtitleJob = new SubtitleProcessingJob
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    ToolboxTalkId = targetToolboxTalkId,
+                    Status = Domain.Enums.SubtitleProcessingStatus.Completed,
+                    SourceVideoUrl = sourceSubtitleJob.SourceVideoUrl,
+                    VideoSourceType = sourceSubtitleJob.VideoSourceType,
+                    StartedAt = currentTime,
+                    CompletedAt = currentTime,
+                    TotalSubtitles = sourceSubtitleJob.TotalSubtitles,
+                    EnglishSrtContent = sourceSubtitleJob.EnglishSrtContent,
+                    EnglishSrtUrl = sourceSubtitleJob.EnglishSrtUrl,
+                    CreatedAt = currentTime,
+                    CreatedBy = currentUser
+                };
+
+                _dbContext.SubtitleProcessingJobs.Add(newSubtitleJob);
+
+                // Copy all completed subtitle translations
+                foreach (var sourceTranslation in sourceSubtitleJob.Translations
+                    .Where(t => t.Status == Domain.Enums.SubtitleTranslationStatus.Completed))
+                {
+                    _dbContext.SubtitleTranslations.Add(new SubtitleTranslation
+                    {
+                        SubtitleProcessingJobId = newSubtitleJob.Id,
+                        Language = sourceTranslation.Language,
+                        LanguageCode = sourceTranslation.LanguageCode,
+                        Status = Domain.Enums.SubtitleTranslationStatus.Completed,
+                        SubtitlesProcessed = sourceTranslation.SubtitlesProcessed,
+                        TotalSubtitles = sourceTranslation.TotalSubtitles,
+                        SrtContent = sourceTranslation.SrtContent,
+                        SrtUrl = sourceTranslation.SrtUrl
+                    });
+                }
+
+                subtitlesCopied = true;
+                _logger.LogInformation(
+                    "Copied subtitle data from source job {SourceJobId} ({TranslationCount} translations) to target talk {TargetId}",
+                    sourceSubtitleJob.Id, sourceSubtitleJob.Translations.Count(t => t.Status == Domain.Enums.SubtitleTranslationStatus.Completed),
+                    targetToolboxTalkId);
+            }
+
             // Copy file hash and URL (reuse the same blob)
             if (!string.IsNullOrEmpty(source.PdfFileHash))
             {
@@ -547,8 +713,8 @@ public class ContentDeduplicationService : IContentDeduplicationService
 
             _logger.LogInformation(
                 "Selective content reuse complete. Sections: {Sections}, Questions: {Questions}, " +
-                "Slideshow: {Slideshow}, Translations: {Translations}, RowsSaved: {Saved}",
-                sectionsCopied, questionsCopied, slideshowCopied, translationsCopied, saved);
+                "Slideshow: {Slideshow}, Translations: {Translations}, Subtitles: {Subtitles}, RowsSaved: {Saved}",
+                sectionsCopied, questionsCopied, slideshowCopied, translationsCopied, subtitlesCopied, saved);
 
             return new ContentReuseResult
             {
@@ -556,7 +722,8 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 SectionsCopied = sectionsCopied,
                 QuestionsCopied = questionsCopied,
                 SlideshowCopied = slideshowCopied,
-                TranslationsCopied = translationsCopied
+                TranslationsCopied = translationsCopied,
+                SubtitlesCopied = subtitlesCopied
             };
         }
         catch (Exception ex)

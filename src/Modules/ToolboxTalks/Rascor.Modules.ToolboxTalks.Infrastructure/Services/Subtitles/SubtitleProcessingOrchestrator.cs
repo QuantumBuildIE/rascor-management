@@ -532,6 +532,126 @@ public class SubtitleProcessingOrchestrator : ISubtitleProcessingOrchestrator
     }
 
     /// <inheritdoc />
+    public async Task<int> TranslateMissingLanguagesAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        List<string> missingLanguageCodes,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "TranslateMissingLanguagesAsync started for ToolboxTalk {ToolboxTalkId}. " +
+            "Missing languages: {Languages}",
+            toolboxTalkId, string.Join(", ", missingLanguageCodes));
+
+        // Find the latest completed subtitle processing job for this talk
+        var job = await _dbContext.SubtitleProcessingJobs
+            .IgnoreQueryFilters()
+            .Include(j => j.Translations)
+            .Include(j => j.ToolboxTalk)
+            .Where(j => j.ToolboxTalkId == toolboxTalkId
+                && j.TenantId == tenantId
+                && !j.IsDeleted
+                && j.Status == SubtitleProcessingStatus.Completed)
+            .OrderByDescending(j => j.CompletedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (job == null)
+        {
+            _logger.LogInformation(
+                "No completed subtitle job found for ToolboxTalk {ToolboxTalkId}. " +
+                "Skipping subtitle translation for missing languages.",
+                toolboxTalkId);
+            return 0;
+        }
+
+        if (string.IsNullOrEmpty(job.EnglishSrtContent))
+        {
+            _logger.LogWarning(
+                "Subtitle job {JobId} has no English SRT content. " +
+                "Cannot translate to missing languages.",
+                job.Id);
+            return 0;
+        }
+
+        // Filter to only truly missing languages (not already translated in this job)
+        var existingLanguageCodes = job.Translations
+            .Select(t => t.LanguageCode)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var actuallyMissing = missingLanguageCodes
+            .Where(code => !existingLanguageCodes.Contains(code))
+            .ToList();
+
+        if (actuallyMissing.Count == 0)
+        {
+            _logger.LogInformation(
+                "All requested subtitle languages already exist for job {JobId}. Nothing to translate.",
+                job.Id);
+            return 0;
+        }
+
+        _logger.LogInformation(
+            "Translating subtitles for {Count} missing language(s) on job {JobId}: {Languages}",
+            actuallyMissing.Count, job.Id, string.Join(", ", actuallyMissing));
+
+        var videoSlug = GenerateVideoSlug(job.ToolboxTalk.Title);
+        var translated = 0;
+
+        foreach (var languageCode in actuallyMissing)
+        {
+            try
+            {
+                var languageName = _languageCodeService.GetLanguageName(languageCode);
+
+                var translation = new SubtitleTranslation
+                {
+                    SubtitleProcessingJobId = job.Id,
+                    Language = languageName,
+                    LanguageCode = languageCode,
+                    Status = SubtitleTranslationStatus.Pending,
+                    TotalSubtitles = job.TotalSubtitles,
+                    SubtitlesProcessed = 0
+                };
+
+                _dbContext.SubtitleTranslations.Add(translation);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                // Reuse the existing TranslateLanguageAsync method
+                await TranslateLanguageAsync(
+                    job, translation, job.EnglishSrtContent, videoSlug,
+                    0, 100, cancellationToken);
+
+                if (translation.Status == SubtitleTranslationStatus.Completed)
+                {
+                    translated++;
+                    _logger.LogInformation(
+                        "Subtitle translation to {Language} ({Code}) completed for job {JobId}",
+                        languageName, languageCode, job.Id);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Subtitle translation to {Language} ({Code}) failed for job {JobId}: {Error}",
+                        languageName, languageCode, job.Id, translation.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error translating subtitles to {LanguageCode} for job {JobId}",
+                    languageCode, job.Id);
+            }
+        }
+
+        _logger.LogInformation(
+            "TranslateMissingLanguagesAsync completed for ToolboxTalk {ToolboxTalkId}. " +
+            "Translated: {Translated}/{Total}",
+            toolboxTalkId, translated, actuallyMissing.Count);
+
+        return translated;
+    }
+
+    /// <inheritdoc />
     public async Task<string?> GetSrtContentAsync(
         Guid toolboxTalkId,
         string languageCode,

@@ -88,4 +88,21 @@ public interface ISubtitleProcessingOrchestrator
         Guid toolboxTalkId,
         string languageCode,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Translates existing subtitles to additional languages that are missing.
+    /// Used when new employee languages are added after subtitle processing was completed.
+    /// Finds the latest completed subtitle job, takes the English SRT, and translates
+    /// it to each missing language, uploading the results to storage.
+    /// </summary>
+    /// <param name="toolboxTalkId">The toolbox talk ID</param>
+    /// <param name="tenantId">The tenant ID (for query filter bypass in background jobs)</param>
+    /// <param name="missingLanguageCodes">ISO 639-1 codes of languages to translate to</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Number of languages successfully translated</returns>
+    Task<int> TranslateMissingLanguagesAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        List<string> missingLanguageCodes,
+        CancellationToken cancellationToken = default);
 }

@@ -945,6 +945,7 @@ public class ToolboxTalksController : ControllerBase
                 QuestionsCopied = result.QuestionsCopied,
                 SlideshowCopied = result.SlideshowCopied,
                 TranslationsCopied = result.TranslationsCopied,
+                SubtitlesCopied = result.SubtitlesCopied,
                 SectionsGenerated = result.SectionsGenerated,
                 QuestionsGenerated = result.QuestionsGenerated,
                 SlideshowGenerated = result.SlideshowGenerated,
@@ -1782,6 +1783,7 @@ public record SmartGenerateContentResponse
     public int QuestionsCopied { get; init; }
     public bool SlideshowCopied { get; init; }
     public int TranslationsCopied { get; init; }
+    public bool SubtitlesCopied { get; init; }
 
     // What was generated via AI (0 if generation is queued as background job)
     public int SectionsGenerated { get; init; }

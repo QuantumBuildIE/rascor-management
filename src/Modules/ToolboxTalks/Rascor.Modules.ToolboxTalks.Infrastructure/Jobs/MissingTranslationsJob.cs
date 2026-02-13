@@ -15,6 +15,10 @@ namespace Rascor.Modules.ToolboxTalks.Infrastructure.Jobs;
 /// Hangfire background job that detects and generates translations for languages
 /// that are missing after content reuse. When content is copied from a source talk
 /// that was created before new languages were added, this job fills the gap.
+///
+/// Handles three types of missing translations:
+/// 1. Content translations (sections, quiz, slideshow HTML) via GenerateContentTranslationsCommand
+/// 2. Video subtitle translations via SubtitleProcessingOrchestrator
 /// </summary>
 public class MissingTranslationsJob
 {
@@ -22,6 +26,7 @@ public class MissingTranslationsJob
     private readonly IToolboxTalksDbContext _toolboxTalksDbContext;
     private readonly ISender _sender;
     private readonly ILanguageCodeService _languageCodeService;
+    private readonly ISubtitleProcessingOrchestrator _subtitleOrchestrator;
     private readonly IHubContext<ContentGenerationHub> _hubContext;
     private readonly ILogger<MissingTranslationsJob> _logger;
 
@@ -30,6 +35,7 @@ public class MissingTranslationsJob
         IToolboxTalksDbContext toolboxTalksDbContext,
         ISender sender,
         ILanguageCodeService languageCodeService,
+        ISubtitleProcessingOrchestrator subtitleOrchestrator,
         IHubContext<ContentGenerationHub> hubContext,
         ILogger<MissingTranslationsJob> logger)
     {
@@ -37,6 +43,7 @@ public class MissingTranslationsJob
         _toolboxTalksDbContext = toolboxTalksDbContext;
         _sender = sender;
         _languageCodeService = languageCodeService;
+        _subtitleOrchestrator = subtitleOrchestrator;
         _hubContext = hubContext;
         _logger = logger;
     }
@@ -100,63 +107,20 @@ public class MissingTranslationsJob
             if (missingLanguageCodes.Count == 0)
             {
                 _logger.LogInformation(
-                    "No missing translations for ToolboxTalk {ToolboxTalkId}. All required languages are covered.",
+                    "No missing content translations for ToolboxTalk {ToolboxTalkId}. All required languages are covered.",
                     toolboxTalkId);
-                return;
-            }
-
-            // Convert codes to language names
-            var missingLanguageNames = missingLanguageCodes
-                .Select(code => _languageCodeService.GetLanguageName(code))
-                .ToList();
-
-            _logger.LogInformation(
-                "Generating missing translations for ToolboxTalk {ToolboxTalkId}: {MissingLanguages}",
-                toolboxTalkId, string.Join(", ", missingLanguageNames));
-
-            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
-                "Translating", 92,
-                $"Generating {missingLanguageNames.Count} missing translation(s)...");
-
-            var command = new GenerateContentTranslationsCommand
-            {
-                ToolboxTalkId = toolboxTalkId,
-                TenantId = tenantId,
-                TargetLanguages = missingLanguageNames
-            };
-
-            var result = await _sender.Send(command, cancellationToken);
-
-            if (result.Success)
-            {
-                var successCount = result.LanguageResults.Count(r => r.Success);
-                var totalCount = result.LanguageResults.Count;
-
-                _logger.LogInformation(
-                    "Missing translations generated for ToolboxTalk {ToolboxTalkId}: {SuccessCount}/{TotalCount}",
-                    toolboxTalkId, successCount, totalCount);
-
-                foreach (var langResult in result.LanguageResults.Where(r => !r.Success))
-                {
-                    _logger.LogWarning(
-                        "Translation failed for language {Language} ({Code}): {Error}",
-                        langResult.Language, langResult.LanguageCode, langResult.ErrorMessage);
-                }
-
-                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
-                    "Translating", 100,
-                    $"Missing translations complete ({successCount}/{totalCount} languages).");
             }
             else
             {
-                _logger.LogWarning(
-                    "Missing translations generation failed for ToolboxTalk {ToolboxTalkId}: {Error}",
-                    toolboxTalkId, result.ErrorMessage);
-
-                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
-                    "Translating", 100,
-                    "Some translations could not be generated. They can be generated manually.");
+                // Generate missing content translations (sections, quiz, slideshow HTML)
+                await GenerateMissingContentTranslationsAsync(
+                    toolboxTalkId, tenantId, connectionId, missingLanguageCodes, cancellationToken);
             }
+
+            // Generate missing subtitle translations (independent from content translations)
+            // This checks the subtitle processing job's translations, not ToolboxTalkTranslation records
+            await GenerateMissingSubtitleTranslationsAsync(
+                toolboxTalkId, tenantId, connectionId, requiredLanguageCodes, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -176,6 +140,134 @@ public class MissingTranslationsJob
             }
 
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Generates missing content translations (sections, quiz, slides, slideshow HTML)
+    /// by dispatching GenerateContentTranslationsCommand.
+    /// </summary>
+    private async Task GenerateMissingContentTranslationsAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        string? connectionId,
+        List<string> missingLanguageCodes,
+        CancellationToken cancellationToken)
+    {
+        // Convert codes to language names
+        var missingLanguageNames = missingLanguageCodes
+            .Select(code => _languageCodeService.GetLanguageName(code))
+            .ToList();
+
+        _logger.LogInformation(
+            "Generating missing content translations for ToolboxTalk {ToolboxTalkId}: {MissingLanguages}",
+            toolboxTalkId, string.Join(", ", missingLanguageNames));
+
+        await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+            "Translating", 50,
+            $"Generating {missingLanguageNames.Count} missing content translation(s)...");
+
+        var command = new GenerateContentTranslationsCommand
+        {
+            ToolboxTalkId = toolboxTalkId,
+            TenantId = tenantId,
+            TargetLanguages = missingLanguageNames
+        };
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.Success)
+        {
+            var successCount = result.LanguageResults.Count(r => r.Success);
+            var totalCount = result.LanguageResults.Count;
+
+            _logger.LogInformation(
+                "Missing content translations generated for ToolboxTalk {ToolboxTalkId}: {SuccessCount}/{TotalCount}",
+                toolboxTalkId, successCount, totalCount);
+
+            foreach (var langResult in result.LanguageResults)
+            {
+                _logger.LogInformation(
+                    "Content translation result for {Language} ({Code}): Success={Success}, " +
+                    "Sections={Sections}, Questions={Questions}, Slides={Slides}, Slideshow={Slideshow}, Error={Error}",
+                    langResult.Language, langResult.LanguageCode, langResult.Success,
+                    langResult.SectionsTranslated, langResult.QuestionsTranslated,
+                    langResult.SlidesTranslated, langResult.SlideshowTranslated,
+                    langResult.ErrorMessage ?? "none");
+            }
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                "Translating", 80,
+                $"Content translations complete ({successCount}/{totalCount} languages).");
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Missing content translations generation failed for ToolboxTalk {ToolboxTalkId}: {Error}",
+                toolboxTalkId, result.ErrorMessage);
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                "Translating", 80,
+                "Some content translations could not be generated. They can be generated manually.");
+        }
+    }
+
+    /// <summary>
+    /// Generates missing subtitle translations by checking existing subtitle processing jobs
+    /// and translating to any languages that don't have subtitle translations yet.
+    /// </summary>
+    private async Task GenerateMissingSubtitleTranslationsAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        string? connectionId,
+        List<string> requiredLanguageCodes,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Checking for missing subtitle translations for ToolboxTalk {ToolboxTalkId}",
+                toolboxTalkId);
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                "Translating", 85,
+                "Checking for missing subtitle translations...");
+
+            var translatedCount = await _subtitleOrchestrator.TranslateMissingLanguagesAsync(
+                toolboxTalkId, tenantId, requiredLanguageCodes, cancellationToken);
+
+            if (translatedCount > 0)
+            {
+                _logger.LogInformation(
+                    "Generated {Count} missing subtitle translation(s) for ToolboxTalk {ToolboxTalkId}",
+                    translatedCount, toolboxTalkId);
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    "Translating", 100,
+                    $"All translations complete. Generated {translatedCount} missing subtitle translation(s).");
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "No missing subtitle translations for ToolboxTalk {ToolboxTalkId}",
+                    toolboxTalkId);
+
+                await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                    "Translating", 100,
+                    "All translations complete.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Subtitle translation failure should not fail the entire job
+            _logger.LogError(ex,
+                "Failed to generate missing subtitle translations for ToolboxTalk {ToolboxTalkId}. " +
+                "Subtitle translations can be generated manually.",
+                toolboxTalkId);
+
+            await SendProgressUpdateAsync(toolboxTalkId, connectionId,
+                "Translating", 100,
+                "Content translations complete. Subtitle translations may need to be generated manually.");
         }
     }
 

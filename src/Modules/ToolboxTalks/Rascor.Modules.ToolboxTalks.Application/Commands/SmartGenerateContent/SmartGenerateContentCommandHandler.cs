@@ -132,6 +132,7 @@ public class SmartGenerateContentCommandHandler
                     result.QuestionsCopied = reuseResult.QuestionsCopied;
                     result.SlideshowCopied = reuseResult.SlideshowCopied;
                     result.TranslationsCopied = reuseResult.TranslationsCopied;
+                    result.SubtitlesCopied = reuseResult.SubtitlesCopied;
                 }
                 else
                 {

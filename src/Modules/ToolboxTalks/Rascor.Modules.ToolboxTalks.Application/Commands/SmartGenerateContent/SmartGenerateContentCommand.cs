@@ -39,6 +39,7 @@ public class SmartGenerateContentResult
     public int QuestionsCopied { get; set; }
     public bool SlideshowCopied { get; set; }
     public int TranslationsCopied { get; set; }
+    public bool SubtitlesCopied { get; set; }
 
     // What was generated (new AI calls)
     public int SectionsGenerated { get; set; }

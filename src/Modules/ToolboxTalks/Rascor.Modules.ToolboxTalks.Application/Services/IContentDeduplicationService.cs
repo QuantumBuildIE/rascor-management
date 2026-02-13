@@ -130,6 +130,9 @@ public record SourceToolboxTalkInfo
     /// <summary>Whether the source has an HTML slideshow</summary>
     public bool HasSlideshow { get; init; }
 
+    /// <summary>Whether the source has completed subtitle processing</summary>
+    public bool HasSubtitles { get; init; }
+
     /// <summary>Languages that have translations available</summary>
     public List<string> TranslationLanguages { get; init; } = new();
 }
@@ -174,4 +177,7 @@ public record ContentReuseResult
 
     /// <summary>Number of translation languages copied</summary>
     public int TranslationsCopied { get; init; }
+
+    /// <summary>Whether subtitle data (processing job + translations) was copied</summary>
+    public bool SubtitlesCopied { get; init; }
 }
