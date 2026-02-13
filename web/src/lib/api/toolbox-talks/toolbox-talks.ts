@@ -17,6 +17,8 @@ import type {
   ContentReuseResponse,
   UpdateFileHashRequest,
   SlideshowHtmlResponse,
+  SmartGenerateContentRequest,
+  SmartGenerateContentResult,
 } from '@/types/toolbox-talks';
 
 export interface PaginatedResponse<T> {
@@ -395,6 +397,27 @@ export async function updateFileHash(
 ): Promise<{ success: boolean; fileHash: string }> {
   const response = await apiClient.post<{ success: boolean; fileHash: string }>(
     `/toolbox-talks/${id}/update-file-hash`,
+    request
+  );
+  return response.data;
+}
+
+// ============================================
+// Smart Content Generation
+// ============================================
+
+/**
+ * Smart content generation: automatically reuses existing content from duplicate
+ * sources and generates only what's missing via AI.
+ * Returns immediately with reuse results. If AI generation is needed, a background
+ * job is queued and the generationJobId is returned for SignalR progress tracking.
+ */
+export async function smartGenerateContent(
+  id: string,
+  request: SmartGenerateContentRequest
+): Promise<SmartGenerateContentResult> {
+  const response = await apiClient.post<SmartGenerateContentResult>(
+    `/toolbox-talks/${id}/smart-generate`,
     request
   );
   return response.data;

@@ -53,6 +53,22 @@ public interface IContentDeduplicationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Copies selected content types from a source toolbox talk to a target (partial reuse).
+    /// </summary>
+    /// <param name="targetToolboxTalkId">The toolbox talk to copy content into</param>
+    /// <param name="sourceToolboxTalkId">The toolbox talk to copy content from</param>
+    /// <param name="tenantId">The tenant ID (for security validation)</param>
+    /// <param name="options">Which content types to copy</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the reuse operation</returns>
+    Task<ContentReuseResult> ReuseContentAsync(
+        Guid targetToolboxTalkId,
+        Guid sourceToolboxTalkId,
+        Guid tenantId,
+        ReuseContentOptions options,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates the file hash for a toolbox talk.
     /// </summary>
     /// <param name="toolboxTalkId">The toolbox talk ID</param>
@@ -111,8 +127,29 @@ public record SourceToolboxTalkInfo
     /// <summary>Number of questions in the source</summary>
     public int QuestionCount { get; init; }
 
+    /// <summary>Whether the source has an HTML slideshow</summary>
+    public bool HasSlideshow { get; init; }
+
     /// <summary>Languages that have translations available</summary>
     public List<string> TranslationLanguages { get; init; } = new();
+}
+
+/// <summary>
+/// Options for controlling which content types to copy during reuse
+/// </summary>
+public record ReuseContentOptions
+{
+    /// <summary>Whether to copy sections</summary>
+    public bool CopySections { get; init; } = true;
+
+    /// <summary>Whether to copy questions</summary>
+    public bool CopyQuestions { get; init; } = true;
+
+    /// <summary>Whether to copy the HTML slideshow</summary>
+    public bool CopySlideshow { get; init; } = true;
+
+    /// <summary>Whether to copy translations</summary>
+    public bool CopyTranslations { get; init; } = true;
 }
 
 /// <summary>
@@ -131,6 +168,9 @@ public record ContentReuseResult
 
     /// <summary>Number of questions copied</summary>
     public int QuestionsCopied { get; init; }
+
+    /// <summary>Whether the HTML slideshow was copied</summary>
+    public bool SlideshowCopied { get; init; }
 
     /// <summary>Number of translation languages copied</summary>
     public int TranslationsCopied { get; init; }

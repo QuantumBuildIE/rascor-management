@@ -7,6 +7,7 @@ using Rascor.Core.Application.Models;
 using Rascor.Modules.ToolboxTalks.Application.Commands.CreateToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.DeleteToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.GenerateContentTranslations;
+using Rascor.Modules.ToolboxTalks.Application.Commands.SmartGenerateContent;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Reports;
@@ -549,6 +550,7 @@ public class ToolboxTalksController : ControllerBase
                         ProcessedAt = result.SourceToolboxTalk.ProcessedAt,
                         SectionCount = result.SourceToolboxTalk.SectionCount,
                         QuestionCount = result.SourceToolboxTalk.QuestionCount,
+                        HasSlideshow = result.SourceToolboxTalk.HasSlideshow,
                         TranslationLanguages = result.SourceToolboxTalk.TranslationLanguages
                     }
                     : null
@@ -824,6 +826,123 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error generating slides for toolbox talk {ToolboxTalkId}", id);
             return StatusCode(500, new { error = "Error generating slides" });
+        }
+    }
+
+    /// <summary>
+    /// Smart content generation: checks for duplicate sources, copies existing content,
+    /// and generates only what's missing via AI. Returns immediately with reuse results
+    /// and queues a background job if AI generation is needed.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="request">Smart generation options</param>
+    /// <returns>Smart generation result showing what was copied vs what needs generation</returns>
+    [HttpPost("{id:guid}/smart-generate")]
+    [Authorize(Policy = "ToolboxTalks.Edit")]
+    [ProducesResponseType(typeof(SmartGenerateContentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SmartGenerateContent(
+        Guid id,
+        [FromBody] SmartGenerateContentRequest request)
+    {
+        try
+        {
+            // First, verify the toolbox talk exists
+            var query = new GetToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                Id = id
+            };
+
+            var toolboxTalk = await _mediator.Send(query);
+            if (toolboxTalk == null)
+            {
+                return NotFound(new { error = "Toolbox Talk not found" });
+            }
+
+            // Validate we have content to work with
+            var includeVideo = request.IncludeVideo && !string.IsNullOrEmpty(toolboxTalk.VideoUrl);
+            var includePdf = request.IncludePdf && !string.IsNullOrEmpty(toolboxTalk.PdfUrl);
+
+            if (!includeVideo && !includePdf)
+            {
+                return BadRequest(new { error = "Must include at least one available content source (video or PDF)" });
+            }
+
+            // Execute the smart generate command (synchronous: duplicate check + reuse)
+            var command = new SmartGenerateContentCommand
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = id,
+                GenerateSections = request.GenerateSections,
+                GenerateQuestions = request.GenerateQuestions,
+                GenerateSlideshow = request.GenerateSlideshow,
+                SourceLanguageCode = request.SourceLanguageCode ?? "en",
+                MinimumSections = request.MinimumSections ?? 7,
+                MinimumQuestions = request.MinimumQuestions ?? 5,
+                PassThreshold = request.PassThreshold ?? 80,
+                IncludeVideo = includeVideo,
+                IncludePdf = includePdf,
+                ConnectionId = request.ConnectionId,
+            };
+
+            var result = await _mediator.Send(command);
+
+            if (!result.Success)
+            {
+                return BadRequest(new { error = result.ErrorMessage });
+            }
+
+            string? jobId = null;
+
+            // If AI generation is needed, queue a Hangfire background job
+            if (result.GenerationJobQueued)
+            {
+                var needSections = request.GenerateSections && result.SectionsCopied == 0;
+                var needQuestions = request.GenerateQuestions && result.QuestionsCopied == 0;
+                var needSlideshow = request.GenerateSlideshow && !result.SlideshowCopied;
+
+                var options = new ContentGenerationOptions(
+                    IncludeVideo: includeVideo,
+                    IncludePdf: includePdf,
+                    MinimumSections: request.MinimumSections ?? 7,
+                    MinimumQuestions: request.MinimumQuestions ?? 5,
+                    PassThreshold: request.PassThreshold ?? 80,
+                    ReplaceExisting: false, // Don't delete what we just copied!
+                    SourceLanguageCode: request.SourceLanguageCode ?? "en",
+                    GenerateSlidesFromPdf: needSlideshow && includePdf);
+
+                var tenantId = _currentUserService.TenantId;
+                jobId = BackgroundJob.Enqueue<ContentGenerationJob>(
+                    job => job.ExecuteAsync(id, options, request.ConnectionId, tenantId, CancellationToken.None));
+
+                result.GenerationJobId = jobId;
+
+                _logger.LogInformation(
+                    "Queued content generation job {JobId} for smart-generate on talk {ToolboxTalkId}. " +
+                    "NeedSections: {NeedSections}, NeedQuestions: {NeedQuestions}, NeedSlideshow: {NeedSlideshow}",
+                    jobId, id, needSections, needQuestions, needSlideshow);
+            }
+
+            return Ok(new SmartGenerateContentResponse
+            {
+                SectionsCopied = result.SectionsCopied,
+                QuestionsCopied = result.QuestionsCopied,
+                SlideshowCopied = result.SlideshowCopied,
+                TranslationsCopied = result.TranslationsCopied,
+                SectionsGenerated = result.SectionsGenerated,
+                QuestionsGenerated = result.QuestionsGenerated,
+                SlideshowGenerated = result.SlideshowGenerated,
+                ContentCopiedFromTitle = result.ContentCopiedFromTitle,
+                GenerationJobId = jobId,
+                GenerationJobQueued = result.GenerationJobQueued,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during smart content generation for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { error = "Error during smart content generation" });
         }
     }
 
@@ -1514,6 +1633,11 @@ public record SourceToolboxTalkResponse
     public int QuestionCount { get; init; }
 
     /// <summary>
+    /// Whether the source has an HTML slideshow
+    /// </summary>
+    public bool HasSlideshow { get; init; }
+
+    /// <summary>
     /// Languages that have translations available
     /// </summary>
     public List<string> TranslationLanguages { get; init; } = new();
@@ -1594,4 +1718,64 @@ public record GenerateSlidesResponse
     public bool Success { get; init; }
     public string? Message { get; init; }
     public int HtmlLength { get; init; }
+}
+
+/// <summary>
+/// Request DTO for smart content generation
+/// </summary>
+public record SmartGenerateContentRequest
+{
+    /// <summary>Whether to generate/reuse sections</summary>
+    public bool GenerateSections { get; init; } = true;
+
+    /// <summary>Whether to generate/reuse quiz questions</summary>
+    public bool GenerateQuestions { get; init; } = true;
+
+    /// <summary>Whether to generate/reuse HTML slideshow</summary>
+    public bool GenerateSlideshow { get; init; }
+
+    /// <summary>Whether to include video as a content source</summary>
+    public bool IncludeVideo { get; init; }
+
+    /// <summary>Whether to include PDF as a content source</summary>
+    public bool IncludePdf { get; init; }
+
+    /// <summary>The language code of the original content (default: "en")</summary>
+    public string? SourceLanguageCode { get; init; }
+
+    /// <summary>Minimum number of sections to generate</summary>
+    public int? MinimumSections { get; init; }
+
+    /// <summary>Minimum number of quiz questions to generate</summary>
+    public int? MinimumQuestions { get; init; }
+
+    /// <summary>Quiz pass threshold percentage</summary>
+    public int? PassThreshold { get; init; }
+
+    /// <summary>SignalR connection ID for progress updates during AI generation</summary>
+    public string? ConnectionId { get; init; }
+}
+
+/// <summary>
+/// Response DTO for smart content generation
+/// </summary>
+public record SmartGenerateContentResponse
+{
+    // What was copied from existing source
+    public int SectionsCopied { get; init; }
+    public int QuestionsCopied { get; init; }
+    public bool SlideshowCopied { get; init; }
+    public int TranslationsCopied { get; init; }
+
+    // What was generated via AI (0 if generation is queued as background job)
+    public int SectionsGenerated { get; init; }
+    public int QuestionsGenerated { get; init; }
+    public bool SlideshowGenerated { get; init; }
+
+    // Source info
+    public string? ContentCopiedFromTitle { get; init; }
+
+    // Background job info (if AI generation was needed)
+    public bool GenerationJobQueued { get; init; }
+    public string? GenerationJobId { get; init; }
 }

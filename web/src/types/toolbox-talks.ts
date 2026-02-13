@@ -863,6 +863,8 @@ export interface SourceToolboxTalkInfo {
   sectionCount: number;
   /** Number of questions in the source */
   questionCount: number;
+  /** Whether the source has an HTML slideshow */
+  hasSlideshow: boolean;
   /** Languages that have translations available */
   translationLanguages: string[];
 }
@@ -955,4 +957,40 @@ export interface UpdateFileHashRequest {
   fileUrl?: string;
   /** Type of file: "PDF" or "Video" */
   fileType: FileHashType;
+}
+
+// ============================================
+// Smart Content Generation
+// ============================================
+
+/** Request for smart content generation (auto reuse + generate missing) */
+export interface SmartGenerateContentRequest {
+  generateSections: boolean;
+  generateQuestions: boolean;
+  generateSlideshow: boolean;
+  includeVideo: boolean;
+  includePdf: boolean;
+  sourceLanguageCode: string;
+  minimumSections?: number;
+  minimumQuestions?: number;
+  passThreshold?: number;
+  connectionId?: string;
+}
+
+/** Response from smart content generation */
+export interface SmartGenerateContentResult {
+  // What was copied from existing source
+  sectionsCopied: number;
+  questionsCopied: number;
+  slideshowCopied: boolean;
+  translationsCopied: number;
+  // What was generated via AI (0 if generation is queued as background job)
+  sectionsGenerated: number;
+  questionsGenerated: number;
+  slideshowGenerated: boolean;
+  // Source info
+  contentCopiedFromTitle?: string;
+  // Background job info (if AI generation was needed)
+  generationJobQueued: boolean;
+  generationJobId?: string;
 }

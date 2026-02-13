@@ -27,13 +27,13 @@ import {
   RefreshCw,
   ArrowRight,
   Presentation,
+  CheckCircle,
 } from 'lucide-react';
 import type { ToolboxTalkWizardData, GeneratedSection, GeneratedQuestion } from '../page';
-import { generateToolboxTalkContent, getToolboxTalk, checkForDuplicate, reuseContent } from '@/lib/api/toolbox-talks/toolbox-talks';
+import { getToolboxTalk, smartGenerateContent } from '@/lib/api/toolbox-talks/toolbox-talks';
 import { getStoredToken } from '@/lib/api/client';
 import { HubConnectionBuilder, HubConnection, LogLevel, HubConnectionState } from '@microsoft/signalr';
-import type { SourceToolboxTalkInfo, FileHashType } from '@/types/toolbox-talks';
-import { DuplicateContentModal } from '@/features/toolbox-talks/components/DuplicateContentModal';
+import type { SmartGenerateContentResult } from '@/types/toolbox-talks';
 import { SOURCE_LANGUAGE_OPTIONS } from '@/features/toolbox-talks/constants';
 import { toast } from 'sonner';
 
@@ -77,12 +77,9 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Duplicate detection state
-  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
-  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
-  const [sourceToolboxTalk, setSourceToolboxTalk] = useState<SourceToolboxTalkInfo | null>(null);
-  const [duplicateFileType, setDuplicateFileType] = useState<FileHashType>('PDF');
-  const [cachedFileHash, setCachedFileHash] = useState<string | null>(null);
+  // Smart generate state
+  const [isSmartGenerating, setIsSmartGenerating] = useState(false);
+  const [smartResult, setSmartResult] = useState<SmartGenerateContentResult | null>(null);
 
   const connectionRef = useRef<HubConnection | null>(null);
   const hasConnectedRef = useRef(false);
@@ -93,7 +90,6 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
   const hasContent = hasVideo || hasPdf;
 
   // Check if content actually exists (regardless of generation status)
-  // This allows proceeding if partial content was created even when generation "failed"
   const hasGeneratedContent = useMemo(() => {
     const hasSections = data.sections && data.sections.length > 0;
     const hasQuestions = data.questions && data.questions.length > 0;
@@ -101,11 +97,53 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
   }, [data.sections, data.questions]);
 
   // Can proceed if generation succeeded OR if content actually exists
-  const canProceed = !isGenerating && (result?.success || hasGeneratedContent);
+  const canProceed = !isGenerating && !isSmartGenerating && (result?.success || smartResult?.sectionsCopied || hasGeneratedContent);
+
+  // Helper to map API response to wizard state
+  const mapTalkToWizardData = useCallback((updatedTalk: Awaited<ReturnType<typeof getToolboxTalk>>) => {
+    const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
+      id: s.id,
+      sortOrder: s.sectionNumber,
+      title: s.title,
+      content: s.content,
+      source: s.source || 'Manual',
+      requiresAcknowledgment: s.requiresAcknowledgment,
+    }));
+
+    const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
+      const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
+      const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
+        if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
+        if (src === 'Both') return 'Video';
+        return 'Manual';
+      };
+
+      return {
+        id: q.id,
+        sortOrder: q.questionNumber,
+        questionText: q.questionText,
+        questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' as const : 'MultipleChoice' as const,
+        options: q.options || [],
+        correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
+        source: mapSource(q.source),
+        points: q.points,
+      };
+    });
+
+    updateData({
+      sections,
+      questions,
+      generateFromVideo: includeVideo,
+      generateFromPdf: includePdf,
+      minimumSections,
+      minimumQuestions,
+    });
+
+    return { sections, questions };
+  }, [includeVideo, includePdf, minimumSections, minimumQuestions, updateData]);
 
   // Set up SignalR connection
   const setupSignalR = useCallback(async () => {
-    // Skip if already connected or connecting, or if there's no toolbox talk ID
     if (!data.id || hasConnectedRef.current || connectionRef.current?.state === HubConnectionState.Connected) {
       return;
     }
@@ -160,7 +198,6 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         totalTokensUsed: number;
         message?: string;
       }) => {
-        console.log('[DEBUG] ContentGenerationComplete received (initial connection):', payload);
         if (payload.toolboxTalkId === data.id) {
           setResult({
             success: payload.success,
@@ -174,97 +211,17 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
             message: payload.message,
           });
 
-          // Always try to fetch content, even on failure (partial content may exist)
+          // Fetch and map content
           if (data.id) {
             try {
-              console.log('[DEBUG] Fetching updated toolbox talk from API after generation complete...');
               const updatedTalk = await getToolboxTalk(data.id);
-
-              console.log('[DEBUG] API response - sections:', updatedTalk.sections?.map(s => ({
-                id: s.id,
-                sectionNumber: s.sectionNumber,
-                source: s.source,
-                title: s.title?.substring(0, 30),
-              })));
-              console.log('[DEBUG] API response - questions:', updatedTalk.questions?.map(q => ({
-                id: q.id,
-                questionNumber: q.questionNumber,
-                source: q.source,
-                questionType: q.questionType,
-              })));
-
-              // Check if any content was actually created
               const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
                                  (updatedTalk.questions?.length ?? 0) > 0;
-
               if (hasContent) {
-                // Map API sections to wizard GeneratedSection format
-                const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
-                  id: s.id,
-                  sortOrder: s.sectionNumber,
-                  title: s.title,
-                  content: s.content,
-                  source: s.source || 'Manual',
-                  requiresAcknowledgment: s.requiresAcknowledgment,
-                }));
-
-                // Map API questions to wizard GeneratedQuestion format
-                const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
-                  // Find the index of the correct answer in the options array
-                  const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
-
-                  // Map 'Both' to 'Video' since wizard type doesn't include 'Both'
-                  const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-                    if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-                    if (src === 'Both') return 'Video'; // Default 'Both' to 'Video'
-                    return 'Manual';
-                  };
-
-                  return {
-                    id: q.id,
-                    sortOrder: q.questionNumber,
-                    questionText: q.questionText,
-                    questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
-                    options: q.options || [],
-                    correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-                    source: mapSource(q.source),
-                    points: q.points,
-                  };
-                });
-
-                console.log('[DEBUG] Mapped sections for wizard state:', sections.map(s => ({
-                  id: s.id,
-                  sortOrder: s.sortOrder,
-                  source: s.source,
-                  title: s.title?.substring(0, 30),
-                })));
-                console.log('[DEBUG] Mapped questions for wizard state:', questions.map(q => ({
-                  id: q.id,
-                  sortOrder: q.sortOrder,
-                  source: q.source,
-                })));
-
-                // Update wizard state with the fetched content
-                updateData({
-                  sections,
-                  questions,
-                  generateFromVideo: includeVideo,
-                  generateFromPdf: includePdf,
-                  minimumSections,
-                  minimumQuestions,
-                });
-
-                console.log('[DEBUG] Loaded generated content:', {
-                  sections: sections.length,
-                  questions: questions.length,
-                  wasSuccessful: payload.success
-                });
-              } else {
-                console.log('[DEBUG] No content found in API response after generation');
+                mapTalkToWizardData(updatedTalk);
               }
             } catch (error) {
-              console.error('[DEBUG] Failed to fetch generated content:', error);
-              // Still show result, but user may need to refresh
+              console.error('Failed to fetch generated content:', error);
             }
           }
 
@@ -272,34 +229,24 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         }
       });
 
-      // Handle connection state changes
       connection.onreconnecting(() => {
-        console.log('SignalR reconnecting...');
         setIsConnected(false);
       });
 
       connection.onreconnected(() => {
-        console.log('SignalR reconnected');
         setIsConnected(true);
-        // Re-subscribe after reconnection
         if (data.id) {
           connection.invoke('SubscribeToToolboxTalk', data.id);
         }
       });
 
       connection.onclose(() => {
-        console.log('SignalR connection closed');
         setIsConnected(false);
         hasConnectedRef.current = false;
       });
 
-      // Start the connection
       await connection.start();
-      console.log('SignalR connected');
-
-      // Subscribe to this toolbox talk's updates
       await connection.invoke('SubscribeToToolboxTalk', data.id);
-      console.log('Subscribed to toolbox talk', data.id);
 
       connectionRef.current = connection;
       hasConnectedRef.current = true;
@@ -311,16 +258,15 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
     } finally {
       setIsConnecting(false);
     }
-  }, [data.id]);
+  }, [data.id, mapTalkToWizardData]);
 
-  // Connect to SignalR when component mounts and we have a toolbox talk ID
+  // Connect to SignalR when component mounts
   useEffect(() => {
     if (data.id && !hasConnectedRef.current) {
       setupSignalR();
     }
 
     return () => {
-      // Cleanup on unmount
       if (connectionRef.current) {
         if (data.id) {
           connectionRef.current.invoke('UnsubscribeFromToolboxTalk', data.id).catch(() => {});
@@ -332,93 +278,44 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
     };
   }, [data.id, setupSignalR]);
 
-  // Timeout fallback: if no SignalR updates received for 45 seconds during generation,
-  // check status via API in case SignalR connection was lost
+  // Timeout fallback: check status via API if no SignalR updates
   useEffect(() => {
     if (!isGenerating || result) return;
 
     const checkInterval = setInterval(async () => {
       const timeSinceLastProgress = Date.now() - lastProgressTimeRef.current;
 
-      // If no progress update in 45 seconds, check status via API
       if (timeSinceLastProgress > 45000 && data.id) {
-        console.log('No SignalR updates received, checking status via API...');
         try {
           const updatedTalk = await getToolboxTalk(data.id);
 
-          // Check if content was generated (sections or questions exist)
           if (updatedTalk.sections?.length > 0 || updatedTalk.questions?.length > 0) {
-            console.log('Content was generated, SignalR may have missed completion event');
-
-            // Content exists - generation succeeded but we missed the SignalR event
             setResult({
               success: true,
               partialSuccess: true,
               sectionsGenerated: updatedTalk.sections?.length || 0,
               questionsGenerated: updatedTalk.questions?.length || 0,
-              hasFinalPortionQuestion: false, // Can't determine from API response
+              hasFinalPortionQuestion: false,
               errors: [],
               warnings: ['Progress updates were delayed, but content was generated successfully'],
               totalTokensUsed: 0,
               message: 'Content generated (status recovered)',
             });
 
-            // Map and update wizard data
-            const sections = updatedTalk.sections.map((s) => ({
-              id: s.id,
-              sortOrder: s.sectionNumber,
-              title: s.title,
-              content: s.content,
-              source: s.source || 'Manual',
-              requiresAcknowledgment: s.requiresAcknowledgment,
-            }));
-
-            const questions = updatedTalk.questions.map((q) => {
-              const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
-              const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-                if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-                if (src === 'Both') return 'Video';
-                return 'Manual';
-              };
-
-              return {
-                id: q.id,
-                sortOrder: q.questionNumber,
-                questionText: q.questionText,
-                questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' as const : 'MultipleChoice' as const,
-                options: q.options || [],
-                correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-                source: mapSource(q.source),
-                points: q.points,
-              };
-            });
-
-            updateData({
-              sections,
-              questions,
-              generateFromVideo: includeVideo,
-              generateFromPdf: includePdf,
-              minimumSections,
-              minimumQuestions,
-            });
-
+            mapTalkToWizardData(updatedTalk);
             setIsGenerating(false);
-          } else if (updatedTalk.status === 'Draft') {
-            // Status is Draft - generation may have failed
-            console.log('Toolbox talk status is Draft, generation may have failed');
-            // Don't auto-fail yet, keep waiting for SignalR
           }
         } catch (error) {
           console.error('Status check failed:', error);
         }
       }
-    }, 15000); // Check every 15 seconds
+    }, 15000);
 
     return () => clearInterval(checkInterval);
-  }, [isGenerating, result, data.id, includeVideo, includePdf, minimumSections, minimumQuestions, updateData]);
+  }, [isGenerating, result, data.id, mapTalkToWizardData]);
 
-  // Check for duplicate content before generating
-  const handleCheckAndGenerate = async () => {
+  // Smart generate: auto-reuse existing content, generate only what's missing
+  const handleSmartGenerate = async () => {
     if (!data.id) {
       setError('Toolbox Talk not found. Please go back and save the basic info first.');
       return;
@@ -429,163 +326,20 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       return;
     }
 
-    setIsCheckingDuplicate(true);
+    setIsSmartGenerating(true);
     setError(null);
-
-    try {
-      // Determine which file URL to check for duplicates
-      const fileUrl = includePdf && data.pdfUrl ? data.pdfUrl : data.videoUrl;
-      const fileType: FileHashType = includePdf && data.pdfUrl ? 'PDF' : 'Video';
-
-      if (fileUrl) {
-        // Check for duplicate content
-        const duplicateResult = await checkForDuplicate(data.id, {
-          fileUrl,
-          fileType,
-        });
-
-        if (duplicateResult.isDuplicate && duplicateResult.sourceToolboxTalk) {
-          // Store the file hash and show modal
-          setCachedFileHash(duplicateResult.fileHash);
-          setSourceToolboxTalk(duplicateResult.sourceToolboxTalk);
-          setDuplicateFileType(fileType);
-          setDuplicateModalOpen(true);
-          setIsCheckingDuplicate(false);
-          return;
-        }
-      }
-
-      // No duplicate found, proceed with normal generation
-      setIsCheckingDuplicate(false);
-      await handleStartGeneration();
-    } catch (err) {
-      console.error('Duplicate check error:', err);
-      // If duplicate check fails, proceed with generation anyway
-      setIsCheckingDuplicate(false);
-      await handleStartGeneration();
-    }
-  };
-
-  // Handle reusing content from a duplicate
-  const handleReuseContent = async () => {
-    if (!data.id || !sourceToolboxTalk) return;
-
-    try {
-      const result = await reuseContent(data.id, {
-        sourceToolboxTalkId: sourceToolboxTalk.id,
-      });
-
-      if (result.success) {
-        toast.success('Content reused successfully', {
-          description: result.message,
-        });
-
-        // Fetch the updated toolbox talk to get the copied content
-        const updatedTalk = await getToolboxTalk(data.id);
-
-        // Map and update wizard data with the reused content
-        const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
-          id: s.id,
-          sortOrder: s.sectionNumber,
-          title: s.title,
-          content: s.content,
-          source: s.source || 'Manual',
-          requiresAcknowledgment: s.requiresAcknowledgment,
-        }));
-
-        const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
-          const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
-          const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-            if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-            if (src === 'Both') return 'Video';
-            return 'Manual';
-          };
-
-          return {
-            id: q.id,
-            sortOrder: q.questionNumber,
-            questionText: q.questionText,
-            questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
-            options: q.options || [],
-            correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-            source: mapSource(q.source),
-            points: q.points,
-          };
-        });
-
-        updateData({
-          sections,
-          questions,
-          generateFromVideo: includeVideo,
-          generateFromPdf: includePdf,
-          minimumSections,
-          minimumQuestions,
-        });
-
-        // Set result to show success state
-        setResult({
-          success: true,
-          partialSuccess: false,
-          sectionsGenerated: result.sectionsCopied,
-          questionsGenerated: result.questionsCopied,
-          hasFinalPortionQuestion: false,
-          errors: [],
-          warnings: result.translationsCopied > 0
-            ? [`Also copied ${result.translationsCopied} translation(s) from the source.`]
-            : [],
-          totalTokensUsed: 0,
-          message: 'Content reused from existing toolbox talk',
-        });
-      } else {
-        toast.error('Failed to reuse content');
-      }
-    } catch (err) {
-      console.error('Reuse content error:', err);
-      toast.error('Failed to reuse content', {
-        description: err instanceof Error ? err.message : 'Unknown error',
-      });
-    }
-  };
-
-  // Handle generating fresh content (user chose not to reuse)
-  const handleGenerateFresh = async () => {
-    setDuplicateModalOpen(false);
-    await handleStartGeneration();
-  };
-
-  const handleStartGeneration = async () => {
-    if (!data.id) {
-      setError('Toolbox Talk not found. Please go back and save the basic info first.');
-      return;
-    }
-
-    if (!includeVideo && !includePdf) {
-      setError('Please select at least one content source');
-      return;
-    }
-
-    setIsGenerating(true);
-    setError(null);
-    setProgress(null);
     setResult(null);
+    setSmartResult(null);
 
     try {
-      // STEP 1: Ensure SignalR is connected FIRST (before starting the job)
+      // Ensure SignalR is ready (needed if AI generation is queued)
       let currentConnection = connectionRef.current;
 
       if (!currentConnection || currentConnection.state !== HubConnectionState.Connected) {
-        console.log('SignalR not connected, establishing connection...');
-
-        // If we have an existing connection that's not connected, stop it first
         if (currentConnection && currentConnection.state !== HubConnectionState.Disconnected) {
-          try {
-            await currentConnection.stop();
-          } catch {
-            // Ignore stop errors
-          }
+          try { await currentConnection.stop(); } catch { /* ignore */ }
         }
 
-        // Create a new connection
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5222';
         const token = getStoredToken('accessToken');
 
@@ -601,7 +355,6 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           .configureLogging(LogLevel.Information)
           .build();
 
-        // Set up event handlers
         currentConnection.on('ContentGenerationProgress', (payload: {
           toolboxTalkId: string;
           stage: string;
@@ -630,7 +383,6 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           totalTokensUsed: number;
           message?: string;
         }) => {
-          console.log('[DEBUG] ContentGenerationComplete received (new connection):', payload);
           if (payload.toolboxTalkId === data.id) {
             setResult({
               success: payload.success,
@@ -644,83 +396,16 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
               message: payload.message,
             });
 
-            // Always try to fetch content, even on failure (partial content may exist)
             if (data.id) {
               try {
-                console.log('[DEBUG] Fetching updated toolbox talk from API (new connection handler)...');
                 const updatedTalk = await getToolboxTalk(data.id);
-
-                console.log('[DEBUG] API response (new connection) - sections:', updatedTalk.sections?.map(s => ({
-                  id: s.id,
-                  sectionNumber: s.sectionNumber,
-                  source: s.source,
-                  title: s.title?.substring(0, 30),
-                })));
-                console.log('[DEBUG] API response (new connection) - questions:', updatedTalk.questions?.map(q => ({
-                  id: q.id,
-                  questionNumber: q.questionNumber,
-                  source: q.source,
-                })));
-
-                // Check if any content was actually created
                 const hasContent = (updatedTalk.sections?.length ?? 0) > 0 ||
                                    (updatedTalk.questions?.length ?? 0) > 0;
-
                 if (hasContent) {
-                  const sections: GeneratedSection[] = updatedTalk.sections.map((s) => ({
-                    id: s.id,
-                    sortOrder: s.sectionNumber,
-                    title: s.title,
-                    content: s.content,
-                    source: s.source || 'Manual',
-                    requiresAcknowledgment: s.requiresAcknowledgment,
-                  }));
-
-                  const questions: GeneratedQuestion[] = updatedTalk.questions.map((q) => {
-                    const correctAnswerIndex = q.options?.findIndex(opt => opt === q.correctAnswer) ?? 0;
-                    const mapSource = (src: string | undefined): 'Video' | 'Pdf' | 'Manual' => {
-                      if (src === 'Video' || src === 'Pdf' || src === 'Manual') return src;
-                      if (src === 'Both') return 'Video';
-                      return 'Manual';
-                    };
-
-                    return {
-                      id: q.id,
-                      sortOrder: q.questionNumber,
-                      questionText: q.questionText,
-                      questionType: q.questionType === 'TrueFalse' ? 'TrueFalse' : 'MultipleChoice',
-                      options: q.options || [],
-                      correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : 0,
-                      source: mapSource(q.source),
-                      points: q.points,
-                    };
-                  });
-
-                  console.log('[DEBUG] Mapped sections (new connection):', sections.map(s => ({
-                    id: s.id,
-                    sortOrder: s.sortOrder,
-                    source: s.source,
-                  })));
-
-                  updateData({
-                    sections,
-                    questions,
-                    generateFromVideo: includeVideo,
-                    generateFromPdf: includePdf,
-                    minimumSections,
-                    minimumQuestions,
-                  });
-
-                  console.log('[DEBUG] Loaded generated content (new connection):', {
-                    sections: sections.length,
-                    questions: questions.length,
-                    wasSuccessful: payload.success
-                  });
-                } else {
-                  console.log('[DEBUG] No content found in API response (new connection)');
+                  mapTalkToWizardData(updatedTalk);
                 }
               } catch (error) {
-                console.error('[DEBUG] Failed to fetch generated content (new connection):', error);
+                console.error('Failed to fetch generated content:', error);
               }
             }
 
@@ -728,68 +413,77 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           }
         });
 
-        currentConnection.onreconnecting(() => {
-          console.log('SignalR reconnecting...');
-          setIsConnected(false);
-        });
-
+        currentConnection.onreconnecting(() => setIsConnected(false));
         currentConnection.onreconnected(() => {
-          console.log('SignalR reconnected');
           setIsConnected(true);
-          if (data.id) {
-            currentConnection?.invoke('SubscribeToToolboxTalk', data.id);
-          }
+          if (data.id) currentConnection?.invoke('SubscribeToToolboxTalk', data.id);
         });
-
         currentConnection.onclose(() => {
-          console.log('SignalR connection closed');
           setIsConnected(false);
           hasConnectedRef.current = false;
         });
 
-        // Start the connection and wait for it
         await currentConnection.start();
-        console.log('SignalR connected');
-
         connectionRef.current = currentConnection;
         hasConnectedRef.current = true;
         setIsConnected(true);
       }
 
-      // STEP 2: Subscribe to this toolbox talk's updates
       await currentConnection.invoke('SubscribeToToolboxTalk', data.id);
-      console.log('Subscribed to toolbox talk:', data.id);
 
-      // STEP 3: Now start the generation job (connection is guaranteed)
-      console.log('Starting content generation...');
-      await generateToolboxTalkContent(data.id, {
+      // Call smart generate endpoint
+      const smartRes = await smartGenerateContent(data.id, {
+        generateSections: true,
+        generateQuestions: true,
+        generateSlideshow: data.generateSlidesFromPdf && hasPdf,
         includeVideo,
         includePdf,
+        sourceLanguageCode: data.sourceLanguageCode,
         minimumSections,
         minimumQuestions,
         passThreshold: data.passThreshold,
-        replaceExisting: true,
         connectionId: currentConnection.connectionId || '',
-        sourceLanguageCode: data.sourceLanguageCode,
-        generateSlidesFromPdf: data.generateSlidesFromPdf,
       });
 
-      // Show initial progress while waiting for SignalR updates
-      setProgress({
-        stage: 'Starting',
-        percentComplete: 5,
-        message: 'Starting content generation...',
-      });
+      setSmartResult(smartRes);
+
+      // If content was copied, fetch it to update wizard state
+      if (smartRes.sectionsCopied > 0 || smartRes.questionsCopied > 0) {
+        const updatedTalk = await getToolboxTalk(data.id);
+        mapTalkToWizardData(updatedTalk);
+      }
+
+      if (smartRes.generationJobQueued) {
+        // AI generation was queued - switch to progress tracking mode
+        setIsSmartGenerating(false);
+        setIsGenerating(true);
+        lastProgressTimeRef.current = Date.now();
+        setProgress({
+          stage: 'Starting',
+          percentComplete: 5,
+          message: smartRes.contentCopiedFromTitle
+            ? `Reused content from "${smartRes.contentCopiedFromTitle}". Generating remaining content...`
+            : 'Starting content generation...',
+        });
+      } else {
+        // Everything was copied - no AI generation needed!
+        setIsSmartGenerating(false);
+
+        if (smartRes.contentCopiedFromTitle) {
+          toast.success('Content ready!', {
+            description: `Reused from "${smartRes.contentCopiedFromTitle}" - no AI credits used.`,
+          });
+        }
+      }
     } catch (err: unknown) {
-      console.error('Generation error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start content generation';
+      console.error('Smart generate error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate content';
       setError(errorMessage);
-      setIsGenerating(false);
+      setIsSmartGenerating(false);
     }
   };
 
   const handleNext = () => {
-    // Update wizard data with generation settings and results
     updateData({
       generateFromVideo: includeVideo,
       generateFromPdf: includePdf,
@@ -801,6 +495,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
 
   const handleRetry = () => {
     setResult(null);
+    setSmartResult(null);
     setProgress(null);
     setError(null);
   };
@@ -843,6 +538,12 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
     }
   };
 
+  // Determine if we should show the smart result summary (content was reused without needing AI)
+  const showSmartResult = smartResult && !smartResult.generationJobQueued && !result;
+
+  // Determine if we should show the combined result (after AI generation completes + reuse info)
+  const showCombinedResult = result && smartResult?.contentCopiedFromTitle;
+
   return (
     <div className="space-y-6">
       <div>
@@ -864,7 +565,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       )}
 
       {/* Connection status indicator */}
-      {data.id && !isGenerating && !result && (
+      {data.id && !isGenerating && !isSmartGenerating && !result && !showSmartResult && (
         <div className="flex items-center gap-2 text-sm">
           {isConnecting ? (
             <>
@@ -891,7 +592,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       )}
 
       {/* Source Selection - only show when not generating and no result */}
-      {!isGenerating && !result && hasContent && (
+      {!isGenerating && !isSmartGenerating && !result && !showSmartResult && hasContent && (
         <Card>
           <CardContent className="pt-6 space-y-6">
             {/* Content Sources */}
@@ -1045,11 +746,25 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         </Card>
       )}
 
-      {/* Generation Progress */}
+      {/* Generation Progress (AI generation running in background) */}
       {isGenerating && progress && (
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
+              {/* Show reuse summary above progress if content was partially copied */}
+              {smartResult?.contentCopiedFromTitle && (smartResult.sectionsCopied > 0 || smartResult.questionsCopied > 0 || smartResult.slideshowCopied) && (
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-700">
+                    Reused {smartResult.sectionsCopied > 0 ? `${smartResult.sectionsCopied} sections` : ''}
+                    {smartResult.sectionsCopied > 0 && smartResult.questionsCopied > 0 ? ', ' : ''}
+                    {smartResult.questionsCopied > 0 ? `${smartResult.questionsCopied} questions` : ''}
+                    {smartResult.slideshowCopied ? ', slideshow' : ''}
+                    {' '}from &quot;{smartResult.contentCopiedFromTitle}&quot;. Generating remaining content...
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Stage indicator */}
               <div className="flex items-center gap-3">
                 {getStageIcon(progress.stage)}
@@ -1085,7 +800,63 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
         </Card>
       )}
 
-      {/* Generation Result */}
+      {/* Smart Result - Content was fully reused (no AI generation needed) */}
+      {showSmartResult && smartResult && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="font-medium text-green-800">Content ready!</p>
+
+                  {smartResult.contentCopiedFromTitle && (
+                    <p className="text-sm text-green-700">
+                      Content was reused from &quot;{smartResult.contentCopiedFromTitle}&quot; &mdash; saving AI costs!
+                    </p>
+                  )}
+
+                  <ul className="text-sm text-green-700 space-y-1">
+                    {/* Sections */}
+                    {smartResult.sectionsCopied > 0 && (
+                      <li>
+                        &bull; {smartResult.sectionsCopied} sections
+                        <span className="text-green-600"> (reused)</span>
+                      </li>
+                    )}
+
+                    {/* Questions */}
+                    {smartResult.questionsCopied > 0 && (
+                      <li>
+                        &bull; {smartResult.questionsCopied} quiz questions
+                        <span className="text-green-600"> (reused)</span>
+                      </li>
+                    )}
+
+                    {/* Slideshow */}
+                    {smartResult.slideshowCopied && (
+                      <li>
+                        &bull; Animated slideshow
+                        <span className="text-green-600"> (reused)</span>
+                      </li>
+                    )}
+
+                    {/* Translations */}
+                    {smartResult.translationsCopied > 0 && (
+                      <li>
+                        &bull; {smartResult.translationsCopied} translation(s)
+                        <span className="text-green-600"> (reused)</span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Generation Result (after AI generation completes) */}
       {result && (
         <Card className={
           result.success && !result.partialSuccess
@@ -1097,7 +868,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           <CardContent className="pt-6">
             {result.success ? (
               <div className="space-y-4">
-                {/* Success/Partial Success header */}
+                {/* Success header */}
                 <div className={`flex items-center gap-2 ${result.partialSuccess ? 'text-yellow-700' : 'text-green-700'}`}>
                   {result.partialSuccess ? (
                     <Info className="h-5 w-5" />
@@ -1111,24 +882,68 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                   </span>
                 </div>
 
-                {/* Partial success explanation */}
-                {result.partialSuccess && (
+                {/* Show combined summary if content was reused + generated */}
+                {showCombinedResult && smartResult && (
+                  <p className="text-sm text-green-700">
+                    Some content was reused from &quot;{smartResult.contentCopiedFromTitle}&quot; &mdash; saving AI costs!
+                  </p>
+                )}
+
+                {result.partialSuccess && !showCombinedResult && (
                   <p className="text-sm text-yellow-700">
                     Some content sources were unavailable, but content was successfully generated from available sources.
                   </p>
                 )}
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white rounded-lg border">
-                    <p className="text-3xl font-bold text-primary">{result.sectionsGenerated}</p>
-                    <p className="text-sm text-muted-foreground">Sections created</p>
+                {/* Smart summary: copied vs generated */}
+                {showCombinedResult && smartResult ? (
+                  <ul className="text-sm text-green-700 space-y-1">
+                    {(smartResult.sectionsCopied > 0 || result.sectionsGenerated > 0) && (
+                      <li>
+                        &bull; {smartResult.sectionsCopied + result.sectionsGenerated} sections
+                        {smartResult.sectionsCopied > 0 && result.sectionsGenerated > 0 && (
+                          <span className="text-green-600">
+                            {' '}({smartResult.sectionsCopied} reused, {result.sectionsGenerated} new)
+                          </span>
+                        )}
+                        {smartResult.sectionsCopied > 0 && result.sectionsGenerated === 0 && (
+                          <span className="text-green-600"> (reused)</span>
+                        )}
+                      </li>
+                    )}
+                    {(smartResult.questionsCopied > 0 || result.questionsGenerated > 0) && (
+                      <li>
+                        &bull; {smartResult.questionsCopied + result.questionsGenerated} quiz questions
+                        {smartResult.questionsCopied > 0 && result.questionsGenerated > 0 && (
+                          <span className="text-green-600">
+                            {' '}({smartResult.questionsCopied} reused, {result.questionsGenerated} new)
+                          </span>
+                        )}
+                        {smartResult.questionsCopied > 0 && result.questionsGenerated === 0 && (
+                          <span className="text-green-600"> (reused)</span>
+                        )}
+                      </li>
+                    )}
+                    {(smartResult.slideshowCopied || smartResult.slideshowGenerated) && (
+                      <li>
+                        &bull; Animated slideshow
+                        {smartResult.slideshowCopied && <span className="text-green-600"> (reused)</span>}
+                      </li>
+                    )}
+                  </ul>
+                ) : (
+                  /* Standard stats (no reuse) */
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white rounded-lg border">
+                      <p className="text-3xl font-bold text-primary">{result.sectionsGenerated}</p>
+                      <p className="text-sm text-muted-foreground">Sections created</p>
+                    </div>
+                    <div className="p-4 bg-white rounded-lg border">
+                      <p className="text-3xl font-bold text-primary">{result.questionsGenerated}</p>
+                      <p className="text-sm text-muted-foreground">Quiz questions</p>
+                    </div>
                   </div>
-                  <div className="p-4 bg-white rounded-lg border">
-                    <p className="text-3xl font-bold text-primary">{result.questionsGenerated}</p>
-                    <p className="text-sm text-muted-foreground">Quiz questions</p>
-                  </div>
-                </div>
+                )}
 
                 {/* Final portion question badge */}
                 {result.hasFinalPortionQuestion && (
@@ -1206,7 +1021,7 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
       )}
 
       {/* Error alert */}
-      {error && !result && (
+      {error && !result && !showSmartResult && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -1219,16 +1034,16 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           type="button"
           variant="outline"
           onClick={onBack}
-          disabled={isGenerating}
+          disabled={isGenerating || isSmartGenerating}
         >
           Back
         </Button>
 
         <div className="flex gap-2">
           {/* Show generate button when ready */}
-          {!isGenerating && !isCheckingDuplicate && !result && hasContent && (
+          {!isGenerating && !isSmartGenerating && !result && !showSmartResult && hasContent && (
             <Button
-              onClick={handleCheckAndGenerate}
+              onClick={handleSmartGenerate}
               disabled={!includeVideo && !includePdf}
               className="gap-2"
             >
@@ -1240,21 +1055,21 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           {/* Show next button after successful generation OR if content exists */}
           {canProceed && (
             <Button onClick={handleNext} className="gap-2">
-              {result?.success ? 'Next: Review Content' : 'Continue to Review'}
+              {(result?.success || showSmartResult) ? 'Next: Review Content' : 'Continue to Review'}
               <ArrowRight className="h-4 w-4" />
             </Button>
           )}
 
-          {/* Show checking duplicate state */}
-          {isCheckingDuplicate && (
+          {/* Show smart generating state */}
+          {isSmartGenerating && (
             <Button disabled className="gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Checking for existing content...
+              Analyzing content...
             </Button>
           )}
 
           {/* Show generating state */}
-          {isGenerating && !isCheckingDuplicate && (
+          {isGenerating && !isSmartGenerating && (
             <Button disabled className="gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Generating...
@@ -1276,18 +1091,6 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
           )}
         </div>
       </div>
-
-      {/* Duplicate Content Modal */}
-      {sourceToolboxTalk && (
-        <DuplicateContentModal
-          open={duplicateModalOpen}
-          onOpenChange={setDuplicateModalOpen}
-          sourceToolboxTalk={sourceToolboxTalk}
-          fileType={duplicateFileType}
-          onReuseContent={handleReuseContent}
-          onGenerateFresh={handleGenerateFresh}
-        />
-      )}
     </div>
   );
 }

@@ -124,6 +124,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 ProcessedAt = existingTalk.ContentGeneratedAt,
                 SectionCount = existingTalk.Sections.Count,
                 QuestionCount = existingTalk.Questions.Count,
+                HasSlideshow = !string.IsNullOrEmpty(existingTalk.SlideshowHtml),
                 TranslationLanguages = translationLanguages
             }
         };
@@ -320,6 +321,245 @@ public class ContentDeduplicationService : IContentDeduplicationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during content reuse. TargetId: {TargetId}, SourceId: {SourceId}",
+                targetToolboxTalkId, sourceToolboxTalkId);
+
+            return new ContentReuseResult
+            {
+                Success = false,
+                ErrorMessage = $"Failed to reuse content: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ContentReuseResult> ReuseContentAsync(
+        Guid targetToolboxTalkId,
+        Guid sourceToolboxTalkId,
+        Guid tenantId,
+        ReuseContentOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Starting selective content reuse. TargetId: {TargetId}, SourceId: {SourceId}, TenantId: {TenantId}, " +
+            "CopySections: {CopySections}, CopyQuestions: {CopyQuestions}, CopySlideshow: {CopySlideshow}, CopyTranslations: {CopyTranslations}",
+            targetToolboxTalkId, sourceToolboxTalkId, tenantId,
+            options.CopySections, options.CopyQuestions, options.CopySlideshow, options.CopyTranslations);
+
+        try
+        {
+            // Load source toolbox talk with all content
+            var source = await _dbContext.ToolboxTalks
+                .Include(t => t.Sections.Where(s => !s.IsDeleted))
+                .Include(t => t.Questions.Where(q => !q.IsDeleted))
+                .Include(t => t.Translations.Where(tr => !tr.IsDeleted))
+                .FirstOrDefaultAsync(t => t.Id == sourceToolboxTalkId && t.TenantId == tenantId && !t.IsDeleted, cancellationToken);
+
+            if (source == null)
+            {
+                _logger.LogWarning("Source toolbox talk {SourceId} not found", sourceToolboxTalkId);
+                return new ContentReuseResult
+                {
+                    Success = false,
+                    ErrorMessage = "Source toolbox talk not found"
+                };
+            }
+
+            // Load target toolbox talk
+            var target = await _dbContext.ToolboxTalks
+                .Include(t => t.Sections.Where(s => !s.IsDeleted))
+                .Include(t => t.Questions.Where(q => !q.IsDeleted))
+                .Include(t => t.Translations.Where(tr => !tr.IsDeleted))
+                .FirstOrDefaultAsync(t => t.Id == targetToolboxTalkId && t.TenantId == tenantId && !t.IsDeleted, cancellationToken);
+
+            if (target == null)
+            {
+                _logger.LogWarning("Target toolbox talk {TargetId} not found", targetToolboxTalkId);
+                return new ContentReuseResult
+                {
+                    Success = false,
+                    ErrorMessage = "Target toolbox talk not found"
+                };
+            }
+
+            var currentTime = DateTime.UtcNow;
+            var currentUser = _currentUser.UserId ?? "System";
+
+            var sectionsCopied = 0;
+            var questionsCopied = 0;
+            var slideshowCopied = false;
+            var translationsCopied = 0;
+
+            // Copy sections if requested
+            if (options.CopySections && source.Sections.Count > 0)
+            {
+                // Soft delete existing sections on target
+                foreach (var section in target.Sections.ToList())
+                {
+                    section.IsDeleted = true;
+                    section.UpdatedAt = currentTime;
+                    section.UpdatedBy = currentUser;
+                }
+
+                foreach (var sourceSection in source.Sections.OrderBy(s => s.SectionNumber))
+                {
+                    var newSection = new ToolboxTalkSection
+                    {
+                        Id = Guid.NewGuid(),
+                        ToolboxTalkId = targetToolboxTalkId,
+                        SectionNumber = sourceSection.SectionNumber,
+                        Title = sourceSection.Title,
+                        Content = sourceSection.Content,
+                        RequiresAcknowledgment = sourceSection.RequiresAcknowledgment,
+                        Source = sourceSection.Source,
+                        VideoTimestamp = sourceSection.VideoTimestamp,
+                        CreatedAt = currentTime,
+                        CreatedBy = currentUser
+                    };
+
+                    _dbContext.ToolboxTalkSections.Add(newSection);
+                    sectionsCopied++;
+                }
+            }
+
+            // Copy questions if requested
+            if (options.CopyQuestions && source.Questions.Count > 0)
+            {
+                // Soft delete existing questions on target
+                foreach (var question in target.Questions.ToList())
+                {
+                    question.IsDeleted = true;
+                    question.UpdatedAt = currentTime;
+                    question.UpdatedBy = currentUser;
+                }
+
+                foreach (var sourceQuestion in source.Questions.OrderBy(q => q.QuestionNumber))
+                {
+                    var newQuestion = new ToolboxTalkQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        ToolboxTalkId = targetToolboxTalkId,
+                        QuestionNumber = sourceQuestion.QuestionNumber,
+                        QuestionText = sourceQuestion.QuestionText,
+                        QuestionType = sourceQuestion.QuestionType,
+                        Options = sourceQuestion.Options,
+                        CorrectAnswer = sourceQuestion.CorrectAnswer,
+                        Points = sourceQuestion.Points,
+                        Source = sourceQuestion.Source,
+                        IsFromVideoFinalPortion = sourceQuestion.IsFromVideoFinalPortion,
+                        VideoTimestamp = sourceQuestion.VideoTimestamp,
+                        CreatedAt = currentTime,
+                        CreatedBy = currentUser
+                    };
+
+                    _dbContext.ToolboxTalkQuestions.Add(newQuestion);
+                    questionsCopied++;
+                }
+            }
+
+            // Copy HTML slideshow if requested and source has it
+            if (options.CopySlideshow && !string.IsNullOrEmpty(source.SlideshowHtml))
+            {
+                target.SlideshowHtml = source.SlideshowHtml;
+                target.SlideshowGeneratedAt = currentTime;
+                target.SlidesGenerated = true;
+                slideshowCopied = true;
+
+                // Copy slideshow translations
+                var slideshowTranslations = await _dbContext.ToolboxTalkSlideshowTranslations
+                    .Where(t => t.ToolboxTalkId == sourceToolboxTalkId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var translation in slideshowTranslations)
+                {
+                    _dbContext.ToolboxTalkSlideshowTranslations.Add(new ToolboxTalkSlideshowTranslation
+                    {
+                        ToolboxTalkId = targetToolboxTalkId,
+                        LanguageCode = translation.LanguageCode,
+                        TranslatedHtml = translation.TranslatedHtml,
+                        TranslatedAt = currentTime
+                    });
+                }
+            }
+
+            // Copy translations if requested
+            if (options.CopyTranslations && source.Translations.Count > 0)
+            {
+                // Soft delete existing translations on target
+                foreach (var translation in target.Translations.ToList())
+                {
+                    translation.IsDeleted = true;
+                    translation.UpdatedAt = currentTime;
+                    translation.UpdatedBy = currentUser;
+                }
+
+                foreach (var sourceTranslation in source.Translations)
+                {
+                    var newTranslation = new ToolboxTalkTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = tenantId,
+                        ToolboxTalkId = targetToolboxTalkId,
+                        LanguageCode = sourceTranslation.LanguageCode,
+                        TranslatedTitle = sourceTranslation.TranslatedTitle,
+                        TranslatedDescription = sourceTranslation.TranslatedDescription,
+                        TranslatedSections = sourceTranslation.TranslatedSections,
+                        TranslatedQuestions = sourceTranslation.TranslatedQuestions,
+                        EmailSubject = sourceTranslation.EmailSubject,
+                        EmailBody = sourceTranslation.EmailBody,
+                        TranslatedAt = currentTime,
+                        TranslationProvider = "ContentReuse",
+                        CreatedAt = currentTime,
+                        CreatedBy = currentUser
+                    };
+
+                    _dbContext.ToolboxTalkTranslations.Add(newTranslation);
+                    translationsCopied++;
+                }
+            }
+
+            // Copy file hash and URL (reuse the same blob)
+            if (!string.IsNullOrEmpty(source.PdfFileHash))
+            {
+                target.PdfFileHash = source.PdfFileHash;
+                target.ExtractedPdfText = source.ExtractedPdfText;
+                target.PdfTextExtractedAt = source.PdfTextExtractedAt;
+                target.GeneratedFromPdf = source.GeneratedFromPdf;
+            }
+
+            if (!string.IsNullOrEmpty(source.VideoFileHash))
+            {
+                target.VideoFileHash = source.VideoFileHash;
+                target.ExtractedVideoTranscript = source.ExtractedVideoTranscript;
+                target.VideoTranscriptExtractedAt = source.VideoTranscriptExtractedAt;
+                target.GeneratedFromVideo = source.GeneratedFromVideo;
+            }
+
+            // Update target metadata
+            target.ContentGeneratedAt = currentTime;
+            target.RequiresQuiz = questionsCopied > 0 || target.Questions.Any(q => !q.IsDeleted);
+            target.Status = ToolboxTalkStatus.ReadyForReview;
+            target.UpdatedAt = currentTime;
+            target.UpdatedBy = currentUser;
+
+            var saved = await _dbContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Selective content reuse complete. Sections: {Sections}, Questions: {Questions}, " +
+                "Slideshow: {Slideshow}, Translations: {Translations}, RowsSaved: {Saved}",
+                sectionsCopied, questionsCopied, slideshowCopied, translationsCopied, saved);
+
+            return new ContentReuseResult
+            {
+                Success = true,
+                SectionsCopied = sectionsCopied,
+                QuestionsCopied = questionsCopied,
+                SlideshowCopied = slideshowCopied,
+                TranslationsCopied = translationsCopied
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during selective content reuse. TargetId: {TargetId}, SourceId: {SourceId}",
                 targetToolboxTalkId, sourceToolboxTalkId);
 
             return new ContentReuseResult
