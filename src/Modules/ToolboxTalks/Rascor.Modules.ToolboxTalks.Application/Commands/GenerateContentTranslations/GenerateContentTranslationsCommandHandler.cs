@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -50,6 +51,7 @@ public class GenerateContentTranslationsCommandHandler
             .Include(t => t.Translations.Where(tr => !tr.IsDeleted))
             .Include(t => t.Slides.Where(s => !s.IsDeleted).OrderBy(s => s.PageNumber))
                 .ThenInclude(s => s.Translations)
+            .Include(t => t.SlideshowTranslations)
             .FirstOrDefaultAsync(t => t.Id == request.ToolboxTalkId
                 && t.TenantId == request.TenantId
                 && !t.IsDeleted, cancellationToken);
@@ -93,9 +95,9 @@ public class GenerateContentTranslationsCommandHandler
             _logger.LogInformation(
                 "Translation result for {Language}: Success={Success}, " +
                 "SectionsTranslated={Sections}, QuestionsTranslated={Questions}, " +
-                "SlidesTranslated={Slides}, Error={Error}",
+                "SlidesTranslated={Slides}, SlideshowTranslated={Slideshow}, Error={Error}",
                 language, result.Success, result.SectionsTranslated, result.QuestionsTranslated,
-                result.SlidesTranslated, result.ErrorMessage ?? "none");
+                result.SlidesTranslated, result.SlideshowTranslated, result.ErrorMessage ?? "none");
             results.Add(result);
         }
 
@@ -359,6 +361,14 @@ public class GenerateContentTranslationsCommandHandler
                 }
             }
 
+            // Translate HTML slideshow if it exists
+            var slideshowTranslated = false;
+            if (!string.IsNullOrEmpty(toolboxTalk.SlideshowHtml))
+            {
+                slideshowTranslated = await TranslateSlideshowAsync(
+                    toolboxTalk, languageCode, language, sourceLanguage, cancellationToken);
+            }
+
             // Explicitly add to DbSet so the change tracker registers it as Added.
             // Using navigation collection Add alone is unreliable when the parent entity
             // was already tracked by a previous operation (content generation) on the same
@@ -368,15 +378,15 @@ public class GenerateContentTranslationsCommandHandler
                 _context.ToolboxTalkTranslations.Add(translation);
                 _logger.LogInformation(
                     "Added new translation entity for {Language} ({LanguageCode}) via DbSet.Add(). " +
-                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}",
-                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated);
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}, Slideshow: {Slideshow}",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated, slideshowTranslated);
             }
             else
             {
                 _logger.LogInformation(
                     "Updated existing translation entity for {Language} ({LanguageCode}). " +
-                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}",
-                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated);
+                    "Sections: {Sections}, Questions: {Questions} (skipped: {Skipped}), Slides: {Slides}, Slideshow: {Slideshow}",
+                    language, languageCode, sectionsTranslated, questionsTranslated, questionsSkipped, slidesTranslated, slideshowTranslated);
             }
 
             return new LanguageTranslationResult
@@ -386,7 +396,8 @@ public class GenerateContentTranslationsCommandHandler
                 Success = true,
                 SectionsTranslated = sectionsTranslated,
                 QuestionsTranslated = questionsTranslated,
-                SlidesTranslated = slidesTranslated
+                SlidesTranslated = slidesTranslated,
+                SlideshowTranslated = slideshowTranslated
             };
         }
         catch (Exception ex)
@@ -402,6 +413,170 @@ public class GenerateContentTranslationsCommandHandler
                 ErrorMessage = ex.Message
             };
         }
+    }
+
+    private async Task<bool> TranslateSlideshowAsync(
+        ToolboxTalk toolboxTalk,
+        string languageCode,
+        string targetLanguageName,
+        string sourceLanguageName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check if translation already exists
+            var existingTranslation = toolboxTalk.SlideshowTranslations
+                .FirstOrDefault(t => t.LanguageCode == languageCode);
+
+            if (existingTranslation != null)
+            {
+                _logger.LogInformation(
+                    "Slideshow translation for {Lang} already exists, skipping",
+                    languageCode);
+                return true;
+            }
+
+            _logger.LogInformation("Translating slideshow HTML to {Lang}", languageCode);
+
+            // Extract the slides array from the HTML
+            var slidesJson = ExtractSlidesArrayFromHtml(toolboxTalk.SlideshowHtml!);
+            if (string.IsNullOrEmpty(slidesJson))
+            {
+                _logger.LogWarning("Could not extract slides array from HTML for translation");
+                return false;
+            }
+
+            // Translate the slides JSON data using the content translation service
+            var translationPrompt = BuildSlideshowTranslationPrompt(
+                slidesJson, sourceLanguageName, targetLanguageName);
+
+            var translationResult = await _translationService.TranslateTextAsync(
+                translationPrompt, targetLanguageName, false, cancellationToken, sourceLanguageName);
+
+            if (!translationResult.Success || string.IsNullOrEmpty(translationResult.TranslatedContent))
+            {
+                _logger.LogWarning(
+                    "Failed to translate slideshow slides JSON to {Lang}: {Error}",
+                    languageCode, translationResult.ErrorMessage);
+                return false;
+            }
+
+            // Clean the response - extract JSON array if wrapped in markdown
+            var translatedSlidesJson = CleanJsonResponse(translationResult.TranslatedContent);
+
+            // Validate it's valid JSON
+            try
+            {
+                JsonDocument.Parse(translatedSlidesJson);
+            }
+            catch (JsonException)
+            {
+                _logger.LogWarning(
+                    "Translated slides JSON is not valid for {Lang}. Preview: {Preview}",
+                    languageCode,
+                    translatedSlidesJson.Length > 200
+                        ? translatedSlidesJson[..200]
+                        : translatedSlidesJson);
+                return false;
+            }
+
+            // Replace the slides array in the HTML
+            var translatedHtml = ReplaceSlidesArrayInHtml(toolboxTalk.SlideshowHtml!, translatedSlidesJson);
+
+            // Save the translation using DbSet.Add() for reliable change tracking
+            var slideshowTranslation = new ToolboxTalkSlideshowTranslation
+            {
+                Id = Guid.NewGuid(),
+                ToolboxTalkId = toolboxTalk.Id,
+                LanguageCode = languageCode,
+                TranslatedHtml = translatedHtml,
+                TranslatedAt = DateTime.UtcNow
+            };
+
+            _context.ToolboxTalkSlideshowTranslations.Add(slideshowTranslation);
+
+            _logger.LogInformation(
+                "Slideshow translation to {Lang} completed. HTML length: {Length}",
+                languageCode, translatedHtml.Length);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error translating slideshow to {Lang} for ToolboxTalk {ToolboxTalkId}",
+                languageCode, toolboxTalk.Id);
+            return false;
+        }
+    }
+
+    private static string? ExtractSlidesArrayFromHtml(string html)
+    {
+        // The HTML contains: const slides = [...];
+        // Extract the JSON array
+        var match = Regex.Match(html, @"const\s+slides\s*=\s*(\[[\s\S]*?\]);", RegexOptions.Multiline);
+        return match.Success ? match.Groups[1].Value : null;
+    }
+
+    private static string BuildSlideshowTranslationPrompt(
+        string slidesJson,
+        string sourceLanguage,
+        string targetLanguage)
+    {
+        return $"""
+Translate all text content in the following JSON slides array from {sourceLanguage} to {targetLanguage}.
+Keep the JSON structure exactly the same. Only translate the text values in fields like:
+- title
+- content
+- items (array elements that are human-readable text)
+- warnings
+- dos
+- donts
+- stats.label
+- forces.label
+- Any other human-readable text
+
+Do NOT translate:
+- Field names/keys
+- CSS values (colors, gradients)
+- Technical values (numbers, emoji codes)
+- type values (cover, checklist, etc.)
+
+Return ONLY the translated JSON array, no explanation or markdown formatting.
+
+{slidesJson}
+""";
+    }
+
+    private static string CleanJsonResponse(string response)
+    {
+        var cleaned = response.Trim();
+
+        // Remove markdown code block wrapper if present
+        if (cleaned.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+        {
+            cleaned = cleaned["```json".Length..];
+        }
+        else if (cleaned.StartsWith("```"))
+        {
+            cleaned = cleaned[3..];
+        }
+
+        if (cleaned.EndsWith("```"))
+        {
+            cleaned = cleaned[..^3];
+        }
+
+        return cleaned.Trim();
+    }
+
+    private static string ReplaceSlidesArrayInHtml(string html, string newSlidesJson)
+    {
+        return Regex.Replace(
+            html,
+            @"const\s+slides\s*=\s*\[[\s\S]*?\];",
+            $"const slides = {newSlidesJson};",
+            RegexOptions.Multiline);
     }
 
     // Internal DTOs for JSON serialization (matching existing structure)

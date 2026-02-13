@@ -24,9 +24,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Slideshow } from './Slideshow';
+import { HtmlSlideshow } from './HtmlSlideshow';
 import {
   useToolboxTalkPreview,
   useToolboxTalkPreviewSlides,
+  useAdminSlideshowHtml,
 } from '@/lib/api/toolbox-talks/use-toolbox-talks';
 import { SOURCE_LANGUAGE_OPTIONS } from '../constants';
 import { cn } from '@/lib/utils';
@@ -60,6 +62,12 @@ export function PreviewModal({ open, onOpenChange, talk }: PreviewModalProps) {
     talk.id,
     previewLanguage,
     open && talk.slidesGenerated && talk.slideCount > 0
+  );
+
+  const { data: slideshowHtmlData } = useAdminSlideshowHtml(
+    talk.id,
+    previewLanguage,
+    open && (talk.hasSlideshow || !!preview?.hasSlideshow)
   );
 
   // Build language options: source language + available translations
@@ -132,8 +140,29 @@ export function PreviewModal({ open, onOpenChange, talk }: PreviewModalProps) {
               </div>
             </div>
 
-            {/* Slideshow */}
-            {slides && slides.length > 0 && (
+            {/* HTML Slideshow (preferred) */}
+            {slideshowHtmlData?.html && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Presentation className="h-5 w-5" />
+                    Presentation
+                    {slideshowHtmlData.isTranslated && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Globe className="h-3 w-3" />
+                        {slideshowHtmlData.languageCode.toUpperCase()}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <HtmlSlideshow html={slideshowHtmlData.html} />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Image-based slideshow fallback */}
+            {!slideshowHtmlData?.html && slides && slides.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">

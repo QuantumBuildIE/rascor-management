@@ -3,18 +3,17 @@ using Rascor.Core.Application.Models;
 namespace Rascor.Modules.ToolboxTalks.Application.Services;
 
 /// <summary>
-/// Service for generating slide images from a PDF document attached to a toolbox talk.
-/// Downloads the PDF, extracts text per page, renders each page to a PNG image,
-/// uploads images to R2 storage, and creates ToolboxTalkSlide records.
+/// Service for generating an AI-powered HTML slideshow from the PDF attached to a toolbox talk.
+/// Downloads the PDF, sends it to AI for analysis, and stores the generated HTML slideshow.
 /// </summary>
 public interface ISlideshowGenerationService
 {
     /// <summary>
-    /// Generates slide images and text from the PDF attached to a toolbox talk.
-    /// Returns the number of slides created.
+    /// Generates an AI-powered HTML slideshow from the talk's PDF.
+    /// Returns the generated HTML string on success.
     /// </summary>
-    Task<Result<int>> GenerateSlidesFromPdfAsync(
+    Task<Result<string>> GenerateSlideshowAsync(
         Guid tenantId,
         Guid toolboxTalkId,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

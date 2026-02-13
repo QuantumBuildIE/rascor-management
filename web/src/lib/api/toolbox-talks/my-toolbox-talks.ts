@@ -325,10 +325,31 @@ export async function getToolboxTalkSlides(
 }
 
 // ============================================
-// Subtitles (Employee-specific endpoints)
+// Slideshow HTML
 // ============================================
 
-import type { SubtitleProcessingStatusResponse } from '@/types/toolbox-talks';
+import type { SlideshowHtmlResponse, SubtitleProcessingStatusResponse } from '@/types/toolbox-talks';
+
+/**
+ * Get slideshow HTML for an assigned toolbox talk with optional translation
+ * @param scheduledTalkId The scheduled talk ID (not the toolbox talk ID)
+ * @param lang Optional ISO 639-1 language code for translated slideshow
+ */
+export async function getSlideshowHtml(
+  scheduledTalkId: string,
+  lang?: string
+): Promise<SlideshowHtmlResponse> {
+  const params = lang ? { lang } : undefined;
+  const response = await apiClient.get<SlideshowHtmlResponse>(
+    `/my/toolbox-talks/${scheduledTalkId}/slideshow`,
+    { params }
+  );
+  return response.data;
+}
+
+// ============================================
+// Subtitles (Employee-specific endpoints)
+// ============================================
 
 /**
  * Get subtitle processing status for an assigned toolbox talk

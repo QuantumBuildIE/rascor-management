@@ -1,10 +1,12 @@
 'use client';
 
-import { useToolboxTalkSlides } from '@/lib/api/toolbox-talks/use-my-toolbox-talks';
+import { useToolboxTalkSlides, useSlideshowHtml } from '@/lib/api/toolbox-talks/use-my-toolbox-talks';
 import { Slideshow } from './Slideshow';
+import { HtmlSlideshow } from './HtmlSlideshow';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Presentation } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Presentation, Globe } from 'lucide-react';
 
 interface SlideshowSectionProps {
   scheduledTalkId: string;
@@ -15,11 +17,25 @@ export function SlideshowSection({
   scheduledTalkId,
   languageCode,
 }: SlideshowSectionProps) {
-  const { data, isLoading, error } = useToolboxTalkSlides(
+  // Try HTML slideshow first
+  const {
+    data: slideshowData,
+    isLoading: isLoadingHtml,
+    error: htmlError,
+  } = useSlideshowHtml(scheduledTalkId, languageCode);
+
+  // Fall back to image-based slides
+  const {
+    data: slidesData,
+    isLoading: isLoadingSlides,
+  } = useToolboxTalkSlides(
     scheduledTalkId,
     languageCode
   );
-  const slides = data ?? [];
+  const slides = slidesData ?? [];
+
+  const hasHtmlSlideshow = !htmlError && slideshowData?.html;
+  const isLoading = isLoadingHtml || (!hasHtmlSlideshow && isLoadingSlides);
 
   if (isLoading) {
     return (
@@ -37,7 +53,31 @@ export function SlideshowSection({
     );
   }
 
-  if (error || slides.length === 0) {
+  // Show HTML slideshow if available
+  if (hasHtmlSlideshow) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Presentation className="h-5 w-5" />
+            Presentation
+            {slideshowData.isTranslated && (
+              <Badge variant="secondary" className="text-xs gap-1">
+                <Globe className="h-3 w-3" />
+                {slideshowData.languageCode.toUpperCase()}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HtmlSlideshow html={slideshowData.html} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Fall back to image-based slides
+  if (slides.length === 0) {
     return null;
   }
 

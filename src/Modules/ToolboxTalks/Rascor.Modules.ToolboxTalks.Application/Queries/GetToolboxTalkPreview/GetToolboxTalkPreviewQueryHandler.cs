@@ -31,6 +31,7 @@ public class GetToolboxTalkPreviewQueryHandler
             .Include(t => t.Questions.OrderBy(q => q.QuestionNumber))
             .Include(t => t.Translations)
             .Include(t => t.Slides.Where(s => !s.IsDeleted))
+            .Include(t => t.SlideshowTranslations)
             .Where(t => t.Id == request.ToolboxTalkId
                 && t.TenantId == request.TenantId
                 && !t.IsDeleted)
@@ -95,6 +96,21 @@ public class GetToolboxTalkPreviewQueryHandler
             .OrderBy(t => t.Language)
             .ToList();
 
+        // Get translated slideshow HTML if available
+        var slideshowHtml = talk.SlideshowHtml;
+        var slideshowGeneratedAt = talk.SlideshowGeneratedAt;
+        if (!string.IsNullOrEmpty(languageCode) &&
+            !string.Equals(languageCode, talk.SourceLanguageCode, StringComparison.OrdinalIgnoreCase))
+        {
+            var slideshowTranslation = talk.SlideshowTranslations?
+                .FirstOrDefault(st => st.LanguageCode == languageCode);
+            if (slideshowTranslation != null)
+            {
+                slideshowHtml = slideshowTranslation.TranslatedHtml;
+                slideshowGeneratedAt = slideshowTranslation.TranslatedAt;
+            }
+        }
+
         return new ToolboxTalkPreviewDto
         {
             Id = talk.Id,
@@ -107,6 +123,8 @@ public class GetToolboxTalkPreviewQueryHandler
             PassingScore = talk.PassingScore,
             SlidesGenerated = talk.SlidesGenerated,
             SlideCount = talk.Slides.Count,
+            SlideshowHtml = slideshowHtml,
+            SlideshowGeneratedAt = slideshowGeneratedAt,
             SourceLanguageCode = talk.SourceLanguageCode,
             PreviewLanguageCode = languageCode,
             AvailableTranslations = availableTranslations,

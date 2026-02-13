@@ -46,6 +46,9 @@ public record MyToolboxTalkDto
     public bool? LastQuizPassed { get; init; }
     public decimal? LastQuizScore { get; init; }
 
+    // Slideshow
+    public bool HasSlideshow { get; init; }
+
     // Sections with progress
     public List<MyToolboxTalkSectionDto> Sections { get; init; } = new();
 

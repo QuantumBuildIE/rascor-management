@@ -105,6 +105,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
     public DbSet<ToolboxTalkCertificate> ToolboxTalkCertificates => Set<ToolboxTalkCertificate>();
     public DbSet<ToolboxTalkSlide> ToolboxTalkSlides => Set<ToolboxTalkSlide>();
     public DbSet<ToolboxTalkSlideTranslation> ToolboxTalkSlideTranslations => Set<ToolboxTalkSlideTranslation>();
+    public DbSet<ToolboxTalkSlideshowTranslation> ToolboxTalkSlideshowTranslations => Set<ToolboxTalkSlideshowTranslation>();
     public DbSet<SubtitleProcessingJob> SubtitleProcessingJobs => Set<SubtitleProcessingJob>();
     public DbSet<SubtitleTranslation> SubtitleTranslations => Set<SubtitleTranslation>();
 
@@ -263,6 +264,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
         modelBuilder.ApplyConfiguration(new ToolboxTalkCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkSlideConfiguration());
         modelBuilder.ApplyConfiguration(new ToolboxTalkSlideTranslationConfiguration());
+        modelBuilder.ApplyConfiguration(new ToolboxTalkSlideshowTranslationConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleProcessingJobConfiguration());
         modelBuilder.ApplyConfiguration(new SubtitleTranslationConfiguration());
 
@@ -317,6 +319,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid, Identity
 
         // Note: Toolbox Talks query filters are defined in entity configurations
         // TenantEntity-based: ToolboxTalk, ToolboxTalkCourse, ToolboxTalkSchedule, ScheduledTalk, ToolboxTalkTranslation, ToolboxTalkVideoTranslation, ToolboxTalkCertificate, SubtitleProcessingJob, ToolboxTalkSlide
+        // BaseEntity-based (not tenant-scoped): ToolboxTalkSlideshowTranslation
         // BaseEntity-based (not tenant-scoped): ToolboxTalkSection, ToolboxTalkQuestion, ToolboxTalkCourseItem, ToolboxTalkCourseTranslation,
         //   ToolboxTalkScheduleAssignment, ScheduledTalkSectionProgress, ScheduledTalkQuizAttempt, ScheduledTalkCompletion, ToolboxTalkSettings, SubtitleTranslation, ToolboxTalkSlideTranslation
 

@@ -33,6 +33,7 @@ public interface IToolboxTalksDbContext
     // Slide entities
     DbSet<ToolboxTalkSlide> ToolboxTalkSlides { get; }
     DbSet<ToolboxTalkSlideTranslation> ToolboxTalkSlideTranslations { get; }
+    DbSet<ToolboxTalkSlideshowTranslation> ToolboxTalkSlideshowTranslations { get; }
 
     // Subtitle processing entities
     DbSet<SubtitleProcessingJob> SubtitleProcessingJobs { get; }

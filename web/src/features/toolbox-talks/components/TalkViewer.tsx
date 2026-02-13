@@ -551,10 +551,12 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
                 scheduledTalkId={scheduledTalkId}
                 preferredLanguageCode={talk.employeePreferredLanguage}
               />
-              <SlideshowSection
-                scheduledTalkId={scheduledTalkId}
-                languageCode={talk.employeePreferredLanguage}
-              />
+              {talk.hasSlideshow && (
+                <SlideshowSection
+                  scheduledTalkId={scheduledTalkId}
+                  languageCode={talk.employeePreferredLanguage}
+                />
+              )}
               <div className="flex justify-end">
                 <Button
                   onClick={() => {
@@ -580,7 +582,7 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
           )}
 
           {/* Sections step */}
-          {currentStep === 'sections' && !talk.videoUrl && (
+          {currentStep === 'sections' && !talk.videoUrl && talk.hasSlideshow && (
             <SlideshowSection
               scheduledTalkId={scheduledTalkId}
               languageCode={talk.employeePreferredLanguage}

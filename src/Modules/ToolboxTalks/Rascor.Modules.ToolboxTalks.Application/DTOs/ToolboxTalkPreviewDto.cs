@@ -18,6 +18,9 @@ public record ToolboxTalkPreviewDto
     public int? PassingScore { get; init; }
     public bool SlidesGenerated { get; init; }
     public int SlideCount { get; init; }
+    public string? SlideshowHtml { get; init; }
+    public DateTime? SlideshowGeneratedAt { get; init; }
+    public bool HasSlideshow => !string.IsNullOrEmpty(SlideshowHtml);
     public string SourceLanguageCode { get; init; } = "en";
     public string PreviewLanguageCode { get; init; } = "en";
 

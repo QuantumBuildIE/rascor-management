@@ -316,25 +316,23 @@ public class ContentGenerationJob
                     "GeneratingSlides", 90,
                     "Generating slideshow from PDF..."));
 
-            var slideResult = await _slideshowGenerationService.GenerateSlidesFromPdfAsync(
+            var slideResult = await _slideshowGenerationService.GenerateSlideshowAsync(
                 tenantId, toolboxTalkId, cancellationToken);
 
-            if (slideResult.Success && slideResult.Data > 0)
+            if (slideResult.Success && !string.IsNullOrEmpty(slideResult.Data))
             {
                 _logger.LogInformation(
-                    "Slideshow generated for ToolboxTalk {ToolboxTalkId}: {SlideCount} slides",
-                    toolboxTalkId, slideResult.Data);
+                    "AI slideshow generated for ToolboxTalk {ToolboxTalkId}: {HtmlLength} chars",
+                    toolboxTalkId, slideResult.Data.Length);
 
                 await SendProgressUpdateAsync(toolboxTalkId, connectionId,
                     new ContentGenerationProgress(
                         "GeneratingSlides", 92,
-                        $"Slideshow generated ({slideResult.Data} slides)."));
+                        "AI slideshow generated successfully."));
             }
             else
             {
-                var errorDetail = slideResult.Success
-                    ? "0 slides could be created from the PDF"
-                    : string.Join("; ", slideResult.Errors);
+                var errorDetail = string.Join("; ", slideResult.Errors);
 
                 _logger.LogWarning(
                     "Slideshow generation failed for ToolboxTalk {ToolboxTalkId}: {Errors}",

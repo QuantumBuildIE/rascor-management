@@ -146,6 +146,7 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
             LastQuizScore = lastAttempt != null && lastAttempt.MaxScore > 0
                 ? Math.Round((decimal)lastAttempt.Score / lastAttempt.MaxScore * 100, 2)
                 : null,
+            HasSlideshow = !string.IsNullOrEmpty(talk.SlideshowHtml),
             Sections = sections,
             Questions = questions,
             CompletedAt = scheduledTalk.Completion?.CompletedAt,

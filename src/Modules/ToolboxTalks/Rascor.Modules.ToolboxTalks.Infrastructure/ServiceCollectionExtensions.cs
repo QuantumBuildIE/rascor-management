@@ -128,7 +128,13 @@ public static class ServiceCollectionExtensions
         // Register content deduplication service for detecting and reusing duplicate content
         services.AddScoped<IContentDeduplicationService, ContentDeduplicationService>();
 
-        // Register slideshow generation service (PDF page → slide images)
+        // Register AI slideshow generation service (Claude API for HTML slideshow from PDF)
+        services.AddHttpClient<IAiSlideshowGenerationService, AiSlideshowGenerationService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5); // 5 minutes for PDF analysis and HTML generation
+        });
+
+        // Register slideshow generation service (orchestrates PDF download + AI generation)
         services.AddHttpClient<ISlideshowGenerationService, SlideshowGenerationService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30); // 30 seconds for PDF download

@@ -12,6 +12,7 @@ import {
   getContentTranslations,
   getToolboxTalkPreview,
   getToolboxTalkPreviewSlides,
+  getAdminSlideshowHtml,
 } from './toolbox-talks';
 import type {
   GenerateTranslationsRequest,
@@ -155,6 +156,14 @@ export function useToolboxTalkPreviewSlides(id: string, lang?: string, enabled =
   return useQuery({
     queryKey: [...TOOLBOX_TALKS_KEY, id, 'preview-slides', lang],
     queryFn: () => getToolboxTalkPreviewSlides(id, lang),
+    enabled: !!id && enabled,
+  });
+}
+
+export function useAdminSlideshowHtml(id: string, lang?: string, enabled = true) {
+  return useQuery({
+    queryKey: [...TOOLBOX_TALKS_KEY, id, 'slideshow-html', lang],
+    queryFn: () => getAdminSlideshowHtml(id, lang),
     enabled: !!id && enabled,
   });
 }

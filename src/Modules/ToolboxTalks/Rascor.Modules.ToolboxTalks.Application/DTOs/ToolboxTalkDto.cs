@@ -32,6 +32,9 @@ public record ToolboxTalkDto
     public bool GenerateSlidesFromPdf { get; init; }
     public bool SlidesGenerated { get; init; }
     public int SlideCount { get; init; }
+    public string? SlideshowHtml { get; init; }
+    public DateTime? SlideshowGeneratedAt { get; init; }
+    public bool HasSlideshow => !string.IsNullOrEmpty(SlideshowHtml);
 
     // Quiz randomization settings
     public int? QuizQuestionCount { get; init; }

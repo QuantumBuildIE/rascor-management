@@ -18,6 +18,7 @@ using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.Features.CourseAssignments.Queries;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetMyToolboxTalks;
+using Rascor.Modules.ToolboxTalks.Application.Queries.GetSlideshowHtml;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkSlides;
 using Rascor.Modules.ToolboxTalks.Application.Services.Subtitles;
 using Rascor.Modules.ToolboxTalks.Domain.Enums;
@@ -795,6 +796,63 @@ public class MyToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error getting slides for talk {ScheduledTalkId}", id);
             return StatusCode(500, new { message = "Error getting slides" });
+        }
+    }
+
+    /// <summary>
+    /// Get slideshow HTML for an assigned toolbox talk with optional translation.
+    /// Returns the AI-generated HTML slideshow, optionally translated to the employee's preferred language.
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <param name="lang">Optional ISO 639-1 language code for translated slideshow</param>
+    /// <returns>Slideshow HTML with translation metadata</returns>
+    [HttpGet("{id:guid}/slideshow")]
+    [ProducesResponseType(typeof(SlideshowHtmlDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSlideshowHtml(Guid id, [FromQuery] string? lang)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            // Verify the employee is assigned to this talk
+            var talkQuery = new GetMyToolboxTalkByIdQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                EmployeeId = employeeId.Value,
+                ScheduledTalkId = id
+            };
+
+            var talk = await _mediator.Send(talkQuery);
+            if (talk == null)
+            {
+                return NotFound(new { message = "Toolbox talk not found or not assigned to you" });
+            }
+
+            // Default to employee's preferred language if not specified
+            var languageCode = lang ?? talk.EmployeePreferredLanguage;
+
+            var result = await _mediator.Send(new GetSlideshowHtmlQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = talk.ToolboxTalkId,
+                LanguageCode = languageCode
+            });
+
+            if (!result.Success)
+                return BadRequest(new { error = string.Join("; ", result.Errors) });
+
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting slideshow HTML for talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error getting slideshow" });
         }
     }
 

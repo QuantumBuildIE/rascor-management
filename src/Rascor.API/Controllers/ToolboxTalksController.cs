@@ -10,6 +10,7 @@ using Rascor.Modules.ToolboxTalks.Application.Commands.GenerateContentTranslatio
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.DTOs;
 using Rascor.Modules.ToolboxTalks.Application.DTOs.Reports;
+using Rascor.Modules.ToolboxTalks.Application.Queries.GetSlideshowHtml;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkById;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkDashboard;
 using Rascor.Modules.ToolboxTalks.Application.Queries.GetToolboxTalkPreview;
@@ -202,6 +203,40 @@ public class ToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving preview slides for toolbox talk {ToolboxTalkId}", id);
             return StatusCode(500, new { message = "Error retrieving preview slides" });
+        }
+    }
+
+    /// <summary>
+    /// Get slideshow HTML for a toolbox talk with optional translation.
+    /// Used for admin preview of the AI-generated HTML slideshow.
+    /// </summary>
+    /// <param name="id">Toolbox talk ID</param>
+    /// <param name="lang">Optional language code for translated slideshow</param>
+    /// <returns>Slideshow HTML with translation metadata</returns>
+    [HttpGet("{id:guid}/slideshow-html")]
+    [ProducesResponseType(typeof(SlideshowHtmlDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSlideshowHtml(Guid id, [FromQuery] string? lang = null)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetSlideshowHtmlQuery
+            {
+                TenantId = _currentUserService.TenantId,
+                ToolboxTalkId = id,
+                LanguageCode = lang
+            });
+
+            if (!result.Success)
+                return BadRequest(new { error = string.Join("; ", result.Errors) });
+
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving slideshow HTML for toolbox talk {ToolboxTalkId}", id);
+            return StatusCode(500, new { message = "Error retrieving slideshow HTML" });
         }
     }
 
@@ -739,11 +774,11 @@ public class ToolboxTalksController : ControllerBase
     }
 
     /// <summary>
-    /// Manually triggers slideshow generation from PDF for a toolbox talk.
-    /// Regenerates all slides if they already exist.
+    /// Manually triggers AI slideshow generation from PDF for a toolbox talk.
+    /// Generates a self-contained HTML slideshow with animations.
     /// </summary>
     /// <param name="id">Toolbox talk ID</param>
-    /// <returns>Number of slides generated</returns>
+    /// <returns>Generation result with HTML length</returns>
     [HttpPost("{id:guid}/generate-slides")]
     [Authorize(Policy = "ToolboxTalks.Edit")]
     [ProducesResponseType(typeof(GenerateSlidesResponse), StatusCodes.Status200OK)]
@@ -770,15 +805,20 @@ public class ToolboxTalksController : ControllerBase
                 return BadRequest(new { error = "No PDF is uploaded for this toolbox talk" });
             }
 
-            var result = await _slideshowGenerationService.GenerateSlidesFromPdfAsync(
-                _currentUserService.TenantId, id);
+            var result = await _slideshowGenerationService.GenerateSlideshowAsync(
+                _currentUserService.TenantId, id, HttpContext.RequestAborted);
 
             if (!result.Success)
             {
                 return BadRequest(new { error = string.Join("; ", result.Errors) });
             }
 
-            return Ok(new GenerateSlidesResponse { SlidesGenerated = result.Data });
+            return Ok(new GenerateSlidesResponse
+            {
+                Success = true,
+                Message = "Slideshow generated successfully",
+                HtmlLength = result.Data?.Length ?? 0
+            });
         }
         catch (Exception ex)
         {
@@ -1551,8 +1591,7 @@ public record UpdateFileHashRequest
 /// </summary>
 public record GenerateSlidesResponse
 {
-    /// <summary>
-    /// Number of slides generated from the PDF
-    /// </summary>
-    public int SlidesGenerated { get; init; }
+    public bool Success { get; init; }
+    public string? Message { get; init; }
+    public int HtmlLength { get; init; }
 }

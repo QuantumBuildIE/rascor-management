@@ -8,6 +8,7 @@ import {
   getMyCompletedToolboxTalks,
   getMyTrainingSummary,
   getToolboxTalkSlides,
+  getSlideshowHtml,
   startToolboxTalk,
   markSectionRead,
   updateVideoProgress,
@@ -91,6 +92,14 @@ export function useToolboxTalkSlides(scheduledTalkId: string, lang?: string) {
     queryKey: [...MY_TOOLBOX_TALKS_KEY, 'slides', scheduledTalkId, lang],
     queryFn: () => getToolboxTalkSlides(scheduledTalkId, lang),
     enabled: !!scheduledTalkId,
+  });
+}
+
+export function useSlideshowHtml(scheduledTalkId: string, lang?: string, enabled = true) {
+  return useQuery({
+    queryKey: [...MY_TOOLBOX_TALKS_KEY, 'slideshow-html', scheduledTalkId, lang],
+    queryFn: () => getSlideshowHtml(scheduledTalkId, lang),
+    enabled: !!scheduledTalkId && enabled,
   });
 }
 

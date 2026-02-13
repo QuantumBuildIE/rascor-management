@@ -150,6 +150,12 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
             .IsRequired()
             .HasDefaultValue(false);
 
+        // AI HTML slideshow
+        builder.Property(t => t.SlideshowHtml)
+            .HasColumnType("text");
+
+        builder.Property(t => t.SlideshowGeneratedAt);
+
         builder.Property(t => t.TenantId)
             .IsRequired();
 
@@ -194,6 +200,11 @@ public class ToolboxTalkConfiguration : IEntityTypeConfiguration<ToolboxTalk>
         builder.HasMany(t => t.Slides)
             .WithOne(s => s.ToolboxTalk)
             .HasForeignKey(s => s.ToolboxTalkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(t => t.SlideshowTranslations)
+            .WithOne(st => st.ToolboxTalk)
+            .HasForeignKey(st => st.ToolboxTalkId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes

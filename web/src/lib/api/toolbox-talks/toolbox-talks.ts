@@ -16,6 +16,7 @@ import type {
   ReuseContentRequest,
   ContentReuseResponse,
   UpdateFileHashRequest,
+  SlideshowHtmlResponse,
 } from '@/types/toolbox-talks';
 
 export interface PaginatedResponse<T> {
@@ -422,6 +423,18 @@ export async function getToolboxTalkPreviewSlides(
   const params = lang ? { lang } : undefined;
   const response = await apiClient.get<SlideDto[]>(
     `/toolbox-talks/${id}/preview/slides`,
+    { params }
+  );
+  return response.data;
+}
+
+export async function getAdminSlideshowHtml(
+  id: string,
+  lang?: string
+): Promise<SlideshowHtmlResponse> {
+  const params = lang ? { lang } : undefined;
+  const response = await apiClient.get<SlideshowHtmlResponse>(
+    `/toolbox-talks/${id}/slideshow-html`,
     { params }
   );
   return response.data;

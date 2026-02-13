@@ -202,6 +202,17 @@ public class ToolboxTalk : TenantEntity
     public bool SlidesGenerated { get; set; } = false;
 
     /// <summary>
+    /// The AI-generated HTML slideshow content (in source language).
+    /// Self-contained HTML with embedded CSS and JS.
+    /// </summary>
+    public string? SlideshowHtml { get; set; }
+
+    /// <summary>
+    /// When the HTML slideshow was generated.
+    /// </summary>
+    public DateTime? SlideshowGeneratedAt { get; set; }
+
+    /// <summary>
     /// The language code of the original content (e.g., "en", "es", "af").
     /// Used as source language for translations.
     /// </summary>
@@ -233,4 +244,9 @@ public class ToolboxTalk : TenantEntity
     /// Slide images extracted from the PDF for slideshow display
     /// </summary>
     public virtual ICollection<ToolboxTalkSlide> Slides { get; set; } = new List<ToolboxTalkSlide>();
+
+    /// <summary>
+    /// Translated HTML slideshows for different languages
+    /// </summary>
+    public ICollection<ToolboxTalkSlideshowTranslation> SlideshowTranslations { get; set; } = new List<ToolboxTalkSlideshowTranslation>();
 }

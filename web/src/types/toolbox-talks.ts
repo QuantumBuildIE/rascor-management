@@ -96,6 +96,9 @@ export interface ToolboxTalk {
   generateSlidesFromPdf: boolean;
   slidesGenerated: boolean;
   slideCount: number;
+  slideshowHtml: string | null;
+  slideshowGeneratedAt: string | null;
+  hasSlideshow: boolean;
   // Quiz randomization settings
   quizQuestionCount: number | null;
   shuffleQuestions: boolean;
@@ -334,6 +337,7 @@ export interface MyToolboxTalk {
   quizAttemptCount: number;
   lastQuizPassed: boolean | null;
   lastQuizScore: number | null;
+  hasSlideshow: boolean;
   sections: MyToolboxTalkSection[];
   questions: MyToolboxTalkQuestion[];
   completedAt: string | null;
@@ -926,11 +930,21 @@ export interface ToolboxTalkPreview {
   passingScore: number | null;
   slidesGenerated: boolean;
   slideCount: number;
+  slideshowHtml: string | null;
+  slideshowGeneratedAt: string | null;
+  hasSlideshow: boolean;
   sourceLanguageCode: string;
   previewLanguageCode: string;
   availableTranslations: ToolboxTalkTranslation[];
   sections: PreviewSectionDto[];
   questions: PreviewQuestionDto[];
+}
+
+export interface SlideshowHtmlResponse {
+  html: string;
+  languageCode: string;
+  isTranslated: boolean;
+  generatedAt: string;
 }
 
 /** Request to update file hash */

@@ -97,4 +97,9 @@ public class LanguageTranslationResult
     /// Number of slides translated
     /// </summary>
     public int SlidesTranslated { get; set; }
+
+    /// <summary>
+    /// Whether the HTML slideshow was translated
+    /// </summary>
+    public bool SlideshowTranslated { get; set; }
 }

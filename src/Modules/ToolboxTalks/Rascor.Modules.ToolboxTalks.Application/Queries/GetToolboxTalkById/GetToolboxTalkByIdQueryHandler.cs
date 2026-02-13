@@ -75,6 +75,8 @@ public class GetToolboxTalkByIdQueryHandler : IRequestHandler<GetToolboxTalkById
             GenerateSlidesFromPdf = talk.GenerateSlidesFromPdf,
             SlidesGenerated = talk.SlidesGenerated,
             SlideCount = talk.Slides.Count,
+            SlideshowHtml = talk.SlideshowHtml,
+            SlideshowGeneratedAt = talk.SlideshowGeneratedAt,
             QuizQuestionCount = talk.QuizQuestionCount,
             ShuffleQuestions = talk.ShuffleQuestions,
             ShuffleOptions = talk.ShuffleOptions,
