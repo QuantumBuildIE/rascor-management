@@ -42,6 +42,8 @@ public class ToolboxTalkQuestionConfiguration : IEntityTypeConfiguration<Toolbox
             .IsRequired()
             .HasMaxLength(500);
 
+        builder.Property(q => q.CorrectOptionIndex);
+
         builder.Property(q => q.Points)
             .IsRequired()
             .HasDefaultValue(1);

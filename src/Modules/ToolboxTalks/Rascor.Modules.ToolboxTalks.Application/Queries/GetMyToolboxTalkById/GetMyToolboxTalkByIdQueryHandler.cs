@@ -188,6 +188,11 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
                 displayOptions = originalOptions;
             }
 
+            // Include OptionOrder so the frontend can map display index -> original index
+            // when submitting answers. This enables translation-safe index-based grading.
+            var hasCustomOrder = generated.OptionOrder.Count > 0 &&
+                !generated.OptionOrder.SequenceEqual(Enumerable.Range(0, generated.OptionOrder.Count));
+
             result.Add(new MyToolboxTalkQuestionDto
             {
                 Id = question.Id,
@@ -196,7 +201,8 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
                 QuestionType = question.QuestionType,
                 QuestionTypeDisplay = GetQuestionTypeDisplay(question.QuestionType),
                 Options = displayOptions,
-                Points = question.Points
+                Points = question.Points,
+                OptionOriginalIndices = hasCustomOrder ? generated.OptionOrder : null
             });
         }
 

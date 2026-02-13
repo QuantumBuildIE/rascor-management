@@ -308,6 +308,9 @@ export interface MyToolboxTalkQuestion {
   questionTypeDisplay: string;
   options: string[] | null;
   points: number;
+  /** Maps each display position to its original option index (for shuffled quizzes).
+   *  null for non-shuffled quizzes (display index = original index). */
+  optionOriginalIndices: number[] | null;
 }
 
 export interface MyToolboxTalk {
@@ -476,6 +479,8 @@ export interface QuestionResult {
   submittedAnswer: string;
   isCorrect: boolean;
   correctAnswer: string;
+  /** Index of correct option in original Options array (0-based). Null for non-MC questions. */
+  correctOptionIndex: number | null;
   pointsEarned: number;
   maxPoints: number;
 }

@@ -810,6 +810,7 @@ public static class ToolboxTalksSeedData
                     "Sunburn and peeling skin"
                 }),
                 CorrectAnswer = "Heavy sweating, weakness, and cold/pale skin",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1112,6 +1113,7 @@ public static class ToolboxTalksSeedData
                     "Point, Aim, Squeeze, Spray"
                 }),
                 CorrectAnswer = "Pull, Aim, Squeeze, Sweep",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1131,6 +1133,7 @@ public static class ToolboxTalksSeedData
                     "Foam (Cream band)"
                 }),
                 CorrectAnswer = "Water (Red band)",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1163,6 +1166,7 @@ public static class ToolboxTalksSeedData
                     "No fire watch is needed"
                 }),
                 CorrectAnswer = "At least 30 minutes",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1182,6 +1186,7 @@ public static class ToolboxTalksSeedData
                     "Continue working until told to evacuate"
                 }),
                 CorrectAnswer = "Stop work and evacuate by the nearest safe exit",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1355,6 +1360,7 @@ public static class ToolboxTalksSeedData
                     "Tool, Individual, Location, Equipment"
                 }),
                 CorrectAnswer = "Task, Individual, Load, Environment",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1387,6 +1393,7 @@ public static class ToolboxTalksSeedData
                     "Lift from one side only"
                 }),
                 CorrectAnswer = "Plan the lift and assess the load",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1406,6 +1413,7 @@ public static class ToolboxTalksSeedData
                     "Standing on one foot"
                 }),
                 CorrectAnswer = "Shoulder-width apart, one foot slightly forward",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1952,6 +1960,7 @@ public static class ToolboxTalksSeedData
                     "12V"
                 }),
                 CorrectAnswer = "110V",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -1971,6 +1980,7 @@ public static class ToolboxTalksSeedData
                     "Test the circuit is dead"
                 }),
                 CorrectAnswer = "Identify the correct circuit",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -2003,6 +2013,7 @@ public static class ToolboxTalksSeedData
                     "Nothing, if it worked yesterday"
                 }),
                 CorrectAnswer = "Cables, plugs, and PAT test label",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"
@@ -2022,6 +2033,7 @@ public static class ToolboxTalksSeedData
                     "Just put it back in the store"
                 }),
                 CorrectAnswer = "Stop using it, tag as defective, and report to supervisor",
+                CorrectOptionIndex = 0,
                 Points = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "system"

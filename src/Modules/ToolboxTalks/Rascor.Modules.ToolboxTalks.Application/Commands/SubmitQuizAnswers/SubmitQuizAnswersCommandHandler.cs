@@ -141,6 +141,7 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
                 SubmittedAnswer = submittedAnswer,
                 IsCorrect = isCorrect,
                 CorrectAnswer = question.CorrectAnswer,
+                CorrectOptionIndex = question.CorrectOptionIndex,
                 PointsEarned = pointsEarned,
                 MaxPoints = question.Points
             });
@@ -219,13 +220,27 @@ public class SubmitQuizAnswersCommandHandler : IRequestHandler<SubmitQuizAnswers
                 submittedAnswer.Trim(),
                 StringComparison.OrdinalIgnoreCase),
 
-            // Exact match for multiple choice (case-insensitive)
-            QuestionType.MultipleChoice => string.Equals(
-                question.CorrectAnswer.Trim(),
-                submittedAnswer.Trim(),
-                StringComparison.OrdinalIgnoreCase),
+            // Index-based grading for multiple choice (translation-safe)
+            QuestionType.MultipleChoice => IsMultipleChoiceCorrect(question, submittedAnswer),
 
             _ => false
         };
+    }
+
+    private static bool IsMultipleChoiceCorrect(ToolboxTalkQuestion question, string submittedAnswer)
+    {
+        // Primary: Index-based grading (translation-safe).
+        // Frontend sends the original option index as a string (e.g., "0", "1", "2", "3").
+        // For shuffled quizzes, the frontend maps display index -> original index before sending.
+        if (question.CorrectOptionIndex.HasValue && int.TryParse(submittedAnswer.Trim(), out int selectedIndex))
+        {
+            return selectedIndex == question.CorrectOptionIndex.Value;
+        }
+
+        // Fallback: Text comparison for legacy attempts (submitted before index-based grading)
+        return string.Equals(
+            question.CorrectAnswer?.Trim(),
+            submittedAnswer.Trim(),
+            StringComparison.OrdinalIgnoreCase);
     }
 }

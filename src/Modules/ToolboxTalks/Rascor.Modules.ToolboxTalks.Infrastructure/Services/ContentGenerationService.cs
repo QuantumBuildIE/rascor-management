@@ -487,6 +487,7 @@ public class ContentGenerationService : IContentGenerationService
                 QuestionType = QuestionType.MultipleChoice,
                 Options = optionsJson,
                 CorrectAnswer = question.Options[question.CorrectAnswerIndex],
+                CorrectOptionIndex = question.CorrectAnswerIndex,
                 Points = 1,
                 Source = question.Source,
                 IsFromVideoFinalPortion = question.IsFromVideoFinalPortion,

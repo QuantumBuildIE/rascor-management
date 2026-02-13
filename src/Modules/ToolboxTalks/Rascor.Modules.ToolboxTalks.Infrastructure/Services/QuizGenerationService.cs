@@ -66,10 +66,14 @@ public class QuizGenerationService : IQuizGenerationService
             generated.OptionOrder = optionOrder;
 
             // Find where the correct answer ended up after shuffling
-            if (options != null && optionCount > 0 && question.QuestionType == QuestionType.MultipleChoice)
+            if (optionCount > 0 && question.QuestionType == QuestionType.MultipleChoice)
             {
-                var correctOriginalIndex = options.FindIndex(o =>
-                    string.Equals(o, question.CorrectAnswer, StringComparison.OrdinalIgnoreCase));
+                // Prefer CorrectOptionIndex (translation-safe) over text comparison
+                var correctOriginalIndex = question.CorrectOptionIndex
+                    ?? options?.FindIndex(o =>
+                        string.Equals(o, question.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
+                    ?? -1;
+
                 if (correctOriginalIndex >= 0)
                 {
                     generated.CorrectOptionDisplayIndex = optionOrder.IndexOf(correctOriginalIndex);

@@ -95,9 +95,18 @@ public record QuestionResultDto
     public bool IsCorrect { get; init; }
 
     /// <summary>
-    /// The correct answer (shown after submission)
+    /// The correct answer text (shown after submission).
+    /// For MultipleChoice, this is the English text. Use CorrectOptionIndex
+    /// to identify the correct option in the displayed (possibly translated) options.
     /// </summary>
     public string CorrectAnswer { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Index of the correct option in the original Options array (0-based).
+    /// Used by the frontend to highlight the correct translated option.
+    /// Null for non-MultipleChoice questions.
+    /// </summary>
+    public int? CorrectOptionIndex { get; init; }
 
     /// <summary>
     /// Points earned for this question

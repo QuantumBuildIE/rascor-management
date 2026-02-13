@@ -284,6 +284,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     existingQuestion.QuestionType = questionDto.QuestionType;
                     existingQuestion.Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null;
                     existingQuestion.CorrectAnswer = questionDto.CorrectAnswer;
+                    existingQuestion.CorrectOptionIndex = ToolboxTalkQuestion.ComputeCorrectOptionIndex(questionDto.CorrectAnswer, questionDto.Options);
                     existingQuestion.Points = questionDto.Points;
                     existingQuestion.Source = questionDto.Source;
                     existingQuestion.VideoTimestamp = questionDto.VideoTimestamp;
@@ -305,6 +306,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                         QuestionType = questionDto.QuestionType,
                         Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null,
                         CorrectAnswer = questionDto.CorrectAnswer,
+                        CorrectOptionIndex = ToolboxTalkQuestion.ComputeCorrectOptionIndex(questionDto.CorrectAnswer, questionDto.Options),
                         Points = questionDto.Points,
                         Source = questionDto.Source,
                         VideoTimestamp = questionDto.VideoTimestamp,
@@ -327,6 +329,7 @@ public class UpdateToolboxTalkCommandHandler : IRequestHandler<UpdateToolboxTalk
                     QuestionType = questionDto.QuestionType,
                     Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null,
                     CorrectAnswer = questionDto.CorrectAnswer,
+                    CorrectOptionIndex = ToolboxTalkQuestion.ComputeCorrectOptionIndex(questionDto.CorrectAnswer, questionDto.Options),
                     Points = questionDto.Points,
                     Source = questionDto.Source,
                     VideoTimestamp = questionDto.VideoTimestamp,

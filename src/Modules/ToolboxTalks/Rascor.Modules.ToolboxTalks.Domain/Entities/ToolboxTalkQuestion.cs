@@ -45,6 +45,14 @@ public class ToolboxTalkQuestion : BaseEntity
     public string CorrectAnswer { get; set; } = string.Empty;
 
     /// <summary>
+    /// Index of the correct answer in the Options array (0-based).
+    /// Used for translation-safe grading of MultipleChoice questions.
+    /// When set, grading compares submitted option index against this value
+    /// instead of comparing answer text (which fails for translated quizzes).
+    /// </summary>
+    public int? CorrectOptionIndex { get; set; }
+
+    /// <summary>
     /// Points awarded for correctly answering this question
     /// </summary>
     public int Points { get; set; } = 1;
@@ -72,4 +80,19 @@ public class ToolboxTalkQuestion : BaseEntity
     /// Parent toolbox talk
     /// </summary>
     public ToolboxTalk ToolboxTalk { get; set; } = null!;
+
+    /// <summary>
+    /// Computes CorrectOptionIndex from CorrectAnswer and a list of options.
+    /// Returns the 0-based index of CorrectAnswer in the options list, or null if not found.
+    /// </summary>
+    public static int? ComputeCorrectOptionIndex(string? correctAnswer, List<string>? options)
+    {
+        if (string.IsNullOrWhiteSpace(correctAnswer) || options == null || options.Count == 0)
+            return null;
+
+        var index = options.FindIndex(o =>
+            string.Equals(o.Trim(), correctAnswer.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        return index >= 0 ? index : null;
+    }
 }

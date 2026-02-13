@@ -76,4 +76,13 @@ public record MyToolboxTalkQuestionDto
     public string QuestionTypeDisplay { get; init; } = string.Empty;
     public List<string>? Options { get; init; }
     public int Points { get; init; }
+
+    /// <summary>
+    /// Maps each display position to its original option index.
+    /// Only populated for shuffled quizzes. For non-shuffled quizzes this is null
+    /// (display index equals original index).
+    /// Example: [2,0,3,1] means display position 0 shows original option 2.
+    /// Frontend uses this to send the original index when submitting answers.
+    /// </summary>
+    public List<int>? OptionOriginalIndices { get; init; }
 }

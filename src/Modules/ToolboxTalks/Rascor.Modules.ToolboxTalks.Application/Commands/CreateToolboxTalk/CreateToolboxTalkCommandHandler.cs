@@ -81,6 +81,7 @@ public class CreateToolboxTalkCommandHandler : IRequestHandler<CreateToolboxTalk
                 QuestionType = questionDto.QuestionType,
                 Options = questionDto.Options != null ? JsonSerializer.Serialize(questionDto.Options) : null,
                 CorrectAnswer = questionDto.CorrectAnswer,
+                CorrectOptionIndex = ToolboxTalkQuestion.ComputeCorrectOptionIndex(questionDto.CorrectAnswer, questionDto.Options),
                 Points = questionDto.Points
             };
             toolboxTalk.Questions.Add(question);

@@ -67,39 +67,51 @@ function Question({
         <div className="flex-1 space-y-3">
           <p className="font-medium">{question.questionText}</p>
 
-          {/* Multiple Choice */}
+          {/* Multiple Choice - sends original option index for translation-safe grading */}
           {question.questionType === 'MultipleChoice' && question.options && (
             <div className="space-y-2">
-              {question.options.map((option, index) => (
-                <label
-                  key={index}
-                  className={cn(
-                    'flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors',
-                    !disabled && 'hover:bg-muted',
-                    answer === option && 'border-primary bg-primary/5',
-                    disabled && 'cursor-default opacity-75',
-                    showResults && result?.correctAnswer === option && 'border-green-500 bg-green-100 dark:bg-green-900',
-                    showResults && answer === option && !isCorrect && 'border-red-500'
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    value={option}
-                    checked={answer === option}
-                    onChange={(e) => onAnswerChange(e.target.value)}
-                    disabled={disabled}
-                    className="h-4 w-4"
-                  />
-                  <span className="flex-1">{option}</span>
-                  {showResults && result?.correctAnswer === option && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                  {showResults && answer === option && !isCorrect && (
-                    <X className="h-4 w-4 text-red-600" />
-                  )}
-                </label>
-              ))}
+              {question.options.map((option, displayIndex) => {
+                // Map display index to original index (handles shuffled options)
+                const originalIndex = question.optionOriginalIndices
+                  ? question.optionOriginalIndices[displayIndex]
+                  : displayIndex;
+                const indexStr = originalIndex.toString();
+                const isSelected = answer === indexStr;
+                const isCorrectOption = result?.correctOptionIndex != null
+                  ? originalIndex === result.correctOptionIndex
+                  : showResults && result?.correctAnswer === option;
+
+                return (
+                  <label
+                    key={displayIndex}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors',
+                      !disabled && 'hover:bg-muted',
+                      isSelected && 'border-primary bg-primary/5',
+                      disabled && 'cursor-default opacity-75',
+                      showResults && isCorrectOption && 'border-green-500 bg-green-100 dark:bg-green-900',
+                      showResults && isSelected && !isCorrect && 'border-red-500'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={`question-${question.id}`}
+                      value={indexStr}
+                      checked={isSelected}
+                      onChange={(e) => onAnswerChange(e.target.value)}
+                      disabled={disabled}
+                      className="h-4 w-4"
+                    />
+                    <span className="flex-1">{option}</span>
+                    {showResults && isCorrectOption && (
+                      <Check className="h-4 w-4 text-green-600" />
+                    )}
+                    {showResults && isSelected && !isCorrect && (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                  </label>
+                );
+              })}
             </div>
           )}
 
