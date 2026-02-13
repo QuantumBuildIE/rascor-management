@@ -32,7 +32,7 @@ import { SectionEditor } from './SectionEditor';
 import { QuestionEditor } from './QuestionEditor';
 import { SubtitleProcessingPanel } from './SubtitleProcessingPanel';
 import { ContentTranslationPanel } from './ContentTranslationPanel';
-import { useCreateToolboxTalk, useUpdateToolboxTalk } from '@/lib/api/toolbox-talks';
+import { useCreateToolboxTalk, useUpdateToolboxTalk, TOOLBOX_TALKS_KEY } from '@/lib/api/toolbox-talks';
 import { generateSlides } from '@/lib/api/toolbox-talks/toolbox-talks';
 import type {
   ToolboxTalk,
@@ -952,6 +952,9 @@ export function ToolboxTalkForm({ talk, onSuccess, onCancel }: ToolboxTalkFormPr
               <ContentTranslationPanel
                 toolboxTalkId={talk.id}
                 existingTranslations={talk.translations}
+                onTranslationsGenerated={() => {
+                  queryClient.invalidateQueries({ queryKey: [...TOOLBOX_TALKS_KEY, talk.id] });
+                }}
               />
             )}
           </>

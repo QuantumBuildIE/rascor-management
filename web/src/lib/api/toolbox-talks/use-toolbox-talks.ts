@@ -48,6 +48,7 @@ export function useToolboxTalk(id: string) {
     queryKey: [...TOOLBOX_TALKS_KEY, id],
     queryFn: () => getToolboxTalk(id),
     enabled: !!id,
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -849,6 +849,13 @@ export function GenerateStep({ data, updateData, onNext, onBack }: GenerateStepP
                       </li>
                     )}
                   </ul>
+
+                  {smartResult.translationsCopied > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      If employees speak languages not covered by the reused translations,
+                      additional translations will be generated automatically in the background.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -446,12 +446,14 @@ public class GenerateContentTranslationsCommandHandler
                 return false;
             }
 
-            // Translate the slides JSON data using the content translation service
+            // Send the slideshow translation prompt directly to the AI without wrapping.
+            // TranslateTextAsync would double-wrap the prompt with its own translation instructions,
+            // causing Claude to return translated instructions + JSON instead of pure JSON.
             var translationPrompt = BuildSlideshowTranslationPrompt(
                 slidesJson, sourceLanguageName, targetLanguageName);
 
-            var translationResult = await _translationService.TranslateTextAsync(
-                translationPrompt, targetLanguageName, false, cancellationToken, sourceLanguageName);
+            var translationResult = await _translationService.SendCustomPromptAsync(
+                translationPrompt, cancellationToken);
 
             if (!translationResult.Success || string.IsNullOrEmpty(translationResult.TranslatedContent))
             {

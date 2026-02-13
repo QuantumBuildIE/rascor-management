@@ -91,6 +91,52 @@ public class ContentTranslationService : IContentTranslationService
     }
 
     /// <inheritdoc />
+    public async Task<ContentTranslationResult> SendCustomPromptAsync(
+        string prompt,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            return ContentTranslationResult.FailureResult("Prompt cannot be empty");
+        }
+
+        try
+        {
+            _logger.LogInformation(
+                "[DEBUG] ContentTranslationService.SendCustomPromptAsync called. PromptLength: {Length}",
+                prompt.Length);
+
+            var response = await CallClaudeApiAsync(prompt, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                _logger.LogWarning(
+                    "[DEBUG] Claude API returned empty response for custom prompt. PromptLength: {Length}",
+                    prompt.Length);
+                return ContentTranslationResult.FailureResult("AI returned empty response");
+            }
+
+            _logger.LogInformation(
+                "[DEBUG] Custom prompt completed. ResponseLength: {Length}",
+                response.Length);
+            return ContentTranslationResult.SuccessResult(response);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "[DEBUG] HTTP request failed for custom prompt. StatusCode: {StatusCode}",
+                ex.StatusCode);
+            return ContentTranslationResult.FailureResult($"HTTP request failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DEBUG] Custom prompt failed with {ExceptionType}: {Message}",
+                ex.GetType().Name, ex.Message);
+            return ContentTranslationResult.FailureResult($"Custom prompt failed: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<BatchTranslationResult> TranslateBatchAsync(
         IEnumerable<TranslationItem> items,
         string targetLanguage,

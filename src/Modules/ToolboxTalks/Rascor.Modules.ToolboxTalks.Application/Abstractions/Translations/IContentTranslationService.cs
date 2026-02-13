@@ -23,6 +23,17 @@ public interface IContentTranslationService
         string? sourceLanguage = null);
 
     /// <summary>
+    /// Sends a custom prompt directly to the AI without wrapping it in translation instructions.
+    /// Use this when you've already constructed the full prompt (e.g., slideshow JSON translation).
+    /// </summary>
+    /// <param name="prompt">The complete prompt to send to the AI</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Translation result with the AI response</returns>
+    Task<ContentTranslationResult> SendCustomPromptAsync(
+        string prompt,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Translates multiple items in a batch for efficiency.
     /// </summary>
     /// <param name="items">Items to translate with their context</param>
