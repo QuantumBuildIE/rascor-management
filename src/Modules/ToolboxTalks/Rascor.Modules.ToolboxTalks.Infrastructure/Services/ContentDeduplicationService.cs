@@ -310,6 +310,62 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 }
             }
 
+            // Copy individual slide records (PDF page images and their translations)
+            var sourceSlides = await _dbContext.ToolboxTalkSlides
+                .Include(s => s.Translations)
+                .Where(s => s.ToolboxTalkId == sourceToolboxTalkId && !s.IsDeleted)
+                .OrderBy(s => s.PageNumber)
+                .ToListAsync(cancellationToken);
+
+            if (sourceSlides.Count > 0)
+            {
+                // Soft delete existing slides on target
+                var existingTargetSlides = await _dbContext.ToolboxTalkSlides
+                    .Where(s => s.ToolboxTalkId == targetToolboxTalkId && !s.IsDeleted)
+                    .ToListAsync(cancellationToken);
+                foreach (var existingSlide in existingTargetSlides)
+                {
+                    existingSlide.IsDeleted = true;
+                    existingSlide.UpdatedAt = currentTime;
+                    existingSlide.UpdatedBy = currentUser;
+                }
+
+                foreach (var sourceSlide in sourceSlides)
+                {
+                    var newSlide = new ToolboxTalkSlide
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = tenantId,
+                        ToolboxTalkId = targetToolboxTalkId,
+                        PageNumber = sourceSlide.PageNumber,
+                        ImageStoragePath = sourceSlide.ImageStoragePath,
+                        OriginalText = sourceSlide.OriginalText,
+                        CreatedAt = currentTime,
+                        CreatedBy = currentUser
+                    };
+
+                    _dbContext.ToolboxTalkSlides.Add(newSlide);
+
+                    foreach (var slideTranslation in sourceSlide.Translations)
+                    {
+                        _dbContext.ToolboxTalkSlideTranslations.Add(new ToolboxTalkSlideTranslation
+                        {
+                            Id = Guid.NewGuid(),
+                            SlideId = newSlide.Id,
+                            LanguageCode = slideTranslation.LanguageCode,
+                            TranslatedText = slideTranslation.TranslatedText
+                        });
+                    }
+                }
+
+                // Ensure SlidesGenerated is set even if there was no SlideshowHtml
+                target.SlidesGenerated = true;
+
+                _logger.LogInformation(
+                    "Copied {SlideCount} slide(s) with translations from source talk {SourceId} to target {TargetId}",
+                    sourceSlides.Count, sourceToolboxTalkId, targetToolboxTalkId);
+            }
+
             // Copy subtitle data from the source's latest completed processing job
             var subtitlesCopied = false;
             var sourceSubtitleJob = await _dbContext.SubtitleProcessingJobs
@@ -579,6 +635,65 @@ public class ContentDeduplicationService : IContentDeduplicationService
                         TranslatedHtml = translation.TranslatedHtml,
                         TranslatedAt = currentTime
                     });
+                }
+            }
+
+            // Copy individual slide records if slideshow was copied
+            if (options.CopySlideshow)
+            {
+                var sourceSlides = await _dbContext.ToolboxTalkSlides
+                    .Include(s => s.Translations)
+                    .Where(s => s.ToolboxTalkId == sourceToolboxTalkId && !s.IsDeleted)
+                    .OrderBy(s => s.PageNumber)
+                    .ToListAsync(cancellationToken);
+
+                if (sourceSlides.Count > 0)
+                {
+                    // Soft delete existing slides on target
+                    var existingTargetSlides = await _dbContext.ToolboxTalkSlides
+                        .Where(s => s.ToolboxTalkId == targetToolboxTalkId && !s.IsDeleted)
+                        .ToListAsync(cancellationToken);
+                    foreach (var existingSlide in existingTargetSlides)
+                    {
+                        existingSlide.IsDeleted = true;
+                        existingSlide.UpdatedAt = currentTime;
+                        existingSlide.UpdatedBy = currentUser;
+                    }
+
+                    foreach (var sourceSlide in sourceSlides)
+                    {
+                        var newSlide = new ToolboxTalkSlide
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantId,
+                            ToolboxTalkId = targetToolboxTalkId,
+                            PageNumber = sourceSlide.PageNumber,
+                            ImageStoragePath = sourceSlide.ImageStoragePath,
+                            OriginalText = sourceSlide.OriginalText,
+                            CreatedAt = currentTime,
+                            CreatedBy = currentUser
+                        };
+
+                        _dbContext.ToolboxTalkSlides.Add(newSlide);
+
+                        foreach (var slideTranslation in sourceSlide.Translations)
+                        {
+                            _dbContext.ToolboxTalkSlideTranslations.Add(new ToolboxTalkSlideTranslation
+                            {
+                                Id = Guid.NewGuid(),
+                                SlideId = newSlide.Id,
+                                LanguageCode = slideTranslation.LanguageCode,
+                                TranslatedText = slideTranslation.TranslatedText
+                            });
+                        }
+                    }
+
+                    // Ensure SlidesGenerated is set even if there was no SlideshowHtml
+                    target.SlidesGenerated = true;
+
+                    _logger.LogInformation(
+                        "Copied {SlideCount} slide(s) with translations from source talk {SourceId} to target {TargetId}",
+                        sourceSlides.Count, sourceToolboxTalkId, targetToolboxTalkId);
                 }
             }
 

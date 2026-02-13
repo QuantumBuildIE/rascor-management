@@ -643,6 +643,15 @@ public class SubtitleProcessingOrchestrator : ISubtitleProcessingOrchestrator
             }
         }
 
+        // Restore the job status to Completed since TranslateLanguageAsync
+        // changes it to Translating during processing
+        if (translated > 0)
+        {
+            job.Status = SubtitleProcessingStatus.Completed;
+            job.CompletedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         _logger.LogInformation(
             "TranslateMissingLanguagesAsync completed for ToolboxTalk {ToolboxTalkId}. " +
             "Translated: {Translated}/{Total}",
