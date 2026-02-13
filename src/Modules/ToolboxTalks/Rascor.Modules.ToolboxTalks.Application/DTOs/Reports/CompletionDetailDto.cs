@@ -109,4 +109,16 @@ public record CompletionDetailDto
     /// URL to completion certificate (if generated)
     /// </summary>
     public string? CertificateUrl { get; init; }
+
+    // Start geolocation
+    public double? StartedLatitude { get; init; }
+    public double? StartedLongitude { get; init; }
+    public double? StartedAccuracyMeters { get; init; }
+    public DateTime? StartedLocationTimestamp { get; init; }
+
+    // Completion geolocation
+    public double? CompletedLatitude { get; init; }
+    public double? CompletedLongitude { get; init; }
+    public double? CompletedAccuracyMeters { get; init; }
+    public DateTime? CompletedLocationTimestamp { get; init; }
 }

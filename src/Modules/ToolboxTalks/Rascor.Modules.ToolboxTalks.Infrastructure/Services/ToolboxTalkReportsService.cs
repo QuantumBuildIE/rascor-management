@@ -334,7 +334,15 @@ public class ToolboxTalkReportsService : IToolboxTalkReportsService
                 SignedByName = c.SignedByName,
                 SignedAt = c.SignedAt,
                 CompletedOnTime = c.CompletedAt <= c.ScheduledTalk.DueDate,
-                CertificateUrl = c.CertificateUrl
+                CertificateUrl = c.CertificateUrl,
+                StartedLatitude = c.ScheduledTalk.StartedLatitude,
+                StartedLongitude = c.ScheduledTalk.StartedLongitude,
+                StartedAccuracyMeters = c.ScheduledTalk.StartedAccuracyMeters,
+                StartedLocationTimestamp = c.ScheduledTalk.StartedLocationTimestamp,
+                CompletedLatitude = c.CompletedLatitude,
+                CompletedLongitude = c.CompletedLongitude,
+                CompletedAccuracyMeters = c.CompletedAccuracyMeters,
+                CompletedLocationTimestamp = c.CompletedLocationTimestamp
             }).ToList();
 
             return new PaginatedList<CompletionDetailDto>(items, totalCount, pageNumber, pageSize);

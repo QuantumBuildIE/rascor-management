@@ -34,6 +34,12 @@ public record ScheduledTalkDto
     // Completion (if completed)
     public ScheduledTalkCompletionDto? Completion { get; init; }
 
+    // Start geolocation
+    public double? StartedLatitude { get; init; }
+    public double? StartedLongitude { get; init; }
+    public double? StartedAccuracyMeters { get; init; }
+    public DateTime? StartedLocationTimestamp { get; init; }
+
     // Refresher
     public bool IsRefresher { get; init; }
     public Guid? OriginalScheduledTalkId { get; init; }

@@ -71,6 +71,12 @@ public class ScheduledTalk : TenantEntity
     /// </summary>
     public int VideoWatchPercent { get; set; } = 0;
 
+    // Geolocation when started
+    public double? StartedLatitude { get; set; }
+    public double? StartedLongitude { get; set; }
+    public double? StartedAccuracyMeters { get; set; }
+    public DateTime? StartedLocationTimestamp { get; set; }
+
     // Refresher tracking (Phase 4)
 
     /// <summary>

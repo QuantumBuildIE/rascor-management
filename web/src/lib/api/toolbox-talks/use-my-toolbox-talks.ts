@@ -8,6 +8,7 @@ import {
   getMyCompletedToolboxTalks,
   getMyTrainingSummary,
   getToolboxTalkSlides,
+  startToolboxTalk,
   markSectionRead,
   updateVideoProgress,
   resetVideoProgress,
@@ -16,6 +17,7 @@ import {
 } from './my-toolbox-talks';
 import type {
   GetMyToolboxTalksParams,
+  StartTalkRequest,
   MarkSectionReadRequest,
   UpdateVideoProgressRequest,
   SubmitQuizRequest,
@@ -89,6 +91,27 @@ export function useToolboxTalkSlides(scheduledTalkId: string, lang?: string) {
     queryKey: [...MY_TOOLBOX_TALKS_KEY, 'slides', scheduledTalkId, lang],
     queryFn: () => getToolboxTalkSlides(scheduledTalkId, lang),
     enabled: !!scheduledTalkId,
+  });
+}
+
+// ============================================
+// Start Talk Mutation Hook
+// ============================================
+
+export function useStartToolboxTalk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      scheduledTalkId,
+      data,
+    }: {
+      scheduledTalkId: string;
+      data?: StartTalkRequest;
+    }) => startToolboxTalk(scheduledTalkId, data),
+    onSuccess: (_, { scheduledTalkId }) => {
+      queryClient.invalidateQueries({ queryKey: [...MY_TOOLBOX_TALKS_KEY, scheduledTalkId] });
+    },
   });
 }
 

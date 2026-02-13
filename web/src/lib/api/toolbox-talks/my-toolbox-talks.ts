@@ -14,6 +14,7 @@ import type {
   SubmitQuizRequest,
   UpdateVideoProgressRequest,
   CompleteToolboxTalkRequest,
+  StartTalkRequest,
 } from '@/types/toolbox-talks';
 import type { PaginatedResponse } from './toolbox-talks';
 
@@ -220,6 +221,20 @@ export async function getMyCompletedToolboxTalks(
 export async function getMyTrainingSummary(): Promise<MyTrainingSummary> {
   const response = await apiClient.get<MyTrainingSummary>('/my/toolbox-talks/summary');
   return response.data;
+}
+
+// ============================================
+// Start Talk (with optional geolocation)
+// ============================================
+
+export async function startToolboxTalk(
+  scheduledTalkId: string,
+  data?: StartTalkRequest
+): Promise<void> {
+  await apiClient.post(
+    `/my/toolbox-talks/${scheduledTalkId}/start`,
+    data || {}
+  );
 }
 
 // ============================================

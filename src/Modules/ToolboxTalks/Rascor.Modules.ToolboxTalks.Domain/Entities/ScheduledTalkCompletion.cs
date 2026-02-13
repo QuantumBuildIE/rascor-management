@@ -78,6 +78,12 @@ public class ScheduledTalkCompletion : BaseEntity
     [MaxLength(500)]
     public string? CertificateUrl { get; set; }
 
+    // Geolocation when completed
+    public double? CompletedLatitude { get; set; }
+    public double? CompletedLongitude { get; set; }
+    public double? CompletedAccuracyMeters { get; set; }
+    public DateTime? CompletedLocationTimestamp { get; set; }
+
     // Navigation properties
 
     /// <summary>

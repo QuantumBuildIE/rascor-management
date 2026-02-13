@@ -232,6 +232,10 @@ export interface ScheduledTalkCompletion {
   ipAddress: string | null;
   userAgent: string | null;
   certificateUrl: string | null;
+  completedLatitude: number | null;
+  completedLongitude: number | null;
+  completedAccuracyMeters: number | null;
+  completedLocationTimestamp: string | null;
 }
 
 export interface ScheduledTalk {
@@ -592,9 +596,18 @@ export interface UpdateVideoProgressRequest {
   watchPercent: number;
 }
 
+export interface StartTalkRequest {
+  latitude?: number;
+  longitude?: number;
+  accuracyMeters?: number;
+}
+
 export interface CompleteToolboxTalkRequest {
   signatureData: string;
   signedByName: string;
+  latitude?: number;
+  longitude?: number;
+  accuracyMeters?: number;
 }
 
 // ============================================
@@ -711,6 +724,14 @@ export interface CompletionDetail {
   signedAt: string;
   completedOnTime: boolean;
   certificateUrl: string | null;
+  startedLatitude: number | null;
+  startedLongitude: number | null;
+  startedAccuracyMeters: number | null;
+  startedLocationTimestamp: string | null;
+  completedLatitude: number | null;
+  completedLongitude: number | null;
+  completedAccuracyMeters: number | null;
+  completedLocationTimestamp: string | null;
 }
 
 // ============================================

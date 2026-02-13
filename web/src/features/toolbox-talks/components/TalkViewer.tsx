@@ -24,12 +24,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import {
   useMyToolboxTalk,
+  useStartToolboxTalk,
   useMarkSectionRead,
   useUpdateVideoProgress,
   useResetVideoProgress,
   useSubmitQuizAnswers,
   useCompleteToolboxTalk,
 } from '@/lib/api/toolbox-talks/use-my-toolbox-talks';
+import { useGeolocation } from '@/hooks/use-geolocation';
 import type { MyToolboxTalk, ScheduledTalkStatus, QuizResult } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 
@@ -185,16 +187,21 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
   const { data: talk, isLoading, error } = useMyToolboxTalk(scheduledTalkId);
 
   // Mutations
+  const startTalk = useStartToolboxTalk();
   const markSectionRead = useMarkSectionRead();
   const updateVideoProgress = useUpdateVideoProgress();
   const resetVideoProgress = useResetVideoProgress();
   const submitQuizAnswers = useSubmitQuizAnswers();
   const completeTalk = useCompleteToolboxTalk();
 
+  // Geolocation
+  const { getLocation } = useGeolocation();
+
   // Local state
   const [currentStep, setCurrentStep] = React.useState<ViewerStep>('sections');
   const [currentSectionIndex, setCurrentSectionIndex] = React.useState(0);
   const [initialStepSet, setInitialStepSet] = React.useState(false);
+  const [hasRecordedStart, setHasRecordedStart] = React.useState(false);
 
   // Determine available steps based on talk configuration
   const getAvailableSteps = React.useCallback((talk: MyToolboxTalk | undefined) => {
@@ -258,6 +265,34 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
     }
   }, [talk, initialStepSet]);
 
+  // Record start with geolocation when talk is first viewed
+  React.useEffect(() => {
+    if (!talk || hasRecordedStart) return;
+    if (talk.status === 'Completed' || talk.status === 'Cancelled') return;
+
+    setHasRecordedStart(true);
+
+    const recordStart = async () => {
+      try {
+        const location = await getLocation();
+        await startTalk.mutateAsync({
+          scheduledTalkId,
+          data: location
+            ? {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                accuracyMeters: location.accuracyMeters,
+              }
+            : undefined,
+        });
+      } catch {
+        // Silently fail - start recording is not critical
+      }
+    };
+
+    recordStart();
+  }, [talk, hasRecordedStart, scheduledTalkId, getLocation, startTalk]);
+
   // Handlers
   const handleMarkSectionRead = async (sectionId: string, timeSpentSeconds?: number) => {
     try {
@@ -298,9 +333,18 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
 
   const handleComplete = async (signatureData: string, signedByName: string) => {
     try {
+      // Capture location before completing
+      const location = await getLocation();
+
       await completeTalk.mutateAsync({
         scheduledTalkId,
-        data: { signatureData, signedByName },
+        data: {
+          signatureData,
+          signedByName,
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+          accuracyMeters: location?.accuracyMeters,
+        },
       });
       setCurrentStep('complete');
       toast.success('Toolbox Talk completed successfully!');
@@ -404,6 +448,10 @@ export function TalkViewer({ scheduledTalkId }: TalkViewerProps) {
       ipAddress: null,
       userAgent: null,
       certificateUrl: talk.certificateUrl,
+      completedLatitude: null,
+      completedLongitude: null,
+      completedAccuracyMeters: null,
+      completedLocationTimestamp: null,
     };
 
     return (

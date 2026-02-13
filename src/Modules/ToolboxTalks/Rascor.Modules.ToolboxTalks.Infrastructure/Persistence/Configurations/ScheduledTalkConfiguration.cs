@@ -53,6 +53,11 @@ public class ScheduledTalkConfiguration : IEntityTypeConfiguration<ScheduledTalk
         builder.Property(s => s.TenantId)
             .IsRequired();
 
+        // Geolocation when started
+        builder.Property(s => s.StartedLatitude).HasPrecision(9, 6);
+        builder.Property(s => s.StartedLongitude).HasPrecision(9, 6);
+        builder.Property(s => s.StartedAccuracyMeters).HasPrecision(10, 2);
+
         // Refresher tracking
         builder.Property(s => s.IsRefresher)
             .IsRequired()

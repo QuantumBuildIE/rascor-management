@@ -23,4 +23,19 @@ public record CompleteToolboxTalkCommand : IRequest<ScheduledTalkCompletionDto>
     /// Name entered by the employee when signing
     /// </summary>
     public string SignedByName { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Latitude of the employee when completing the talk
+    /// </summary>
+    public double? Latitude { get; init; }
+
+    /// <summary>
+    /// Longitude of the employee when completing the talk
+    /// </summary>
+    public double? Longitude { get; init; }
+
+    /// <summary>
+    /// GPS accuracy in meters
+    /// </summary>
+    public double? AccuracyMeters { get; init; }
 }

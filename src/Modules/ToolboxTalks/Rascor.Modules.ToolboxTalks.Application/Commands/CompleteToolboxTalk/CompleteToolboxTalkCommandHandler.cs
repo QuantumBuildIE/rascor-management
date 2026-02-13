@@ -181,7 +181,11 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
             SignedAt = now,
             SignedByName = request.SignedByName,
             IPAddress = ipAddress,
-            UserAgent = userAgent
+            UserAgent = userAgent,
+            CompletedLatitude = request.Latitude,
+            CompletedLongitude = request.Longitude,
+            CompletedAccuracyMeters = request.AccuracyMeters,
+            CompletedLocationTimestamp = request.Latitude.HasValue ? now : null
         };
 
         _dbContext.ScheduledTalkCompletions.Add(completion);
@@ -237,7 +241,11 @@ public class CompleteToolboxTalkCommandHandler : IRequestHandler<CompleteToolbox
             SignedByName = completion.SignedByName,
             IPAddress = completion.IPAddress,
             UserAgent = completion.UserAgent,
-            CertificateUrl = completion.CertificateUrl
+            CertificateUrl = completion.CertificateUrl,
+            CompletedLatitude = completion.CompletedLatitude,
+            CompletedLongitude = completion.CompletedLongitude,
+            CompletedAccuracyMeters = completion.CompletedAccuracyMeters,
+            CompletedLocationTimestamp = completion.CompletedLocationTimestamp
         };
     }
 

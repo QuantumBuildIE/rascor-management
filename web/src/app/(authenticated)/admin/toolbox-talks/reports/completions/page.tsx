@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { format } from 'date-fns';
-import { CheckCircle, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, Download, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -205,6 +205,7 @@ export default function AdminCompletionsReportPage() {
                 <TableHead className="text-center">Quiz Score</TableHead>
                 <TableHead className="text-center">On Time</TableHead>
                 <TableHead>Signed By</TableHead>
+                <TableHead>Location</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -219,11 +220,12 @@ export default function AdminCompletionsReportPage() {
                     <TableCell><Skeleton className="h-4 w-20 mx-auto" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                   </TableRow>
                 ))
               ) : (report?.items ?? []).length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
+                  <TableCell colSpan={9} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2">
                       <CheckCircle className="h-8 w-8 text-muted-foreground" />
                       <p className="text-muted-foreground">No completions found</p>
@@ -285,6 +287,47 @@ export default function AdminCompletionsReportPage() {
                         <div className="text-xs text-muted-foreground">
                           {format(new Date(item.signedAt), 'MMM dd, HH:mm')}
                         </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {item.startedLatitude && item.startedLongitude ? (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">Start: </span>
+                            <a
+                              href={`https://www.google.com/maps?q=${item.startedLatitude},${item.startedLongitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                            >
+                              <MapPin className="h-3 w-3" />
+                              View
+                            </a>
+                            {item.startedAccuracyMeters != null && (
+                              <span className="text-muted-foreground"> ({Math.round(item.startedAccuracyMeters)}m)</span>
+                            )}
+                          </div>
+                        ) : null}
+                        {item.completedLatitude && item.completedLongitude ? (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">End: </span>
+                            <a
+                              href={`https://www.google.com/maps?q=${item.completedLatitude},${item.completedLongitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                            >
+                              <MapPin className="h-3 w-3" />
+                              View
+                            </a>
+                            {item.completedAccuracyMeters != null && (
+                              <span className="text-muted-foreground"> ({Math.round(item.completedAccuracyMeters)}m)</span>
+                            )}
+                          </div>
+                        ) : null}
+                        {!item.startedLatitude && !item.completedLatitude && (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

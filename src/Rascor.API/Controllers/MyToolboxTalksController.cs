@@ -5,6 +5,7 @@ using Rascor.Core.Application.Interfaces;
 using Rascor.Core.Application.Models;
 using Rascor.Modules.ToolboxTalks.Application.Commands.CompleteToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.MarkSectionRead;
+using Rascor.Modules.ToolboxTalks.Application.Commands.StartToolboxTalk;
 using Rascor.Modules.ToolboxTalks.Application.Commands.ResetVideoProgress;
 using Rascor.Modules.ToolboxTalks.Application.Commands.SubmitQuizAnswers;
 using Rascor.Modules.ToolboxTalks.Application.Commands.UpdateVideoProgress;
@@ -130,6 +131,48 @@ public class MyToolboxTalksController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving my toolbox talk {ScheduledTalkId}", id);
             return StatusCode(500, new { message = "Error retrieving toolbox talk" });
+        }
+    }
+
+    /// <summary>
+    /// Record that the employee has started viewing a toolbox talk.
+    /// Captures optional geolocation and transitions status to InProgress.
+    /// </summary>
+    /// <param name="id">Scheduled talk ID</param>
+    /// <param name="request">Optional location data</param>
+    /// <returns>200 OK</returns>
+    [HttpPost("{id:guid}/start")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Start(Guid id, [FromBody] StartTalkRequest? request = null)
+    {
+        try
+        {
+            var employeeId = GetCurrentEmployeeId();
+            if (employeeId == null)
+            {
+                return BadRequest(new { message = "No employee record associated with current user" });
+            }
+
+            var command = new StartToolboxTalkCommand
+            {
+                ScheduledTalkId = id,
+                Latitude = request?.Latitude,
+                Longitude = request?.Longitude,
+                AccuracyMeters = request?.AccuracyMeters
+            };
+
+            await _mediator.Send(command);
+            return Ok(new { message = "Talk started" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting talk {ScheduledTalkId}", id);
+            return StatusCode(500, new { message = "Error starting toolbox talk" });
         }
     }
 
@@ -324,7 +367,10 @@ public class MyToolboxTalksController : ControllerBase
             {
                 ScheduledTalkId = id,
                 SignatureData = request.SignatureData,
-                SignedByName = request.SignedByName
+                SignedByName = request.SignedByName,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
+                AccuracyMeters = request.AccuracyMeters
             };
 
             var result = await _mediator.Send(command);
@@ -949,6 +995,16 @@ public record UpdateVideoProgressRequest
 }
 
 /// <summary>
+/// Request for starting a toolbox talk with optional geolocation
+/// </summary>
+public record StartTalkRequest
+{
+    public double? Latitude { get; init; }
+    public double? Longitude { get; init; }
+    public double? AccuracyMeters { get; init; }
+}
+
+/// <summary>
 /// Request for completing a toolbox talk
 /// </summary>
 public record CompleteToolboxTalkRequest
@@ -962,6 +1018,10 @@ public record CompleteToolboxTalkRequest
     /// Name entered by the employee when signing
     /// </summary>
     public string SignedByName { get; init; } = string.Empty;
+
+    public double? Latitude { get; init; }
+    public double? Longitude { get; init; }
+    public double? AccuracyMeters { get; init; }
 }
 
 #endregion
