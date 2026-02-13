@@ -418,9 +418,35 @@ public class ContentGenerationJob
                 return;
             }
 
+            // Check which translations already exist (e.g., copied from content reuse)
+            // and only generate for missing languages to avoid wasteful regeneration
+            var existingTranslationCodes = await _toolboxTalksDbContext.ToolboxTalkTranslations
+                .IgnoreQueryFilters()
+                .Where(t => t.ToolboxTalkId == toolboxTalkId && t.TenantId == tenantId && !t.IsDeleted)
+                .Select(t => t.LanguageCode)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var missingLanguageCodes = employeeLanguageCodes
+                .Except(existingTranslationCodes, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            _logger.LogInformation(
+                "[DEBUG] Existing translation languages: {Existing}. Missing: {Missing}",
+                string.Join(", ", existingTranslationCodes),
+                string.Join(", ", missingLanguageCodes));
+
+            if (missingLanguageCodes.Count == 0)
+            {
+                _logger.LogInformation(
+                    "[DEBUG] All required translations already exist for ToolboxTalk {ToolboxTalkId}. Skipping auto-translation.",
+                    toolboxTalkId);
+                return;
+            }
+
             // Convert language codes (e.g. "pl") to language names (e.g. "Polish")
             // as the translation command expects language names
-            var languageNames = employeeLanguageCodes
+            var languageNames = missingLanguageCodes
                 .Select(code => _languageCodeService.GetLanguageName(code))
                 .ToList();
 

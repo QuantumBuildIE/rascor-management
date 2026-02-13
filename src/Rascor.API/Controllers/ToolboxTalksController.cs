@@ -895,6 +895,7 @@ public class ToolboxTalksController : ControllerBase
             }
 
             string? jobId = null;
+            string? missingTranslationsJobId = null;
 
             // If AI generation is needed, queue a Hangfire background job
             if (result.GenerationJobQueued)
@@ -924,6 +925,19 @@ public class ToolboxTalksController : ControllerBase
                     "NeedSections: {NeedSections}, NeedQuestions: {NeedQuestions}, NeedSlideshow: {NeedSlideshow}",
                     jobId, id, needSections, needQuestions, needSlideshow);
             }
+            else if (result.ContentCopiedFromTitle != null)
+            {
+                // Content was fully reused (no AI generation needed).
+                // Queue a job to detect and generate any missing translations
+                // (e.g., new languages added since the source content was created).
+                var tenantId = _currentUserService.TenantId;
+                missingTranslationsJobId = BackgroundJob.Enqueue<MissingTranslationsJob>(
+                    job => job.ExecuteAsync(id, tenantId, request.ConnectionId, CancellationToken.None));
+
+                _logger.LogInformation(
+                    "Queued missing translations job {JobId} for talk {ToolboxTalkId} after full content reuse from '{SourceTitle}'",
+                    missingTranslationsJobId, id, result.ContentCopiedFromTitle);
+            }
 
             return Ok(new SmartGenerateContentResponse
             {
@@ -937,6 +951,8 @@ public class ToolboxTalksController : ControllerBase
                 ContentCopiedFromTitle = result.ContentCopiedFromTitle,
                 GenerationJobId = jobId,
                 GenerationJobQueued = result.GenerationJobQueued,
+                MissingTranslationsJobId = missingTranslationsJobId,
+                MissingTranslationsJobQueued = missingTranslationsJobId != null,
             });
         }
         catch (Exception ex)
@@ -1778,4 +1794,8 @@ public record SmartGenerateContentResponse
     // Background job info (if AI generation was needed)
     public bool GenerationJobQueued { get; init; }
     public string? GenerationJobId { get; init; }
+
+    // Missing translations job info (if content was fully reused but some languages are missing)
+    public bool MissingTranslationsJobQueued { get; init; }
+    public string? MissingTranslationsJobId { get; init; }
 }
