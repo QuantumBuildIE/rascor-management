@@ -290,7 +290,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
             {
                 target.SlideshowHtml = source.SlideshowHtml;
                 target.SlideshowGeneratedAt = currentTime;
-                target.SlidesGenerated = true;
+                // SlidesGenerated is only set when actual ToolboxTalkSlide records exist (below)
                 slideshowCopied = true;
 
                 // Copy slideshow translations
@@ -618,7 +618,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
             {
                 target.SlideshowHtml = source.SlideshowHtml;
                 target.SlideshowGeneratedAt = currentTime;
-                target.SlidesGenerated = true;
+                // SlidesGenerated is only set when actual ToolboxTalkSlide records exist (below)
                 slideshowCopied = true;
 
                 // Copy slideshow translations

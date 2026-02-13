@@ -47,8 +47,8 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
             return null;
 
         var talk = scheduledTalk.ToolboxTalk;
-        var employeePreferredLanguage = scheduledTalk.Employee?.PreferredLanguage ?? "en";
-        var languageCode = scheduledTalk.LanguageCode ?? employeePreferredLanguage;
+        // Always use the employee's current preferred language, not the frozen ScheduledTalk.LanguageCode
+        var languageCode = scheduledTalk.Employee?.PreferredLanguage ?? "en";
 
         // Get translation if available and not English
         var translation = talk.Translations?
@@ -134,7 +134,7 @@ public class GetMyToolboxTalkByIdQueryHandler : IRequestHandler<GetMyToolboxTalk
             Status = scheduledTalk.Status,
             StatusDisplay = GetStatusDisplay(scheduledTalk.Status),
             LanguageCode = languageCode,
-            EmployeePreferredLanguage = employeePreferredLanguage,
+            EmployeePreferredLanguage = languageCode,
             TotalSections = sections.Count,
             CompletedSections = sections.Count(s => s.IsRead),
             ProgressPercent = sections.Count > 0
