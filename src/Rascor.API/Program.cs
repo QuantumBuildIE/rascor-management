@@ -334,6 +334,9 @@ app.UseCors("Development");
 // Enable static files (for product images)
 app.UseStaticFiles();
 
+// Enable WebSocket support (required for SignalR WebSocket transport)
+app.UseWebSockets();
+
 // Add authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
