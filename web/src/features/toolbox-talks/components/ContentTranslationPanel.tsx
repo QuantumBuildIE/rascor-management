@@ -160,6 +160,7 @@ export function ContentTranslationPanel({
           <div className="flex items-center justify-between">
             <Label>Generate New Translations</Label>
             <Button
+              type="button"
               variant="link"
               size="sm"
               className="h-auto p-0"
@@ -237,6 +238,7 @@ export function ContentTranslationPanel({
 
         {/* Generate Button */}
         <Button
+          type="button"
           onClick={handleGenerateTranslations}
           disabled={
             selectedLanguages.length === 0 ||

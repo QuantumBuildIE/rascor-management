@@ -363,6 +363,11 @@ public class GenerateContentTranslationsCommandHandler
 
             // Translate HTML slideshow if it exists
             var slideshowTranslated = false;
+            _logger.LogInformation(
+                "Slideshow translation check for talk {TalkId}: HasSlideshowHtml={HasHtml}, Length={Length}",
+                toolboxTalk.Id,
+                !string.IsNullOrEmpty(toolboxTalk.SlideshowHtml),
+                toolboxTalk.SlideshowHtml?.Length ?? 0);
             if (!string.IsNullOrEmpty(toolboxTalk.SlideshowHtml))
             {
                 slideshowTranslated = await TranslateSlideshowAsync(
