@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using MediatR;
@@ -445,8 +446,8 @@ public class GenerateContentTranslationsCommandHandler
                 languageCode, toolboxTalk.SlideshowHtml!.Length);
 
             // Extract the slides array from the HTML
-            var slidesJson = ExtractSlidesArrayFromHtml(toolboxTalk.SlideshowHtml!);
-            if (string.IsNullOrEmpty(slidesJson))
+            var slidesText = ExtractSlidesArrayFromHtml(toolboxTalk.SlideshowHtml!);
+            if (string.IsNullOrEmpty(slidesText))
             {
                 _logger.LogWarning(
                     "Could not extract slides array from HTML for translation to {Lang}. " +
@@ -458,80 +459,82 @@ public class GenerateContentTranslationsCommandHandler
                 return false;
             }
 
-            _logger.LogInformation(
-                "Extracted slides JSON for {Lang}. JSON length: {JsonLength}, Preview: {Preview}",
-                languageCode, slidesJson.Length,
-                slidesJson.Length > 200 ? slidesJson[..200] : slidesJson);
-
-            // Send the slideshow translation prompt directly to the AI without wrapping.
-            // TranslateTextAsync would double-wrap the prompt with its own translation instructions,
-            // causing Claude to return translated instructions + JSON instead of pure JSON.
-            var translationPrompt = BuildSlideshowTranslationPrompt(
-                slidesJson, sourceLanguageName, targetLanguageName);
+            // Find all translatable strings in the JavaScript object notation
+            var translatableStrings = FindTranslatableStrings(slidesText);
+            var uniqueStrings = translatableStrings.Select(t => t.Value).Distinct().ToList();
 
             _logger.LogInformation(
-                "Sending slideshow translation prompt for {Lang}. Prompt length: {PromptLength}",
-                languageCode, translationPrompt.Length);
+                "Slideshow translation for {Lang}: Found {Total} translatable string occurrences, " +
+                "{Unique} unique strings to translate. SlidesText length: {Length}",
+                languageCode, translatableStrings.Count, uniqueStrings.Count, slidesText.Length);
 
-            var translationResult = await _translationService.SendCustomPromptAsync(
-                translationPrompt, cancellationToken);
-
-            _logger.LogInformation(
-                "Slideshow SendCustomPromptAsync result for {Lang}: Success={Success}, " +
-                "HasContent={HasContent}, ContentLength={ContentLength}, Error={Error}",
-                languageCode,
-                translationResult.Success,
-                !string.IsNullOrEmpty(translationResult.TranslatedContent),
-                translationResult.TranslatedContent?.Length ?? 0,
-                translationResult.ErrorMessage ?? "none");
-
-            if (!translationResult.Success || string.IsNullOrEmpty(translationResult.TranslatedContent))
+            if (uniqueStrings.Count == 0)
             {
                 _logger.LogWarning(
-                    "Failed to translate slideshow slides JSON to {Lang}: Success={Success}, " +
-                    "ContentIsNull={IsNull}, ContentLength={Length}, Error={Error}",
-                    languageCode, translationResult.Success,
-                    translationResult.TranslatedContent == null,
-                    translationResult.TranslatedContent?.Length ?? 0,
-                    translationResult.ErrorMessage ?? "none");
-                return false;
-            }
-
-            // Clean the response - extract JSON array if wrapped in markdown
-            var translatedSlidesJson = CleanJsonResponse(translationResult.TranslatedContent);
-
-            _logger.LogInformation(
-                "Cleaned slideshow JSON response for {Lang}. " +
-                "RawLength={RawLength}, CleanedLength={CleanedLength}, StartsWithBracket={StartsBracket}",
-                languageCode,
-                translationResult.TranslatedContent.Length,
-                translatedSlidesJson.Length,
-                translatedSlidesJson.StartsWith('['));
-
-            // Validate it's valid JSON
-            try
-            {
-                JsonDocument.Parse(translatedSlidesJson);
-                _logger.LogInformation(
-                    "Slideshow JSON validation PASSED for {Lang}. Length: {Length}",
-                    languageCode, translatedSlidesJson.Length);
-            }
-            catch (JsonException jsonEx)
-            {
-                _logger.LogWarning(
-                    "Translated slides JSON is not valid for {Lang}. " +
-                    "JsonError: {JsonError}, CleanedLength: {Length}, Preview: {Preview}",
+                    "No translatable strings found in slideshow for {Lang}. " +
+                    "SlidesText preview: {Preview}",
                     languageCode,
-                    jsonEx.Message,
-                    translatedSlidesJson.Length,
-                    translatedSlidesJson.Length > 500
-                        ? translatedSlidesJson[..500]
-                        : translatedSlidesJson);
+                    slidesText.Length > 300 ? slidesText[..300] : slidesText);
                 return false;
             }
+
+            // Translate each unique string individually via TranslateTextAsync
+            var translations = new Dictionary<string, string>();
+            var translated = 0;
+            var failed = 0;
+
+            foreach (var originalRaw in uniqueStrings)
+            {
+                var textToTranslate = UnescapeJsString(originalRaw);
+
+                var result = await _translationService.TranslateTextAsync(
+                    textToTranslate, targetLanguageName, false, cancellationToken, sourceLanguageName);
+
+                if (result.Success && !string.IsNullOrEmpty(result.TranslatedContent))
+                {
+                    translations[originalRaw] = result.TranslatedContent;
+                    translated++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Slideshow string translation failed for {Lang}. " +
+                        "Original: '{Original}', Error: {Error}",
+                        languageCode,
+                        textToTranslate.Length > 80 ? textToTranslate[..80] + "..." : textToTranslate,
+                        result.ErrorMessage ?? "empty result");
+                    failed++;
+                }
+            }
+
+            _logger.LogInformation(
+                "Slideshow string translations for {Lang}: {Translated} succeeded, {Failed} failed out of {Total} unique strings",
+                languageCode, translated, failed, uniqueStrings.Count);
+
+            if (translated == 0)
+            {
+                _logger.LogWarning(
+                    "All slideshow string translations failed for {Lang}. Skipping slideshow translation.",
+                    languageCode);
+                return false;
+            }
+
+            // Replace strings in the slides text (from end to start to preserve positions)
+            var sb = new StringBuilder(slidesText);
+            foreach (var match in translatableStrings.OrderByDescending(t => t.Index))
+            {
+                if (translations.TryGetValue(match.Value, out var translatedText))
+                {
+                    var escapedTranslation = $"\"{EscapeJsString(translatedText)}\"";
+                    sb.Remove(match.Index, match.Length);
+                    sb.Insert(match.Index, escapedTranslation);
+                }
+            }
+
+            var translatedSlidesText = sb.ToString();
 
             // Replace the slides array in the HTML
-            var translatedHtml = ReplaceSlidesArrayInHtml(toolboxTalk.SlideshowHtml!, translatedSlidesJson);
+            var translatedHtml = ReplaceSlidesArrayInHtml(toolboxTalk.SlideshowHtml!, translatedSlidesText);
 
             _logger.LogInformation(
                 "Slideshow HTML replacement for {Lang}: OriginalHtmlLength={Original}, " +
@@ -554,8 +557,10 @@ public class GenerateContentTranslationsCommandHandler
 
             _logger.LogInformation(
                 "Slideshow translation entity ADDED to DbContext for {Lang}. " +
-                "EntityId={EntityId}, ToolboxTalkId={TalkId}, HTML length: {Length}",
-                languageCode, slideshowTranslation.Id, toolboxTalk.Id, translatedHtml.Length);
+                "EntityId={EntityId}, ToolboxTalkId={TalkId}, HTML length: {Length}, " +
+                "Strings translated: {Translated}/{Total}",
+                languageCode, slideshowTranslation.Id, toolboxTalk.Id, translatedHtml.Length,
+                translated, uniqueStrings.Count);
 
             return true;
         }
@@ -576,58 +581,6 @@ public class GenerateContentTranslationsCommandHandler
         return match.Success ? match.Groups[1].Value : null;
     }
 
-    private static string BuildSlideshowTranslationPrompt(
-        string slidesJson,
-        string sourceLanguage,
-        string targetLanguage)
-    {
-        return $"""
-Translate all text content in the following JSON slides array from {sourceLanguage} to {targetLanguage}.
-Keep the JSON structure exactly the same. Only translate the text values in fields like:
-- title
-- content
-- items (array elements that are human-readable text)
-- warnings
-- dos
-- donts
-- stats.label
-- forces.label
-- Any other human-readable text
-
-Do NOT translate:
-- Field names/keys
-- CSS values (colors, gradients)
-- Technical values (numbers, emoji codes)
-- type values (cover, checklist, etc.)
-
-Return ONLY the translated JSON array, no explanation or markdown formatting.
-
-{slidesJson}
-""";
-    }
-
-    private static string CleanJsonResponse(string response)
-    {
-        var cleaned = response.Trim();
-
-        // Remove markdown code block wrapper if present
-        if (cleaned.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
-        {
-            cleaned = cleaned["```json".Length..];
-        }
-        else if (cleaned.StartsWith("```"))
-        {
-            cleaned = cleaned[3..];
-        }
-
-        if (cleaned.EndsWith("```"))
-        {
-            cleaned = cleaned[..^3];
-        }
-
-        return cleaned.Trim();
-    }
-
     private static string ReplaceSlidesArrayInHtml(string html, string newSlidesJson)
     {
         return Regex.Replace(
@@ -635,6 +588,157 @@ Return ONLY the translated JSON array, no explanation or markdown formatting.
             @"const\s+slides\s*=\s*\[[\s\S]*?\];",
             $"const slides = {newSlidesJson};",
             RegexOptions.Multiline);
+    }
+
+    // --- Slideshow string extraction and filtering helpers ---
+
+    /// <summary>
+    /// Represents a translatable string found in the JavaScript slides text.
+    /// Index and Length refer to the full match including quotes.
+    /// Value is the content between quotes (raw, with any JS escape sequences).
+    /// </summary>
+    private record TranslatableStringMatch(int Index, int Length, string Value, string? Key);
+
+    /// <summary>
+    /// Property keys whose string values should NOT be translated (technical/styling values).
+    /// </summary>
+    private static readonly HashSet<string> SkipKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "id", "type", "icon", "color", "bgGrad", "bgColor", "gradient", "bg"
+    };
+
+    /// <summary>
+    /// Finds all translatable double-quoted string values in JavaScript object notation text.
+    /// Parses each "..." value, determines its property key, and filters out non-translatable values.
+    /// </summary>
+    private static List<TranslatableStringMatch> FindTranslatableStrings(string jsText)
+    {
+        var results = new List<TranslatableStringMatch>();
+        // Match all double-quoted strings (handles \" escape sequences inside strings)
+        var regex = new Regex(@"""((?:[^""\\]|\\.)*)""");
+
+        foreach (Match match in regex.Matches(jsText))
+        {
+            var value = match.Groups[1].Value;
+            var key = GetKeyForString(jsText, match.Index);
+
+            if (ShouldTranslateString(key, value))
+            {
+                results.Add(new TranslatableStringMatch(match.Index, match.Length, value, key));
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Determines the property key for a string value by looking at the text preceding it.
+    /// For direct properties (key: "value"), returns the key name.
+    /// For array elements ("value" inside [...]), finds the enclosing array's key.
+    /// </summary>
+    private static string? GetKeyForString(string jsText, int stringIndex)
+    {
+        var before = jsText[..stringIndex].TrimEnd();
+
+        // Direct key: "value" pattern (JS object notation - keys are unquoted)
+        var keyMatch = Regex.Match(before, @"(\w+)\s*:\s*$");
+        if (keyMatch.Success)
+            return keyMatch.Groups[1].Value;
+
+        // Array element: preceded by [ or , (string is inside an array of strings)
+        if (before.Length > 0 && (before[^1] == ',' || before[^1] == '['))
+        {
+            return FindEnclosingArrayKey(jsText, stringIndex);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Walks backwards from a position to find the key of the enclosing array bracket.
+    /// </summary>
+    private static string? FindEnclosingArrayKey(string jsText, int position)
+    {
+        int depth = 0;
+        for (int i = position - 1; i >= 0; i--)
+        {
+            var c = jsText[i];
+            if (c == ']') depth++;
+            else if (c == '[')
+            {
+                if (depth == 0)
+                {
+                    // Found the opening bracket, find the key before it
+                    var before = jsText[..i].TrimEnd();
+                    var keyMatch = Regex.Match(before, @"(\w+)\s*:\s*$");
+                    return keyMatch.Success ? keyMatch.Groups[1].Value : null;
+                }
+                depth--;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Determines whether a string value should be translated based on its key and content.
+    /// </summary>
+    private static bool ShouldTranslateString(string? key, string value)
+    {
+        // Skip empty or whitespace-only strings
+        if (string.IsNullOrWhiteSpace(value)) return false;
+
+        // Skip if key is in the skip list
+        if (key != null && SkipKeys.Contains(key)) return false;
+
+        // Skip color values (#hex)
+        if (value.StartsWith('#')) return false;
+
+        // Skip CSS gradients
+        if (value.StartsWith("linear-gradient", StringComparison.OrdinalIgnoreCase)) return false;
+        if (value.StartsWith("radial-gradient", StringComparison.OrdinalIgnoreCase)) return false;
+
+        // Skip purely numeric values (integers, decimals, percentages like "50%")
+        if (Regex.IsMatch(value, @"^\d+\.?\d*%?$")) return false;
+
+        // Skip phone number-like strings (digits, spaces, dashes, parentheses, plus)
+        if (Regex.IsMatch(value, @"^[\d\s\-\+\(\)\.]+$")) return false;
+
+        // Skip URLs
+        if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return false;
+
+        // Skip single emoji characters (short strings of only non-ASCII chars)
+        if (value.Length <= 4 && value.All(c => !char.IsAscii(c) || char.IsWhiteSpace(c))) return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Unescapes a JavaScript string value (reverses backslash escape sequences).
+    /// </summary>
+    private static string UnescapeJsString(string value)
+    {
+        if (!value.Contains('\\')) return value;
+
+        return value
+            .Replace("\\\"", "\"")
+            .Replace("\\n", "\n")
+            .Replace("\\r", "\r")
+            .Replace("\\t", "\t")
+            .Replace("\\\\", "\\");
+    }
+
+    /// <summary>
+    /// Escapes a string for use inside a JavaScript double-quoted string.
+    /// </summary>
+    private static string EscapeJsString(string value)
+    {
+        return value
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t");
     }
 
     // Internal DTOs for JSON serialization (matching existing structure)
