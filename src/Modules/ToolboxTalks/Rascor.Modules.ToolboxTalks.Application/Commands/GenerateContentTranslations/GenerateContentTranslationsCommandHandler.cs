@@ -441,15 +441,27 @@ public class GenerateContentTranslationsCommandHandler
                 return true;
             }
 
-            _logger.LogInformation("Translating slideshow HTML to {Lang}", languageCode);
+            _logger.LogInformation("Translating slideshow HTML to {Lang}. Source HTML length: {HtmlLength}",
+                languageCode, toolboxTalk.SlideshowHtml!.Length);
 
             // Extract the slides array from the HTML
             var slidesJson = ExtractSlidesArrayFromHtml(toolboxTalk.SlideshowHtml!);
             if (string.IsNullOrEmpty(slidesJson))
             {
-                _logger.LogWarning("Could not extract slides array from HTML for translation");
+                _logger.LogWarning(
+                    "Could not extract slides array from HTML for translation to {Lang}. " +
+                    "Regex failed to match 'const slides = [...]' pattern. HTML preview: {Preview}",
+                    languageCode,
+                    toolboxTalk.SlideshowHtml!.Length > 300
+                        ? toolboxTalk.SlideshowHtml![..300]
+                        : toolboxTalk.SlideshowHtml!);
                 return false;
             }
+
+            _logger.LogInformation(
+                "Extracted slides JSON for {Lang}. JSON length: {JsonLength}, Preview: {Preview}",
+                languageCode, slidesJson.Length,
+                slidesJson.Length > 200 ? slidesJson[..200] : slidesJson);
 
             // Send the slideshow translation prompt directly to the AI without wrapping.
             // TranslateTextAsync would double-wrap the prompt with its own translation instructions,
@@ -457,38 +469,76 @@ public class GenerateContentTranslationsCommandHandler
             var translationPrompt = BuildSlideshowTranslationPrompt(
                 slidesJson, sourceLanguageName, targetLanguageName);
 
+            _logger.LogInformation(
+                "Sending slideshow translation prompt for {Lang}. Prompt length: {PromptLength}",
+                languageCode, translationPrompt.Length);
+
             var translationResult = await _translationService.SendCustomPromptAsync(
                 translationPrompt, cancellationToken);
+
+            _logger.LogInformation(
+                "Slideshow SendCustomPromptAsync result for {Lang}: Success={Success}, " +
+                "HasContent={HasContent}, ContentLength={ContentLength}, Error={Error}",
+                languageCode,
+                translationResult.Success,
+                !string.IsNullOrEmpty(translationResult.TranslatedContent),
+                translationResult.TranslatedContent?.Length ?? 0,
+                translationResult.ErrorMessage ?? "none");
 
             if (!translationResult.Success || string.IsNullOrEmpty(translationResult.TranslatedContent))
             {
                 _logger.LogWarning(
-                    "Failed to translate slideshow slides JSON to {Lang}: {Error}",
-                    languageCode, translationResult.ErrorMessage);
+                    "Failed to translate slideshow slides JSON to {Lang}: Success={Success}, " +
+                    "ContentIsNull={IsNull}, ContentLength={Length}, Error={Error}",
+                    languageCode, translationResult.Success,
+                    translationResult.TranslatedContent == null,
+                    translationResult.TranslatedContent?.Length ?? 0,
+                    translationResult.ErrorMessage ?? "none");
                 return false;
             }
 
             // Clean the response - extract JSON array if wrapped in markdown
             var translatedSlidesJson = CleanJsonResponse(translationResult.TranslatedContent);
 
+            _logger.LogInformation(
+                "Cleaned slideshow JSON response for {Lang}. " +
+                "RawLength={RawLength}, CleanedLength={CleanedLength}, StartsWithBracket={StartsBracket}",
+                languageCode,
+                translationResult.TranslatedContent.Length,
+                translatedSlidesJson.Length,
+                translatedSlidesJson.StartsWith('['));
+
             // Validate it's valid JSON
             try
             {
                 JsonDocument.Parse(translatedSlidesJson);
+                _logger.LogInformation(
+                    "Slideshow JSON validation PASSED for {Lang}. Length: {Length}",
+                    languageCode, translatedSlidesJson.Length);
             }
-            catch (JsonException)
+            catch (JsonException jsonEx)
             {
                 _logger.LogWarning(
-                    "Translated slides JSON is not valid for {Lang}. Preview: {Preview}",
+                    "Translated slides JSON is not valid for {Lang}. " +
+                    "JsonError: {JsonError}, CleanedLength: {Length}, Preview: {Preview}",
                     languageCode,
-                    translatedSlidesJson.Length > 200
-                        ? translatedSlidesJson[..200]
+                    jsonEx.Message,
+                    translatedSlidesJson.Length,
+                    translatedSlidesJson.Length > 500
+                        ? translatedSlidesJson[..500]
                         : translatedSlidesJson);
                 return false;
             }
 
             // Replace the slides array in the HTML
             var translatedHtml = ReplaceSlidesArrayInHtml(toolboxTalk.SlideshowHtml!, translatedSlidesJson);
+
+            _logger.LogInformation(
+                "Slideshow HTML replacement for {Lang}: OriginalHtmlLength={Original}, " +
+                "TranslatedHtmlLength={Translated}, LengthDiff={Diff}",
+                languageCode, toolboxTalk.SlideshowHtml!.Length,
+                translatedHtml.Length,
+                translatedHtml.Length - toolboxTalk.SlideshowHtml!.Length);
 
             // Save the translation using DbSet.Add() for reliable change tracking
             var slideshowTranslation = new ToolboxTalkSlideshowTranslation
@@ -503,8 +553,9 @@ public class GenerateContentTranslationsCommandHandler
             _context.ToolboxTalkSlideshowTranslations.Add(slideshowTranslation);
 
             _logger.LogInformation(
-                "Slideshow translation to {Lang} completed. HTML length: {Length}",
-                languageCode, translatedHtml.Length);
+                "Slideshow translation entity ADDED to DbContext for {Lang}. " +
+                "EntityId={EntityId}, ToolboxTalkId={TalkId}, HTML length: {Length}",
+                languageCode, slideshowTranslation.Id, toolboxTalk.Id, translatedHtml.Length);
 
             return true;
         }

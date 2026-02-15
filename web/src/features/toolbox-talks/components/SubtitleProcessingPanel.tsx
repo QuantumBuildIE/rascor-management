@@ -234,6 +234,7 @@ export function SubtitleProcessingPanel({
               </span>
             )}
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               className="h-8 w-8"
@@ -269,6 +270,7 @@ export function SubtitleProcessingPanel({
                 </div>
                 <Progress value={status.overallPercentage} data-testid="progress-bar" />
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={handleCancelProcessing}
@@ -376,6 +378,7 @@ export function SubtitleProcessingPanel({
             {showRetryButton && (
               <div className="space-y-2" data-testid="retry-section">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handleRetryProcessing}
                   disabled={isRetrying}
@@ -463,6 +466,7 @@ export function SubtitleProcessingPanel({
               <div className="flex items-center justify-between">
                 <Label>Target Languages</Label>
                 <Button
+                  type="button"
                   variant="link"
                   size="sm"
                   className="h-auto p-0"
@@ -535,6 +539,7 @@ export function SubtitleProcessingPanel({
 
             {/* Start Button */}
             <Button
+              type="button"
               onClick={handleStartProcessing}
               disabled={
                 !videoUrl ||
