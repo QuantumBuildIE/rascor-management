@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Rascor.Core.Application.Interfaces;
@@ -213,12 +214,20 @@ public class ContentDeduplicationService : IContentDeduplicationService
             var questionsCopied = 0;
             var translationsCopied = 0;
 
+            // Build source→target ID mappings for sections and questions
+            // so translation JSON can be remapped to reference the new IDs
+            var sectionIdMap = new Dictionary<Guid, Guid>();
+            var questionIdMap = new Dictionary<Guid, Guid>();
+
             // Copy sections
             foreach (var sourceSection in source.Sections.OrderBy(s => s.SectionNumber))
             {
+                var newId = Guid.NewGuid();
+                sectionIdMap[sourceSection.Id] = newId;
+
                 var newSection = new ToolboxTalkSection
                 {
-                    Id = Guid.NewGuid(),
+                    Id = newId,
                     ToolboxTalkId = targetToolboxTalkId,
                     SectionNumber = sourceSection.SectionNumber,
                     Title = sourceSection.Title,
@@ -237,9 +246,12 @@ public class ContentDeduplicationService : IContentDeduplicationService
             // Copy questions
             foreach (var sourceQuestion in source.Questions.OrderBy(q => q.QuestionNumber))
             {
+                var newId = Guid.NewGuid();
+                questionIdMap[sourceQuestion.Id] = newId;
+
                 var newQuestion = new ToolboxTalkQuestion
                 {
-                    Id = Guid.NewGuid(),
+                    Id = newId,
                     ToolboxTalkId = targetToolboxTalkId,
                     QuestionNumber = sourceQuestion.QuestionNumber,
                     QuestionText = sourceQuestion.QuestionText,
@@ -259,7 +271,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 questionsCopied++;
             }
 
-            // Copy translations
+            // Copy translations with remapped section/question IDs
             foreach (var sourceTranslation in source.Translations)
             {
                 var newTranslation = new ToolboxTalkTranslation
@@ -270,8 +282,8 @@ public class ContentDeduplicationService : IContentDeduplicationService
                     LanguageCode = sourceTranslation.LanguageCode,
                     TranslatedTitle = sourceTranslation.TranslatedTitle,
                     TranslatedDescription = sourceTranslation.TranslatedDescription,
-                    TranslatedSections = sourceTranslation.TranslatedSections,
-                    TranslatedQuestions = sourceTranslation.TranslatedQuestions,
+                    TranslatedSections = RemapTranslatedSections(sourceTranslation.TranslatedSections, sectionIdMap),
+                    TranslatedQuestions = RemapTranslatedQuestions(sourceTranslation.TranslatedQuestions, questionIdMap),
                     EmailSubject = sourceTranslation.EmailSubject,
                     EmailBody = sourceTranslation.EmailBody,
                     TranslatedAt = currentTime,
@@ -545,6 +557,11 @@ public class ContentDeduplicationService : IContentDeduplicationService
             var slideshowCopied = false;
             var translationsCopied = 0;
 
+            // Build source→target ID mappings for sections and questions
+            // so translation JSON can be remapped to reference the new IDs
+            var sectionIdMap = new Dictionary<Guid, Guid>();
+            var questionIdMap = new Dictionary<Guid, Guid>();
+
             // Copy sections if requested
             if (options.CopySections && source.Sections.Count > 0)
             {
@@ -558,9 +575,12 @@ public class ContentDeduplicationService : IContentDeduplicationService
 
                 foreach (var sourceSection in source.Sections.OrderBy(s => s.SectionNumber))
                 {
+                    var newId = Guid.NewGuid();
+                    sectionIdMap[sourceSection.Id] = newId;
+
                     var newSection = new ToolboxTalkSection
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         ToolboxTalkId = targetToolboxTalkId,
                         SectionNumber = sourceSection.SectionNumber,
                         Title = sourceSection.Title,
@@ -590,9 +610,12 @@ public class ContentDeduplicationService : IContentDeduplicationService
 
                 foreach (var sourceQuestion in source.Questions.OrderBy(q => q.QuestionNumber))
                 {
+                    var newId = Guid.NewGuid();
+                    questionIdMap[sourceQuestion.Id] = newId;
+
                     var newQuestion = new ToolboxTalkQuestion
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         ToolboxTalkId = targetToolboxTalkId,
                         QuestionNumber = sourceQuestion.QuestionNumber,
                         QuestionText = sourceQuestion.QuestionText,
@@ -697,7 +720,7 @@ public class ContentDeduplicationService : IContentDeduplicationService
                 }
             }
 
-            // Copy translations if requested
+            // Copy translations if requested, with remapped section/question IDs
             if (options.CopyTranslations && source.Translations.Count > 0)
             {
                 // Soft delete existing translations on target
@@ -718,8 +741,12 @@ public class ContentDeduplicationService : IContentDeduplicationService
                         LanguageCode = sourceTranslation.LanguageCode,
                         TranslatedTitle = sourceTranslation.TranslatedTitle,
                         TranslatedDescription = sourceTranslation.TranslatedDescription,
-                        TranslatedSections = sourceTranslation.TranslatedSections,
-                        TranslatedQuestions = sourceTranslation.TranslatedQuestions,
+                        TranslatedSections = sectionIdMap.Count > 0
+                            ? RemapTranslatedSections(sourceTranslation.TranslatedSections, sectionIdMap)
+                            : sourceTranslation.TranslatedSections,
+                        TranslatedQuestions = questionIdMap.Count > 0
+                            ? RemapTranslatedQuestions(sourceTranslation.TranslatedQuestions, questionIdMap)
+                            : sourceTranslation.TranslatedQuestions,
                         EmailSubject = sourceTranslation.EmailSubject,
                         EmailBody = sourceTranslation.EmailBody,
                         TranslatedAt = currentTime,
@@ -888,6 +915,81 @@ public class ContentDeduplicationService : IContentDeduplicationService
         toolboxTalk.UpdatedBy = _currentUser.UserId ?? "System";
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Remaps SectionId values in a TranslatedSections JSON string from source IDs to target IDs.
+    /// The JSON format is: [{"SectionId":"guid","Title":"...","Content":"..."},...]
+    /// </summary>
+    private static string RemapTranslatedSections(string? json, Dictionary<Guid, Guid> sectionIdMap)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json == "[]")
+            return json ?? "[]";
+
+        try
+        {
+            var sections = JsonSerializer.Deserialize<List<TranslatedSectionData>>(json);
+            if (sections == null || sections.Count == 0)
+                return "[]";
+
+            foreach (var section in sections)
+            {
+                if (sectionIdMap.TryGetValue(section.SectionId, out var newId))
+                    section.SectionId = newId;
+            }
+
+            return JsonSerializer.Serialize(sections);
+        }
+        catch
+        {
+            // If JSON is malformed, return empty array rather than propagating stale IDs
+            return "[]";
+        }
+    }
+
+    /// <summary>
+    /// Remaps QuestionId values in a TranslatedQuestions JSON string from source IDs to target IDs.
+    /// The JSON format is: [{"QuestionId":"guid","QuestionText":"...","Options":[...]},...]
+    /// </summary>
+    private static string? RemapTranslatedQuestions(string? json, Dictionary<Guid, Guid> questionIdMap)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json == "[]")
+            return json;
+
+        try
+        {
+            var questions = JsonSerializer.Deserialize<List<TranslatedQuestionData>>(json);
+            if (questions == null || questions.Count == 0)
+                return json;
+
+            foreach (var question in questions)
+            {
+                if (questionIdMap.TryGetValue(question.QuestionId, out var newId))
+                    question.QuestionId = newId;
+            }
+
+            return JsonSerializer.Serialize(questions);
+        }
+        catch
+        {
+            // If JSON is malformed, return null rather than propagating stale IDs
+            return null;
+        }
+    }
+
+    // Internal DTOs for JSON deserialization of translation data
+    private class TranslatedSectionData
+    {
+        public Guid SectionId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+    }
+
+    private class TranslatedQuestionData
+    {
+        public Guid QuestionId { get; set; }
+        public string QuestionText { get; set; } = string.Empty;
+        public List<string>? Options { get; set; }
     }
 
     /// <summary>

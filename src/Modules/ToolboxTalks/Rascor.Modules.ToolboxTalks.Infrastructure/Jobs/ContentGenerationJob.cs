@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
@@ -427,19 +428,27 @@ public class ContentGenerationJob
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
+            // Detect stale translations where section/question IDs in the JSON
+            // no longer match the actual live entities (e.g., after content reuse
+            // followed by content regeneration with ReplaceExisting=true)
+            var staleTranslationCodes = await DetectStaleTranslationsAsync(
+                toolboxTalkId, tenantId, existingTranslationCodes, cancellationToken);
+
             var missingLanguageCodes = employeeLanguageCodes
                 .Except(existingTranslationCodes, StringComparer.OrdinalIgnoreCase)
+                .Union(staleTranslationCodes, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             _logger.LogInformation(
-                "[DEBUG] Existing translation languages: {Existing}. Missing: {Missing}",
+                "[DEBUG] Existing translation languages: {Existing}. Stale: {Stale}. Missing/stale to regenerate: {Missing}",
                 string.Join(", ", existingTranslationCodes),
+                staleTranslationCodes.Count > 0 ? string.Join(", ", staleTranslationCodes) : "none",
                 string.Join(", ", missingLanguageCodes));
 
             if (missingLanguageCodes.Count == 0)
             {
                 _logger.LogInformation(
-                    "[DEBUG] All required translations already exist for ToolboxTalk {ToolboxTalkId}. Skipping auto-translation.",
+                    "[DEBUG] All required translations already exist and are up-to-date for ToolboxTalk {ToolboxTalkId}. Skipping auto-translation.",
                     toolboxTalkId);
                 return;
             }
@@ -624,5 +633,125 @@ public class ContentGenerationJob
                 "Failed to send completion notification for toolbox talk {ToolboxTalkId}",
                 toolboxTalkId);
         }
+    }
+
+    /// <summary>
+    /// Detects translations whose TranslatedSections/TranslatedQuestions JSON contains
+    /// stale SectionId/QuestionId values that don't match the actual live entities.
+    /// This happens when content is reused then regenerated, leaving translations with
+    /// IDs referencing the old (now soft-deleted) sections/questions.
+    /// </summary>
+    private async Task<List<string>> DetectStaleTranslationsAsync(
+        Guid toolboxTalkId,
+        Guid tenantId,
+        List<string> existingTranslationCodes,
+        CancellationToken cancellationToken)
+    {
+        if (existingTranslationCodes.Count == 0)
+            return [];
+
+        try
+        {
+            // Get actual live section and question IDs for this talk
+            var actualSectionIds = await _toolboxTalksDbContext.ToolboxTalkSections
+                .IgnoreQueryFilters()
+                .Where(s => s.ToolboxTalkId == toolboxTalkId && !s.IsDeleted)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+
+            var actualQuestionIds = await _toolboxTalksDbContext.ToolboxTalkQuestions
+                .IgnoreQueryFilters()
+                .Where(q => q.ToolboxTalkId == toolboxTalkId && !q.IsDeleted)
+                .Select(q => q.Id)
+                .ToListAsync(cancellationToken);
+
+            var sectionIdSet = new HashSet<Guid>(actualSectionIds);
+            var questionIdSet = new HashSet<Guid>(actualQuestionIds);
+
+            // Load existing translations with their JSON columns
+            var translations = await _toolboxTalksDbContext.ToolboxTalkTranslations
+                .IgnoreQueryFilters()
+                .Where(t => t.ToolboxTalkId == toolboxTalkId && t.TenantId == tenantId && !t.IsDeleted)
+                .Select(t => new { t.LanguageCode, t.TranslatedSections, t.TranslatedQuestions })
+                .ToListAsync(cancellationToken);
+
+            var staleCodes = new List<string>();
+
+            foreach (var translation in translations)
+            {
+                var isStale = false;
+
+                // Check if section IDs in the JSON match actual live sections
+                if (sectionIdSet.Count > 0 && !string.IsNullOrWhiteSpace(translation.TranslatedSections) && translation.TranslatedSections != "[]")
+                {
+                    try
+                    {
+                        var sectionData = JsonSerializer.Deserialize<List<StaleSectionIdCheck>>(translation.TranslatedSections);
+                        if (sectionData != null && sectionData.Count > 0)
+                        {
+                            isStale = sectionData.Any(s => !sectionIdSet.Contains(s.SectionId));
+                        }
+                    }
+                    catch
+                    {
+                        // Malformed JSON is inherently stale
+                        isStale = true;
+                    }
+                }
+                else if (sectionIdSet.Count > 0 && (string.IsNullOrWhiteSpace(translation.TranslatedSections) || translation.TranslatedSections == "[]"))
+                {
+                    // Talk has sections but translation has none - stale
+                    isStale = true;
+                }
+
+                // Check if question IDs in the JSON match actual live questions
+                if (!isStale && questionIdSet.Count > 0 && !string.IsNullOrWhiteSpace(translation.TranslatedQuestions) && translation.TranslatedQuestions != "[]")
+                {
+                    try
+                    {
+                        var questionData = JsonSerializer.Deserialize<List<StaleQuestionIdCheck>>(translation.TranslatedQuestions);
+                        if (questionData != null && questionData.Count > 0)
+                        {
+                            isStale = questionData.Any(q => !questionIdSet.Contains(q.QuestionId));
+                        }
+                    }
+                    catch
+                    {
+                        isStale = true;
+                    }
+                }
+                else if (!isStale && questionIdSet.Count > 0 && string.IsNullOrWhiteSpace(translation.TranslatedQuestions))
+                {
+                    // Talk has questions but translation has none - stale
+                    isStale = true;
+                }
+
+                if (isStale)
+                {
+                    staleCodes.Add(translation.LanguageCode);
+                }
+            }
+
+            return staleCodes;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to detect stale translations for ToolboxTalk {ToolboxTalkId}. " +
+                "Proceeding without stale detection.",
+                toolboxTalkId);
+            return [];
+        }
+    }
+
+    // Minimal DTOs for checking IDs in translation JSON without deserializing full content
+    private class StaleSectionIdCheck
+    {
+        public Guid SectionId { get; set; }
+    }
+
+    private class StaleQuestionIdCheck
+    {
+        public Guid QuestionId { get; set; }
     }
 }
