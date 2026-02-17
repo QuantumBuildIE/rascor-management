@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -17,11 +17,13 @@ import {
   ListChecksIcon,
   ExternalLinkIcon,
   EyeIcon,
+  InfoIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Accordion,
   AccordionContent,
@@ -30,7 +32,7 @@ import {
 } from '@/components/ui/accordion';
 import { DeleteConfirmationDialog } from '@/components/shared/delete-confirmation-dialog';
 import { PreviewModal } from './PreviewModal';
-import { useToolboxTalk, useDeleteToolboxTalk } from '@/lib/api/toolbox-talks';
+import { useToolboxTalk, useDeleteToolboxTalk, useAvailableLanguages } from '@/lib/api/toolbox-talks';
 import type { ToolboxTalk } from '@/types/toolbox-talks';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -47,8 +49,28 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const { data: talk, isLoading, error } = useToolboxTalk(talkId);
+  const { data: talk, isLoading, error, refetch } = useToolboxTalk(talkId);
+  const { data: languagesData } = useAvailableLanguages();
   const deleteMutation = useDeleteToolboxTalk();
+
+  // Determine if translations are pending for employee languages
+  const pendingTranslationLanguages = useMemo(() => {
+    if (!talk || !languagesData?.employeeLanguages) return [];
+    const hasContent = talk.sections.length > 0 || talk.questions.length > 0;
+    if (!hasContent) return [];
+    const existingCodes = new Set(talk.translations.map(t => t.languageCode));
+    return languagesData.employeeLanguages
+      .filter(l => l.languageCode !== talk.sourceLanguageCode && !existingCodes.has(l.languageCode));
+  }, [talk, languagesData]);
+
+  const hasTranslationsPending = pendingTranslationLanguages.length > 0;
+
+  // Auto-refetch when translations are pending so banner auto-dismisses
+  useEffect(() => {
+    if (!hasTranslationsPending) return;
+    const interval = setInterval(() => refetch(), 15000);
+    return () => clearInterval(interval);
+  }, [hasTranslationsPending, refetch]);
 
   const handleDelete = async () => {
     if (!talk) return;
@@ -147,6 +169,18 @@ export function ToolboxTalkDetail({ talkId, onSchedule, basePath = '/admin/toolb
           </Button>
         </div>
       </div>
+
+      {/* Pending Translations Banner */}
+      {hasTranslationsPending && (
+        <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200">
+          <InfoIcon className="h-4 w-4" />
+          <AlertTitle>Translations in progress</AlertTitle>
+          <AlertDescription>
+            Translations are being generated in the background and may take a few moments to complete.
+            Employees viewing this talk in their preferred language will see the English version until translations are ready.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics */}
       {stats && (
